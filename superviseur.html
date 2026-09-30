@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de Bord Vie Scolaire | لوحة تحكم مستشار التربية</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Supabase JS Client v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Polices Google Fonts (Inter & Cairo pour l'arabe) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    html[dir="rtl"] body {
+      font-family: 'Cairo', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+  <!-- ================= BARRE SUPÉRIEURE ================= -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-3 shadow-sm">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
+          LV
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight" data-i18n="dashboardTitle">Vie Scolaire & Surveillance</h1>
+          <p class="text-xs text-slate-500" data-i18n="dashboardSubtitle">Suivi des absences et retards en direct</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Indicateur de connexion Realtime -->
+        <div id="liveIndicator" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span data-i18n="liveActive">Temps réel actif</span>
+        </div>
+
+        <!-- Bouton bascule de langue -->
+        <button id="langBtn" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+          العربية
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- ================= STATISTIQUES EN DIRECT ================= -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Total Absents -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider" data-i18n="totalAbsents">Total Absents</p>
+          <h3 class="text-3xl font-black text-rose-600 mt-1" id="statAbsents">0</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </div>
+      </div>
+
+      <!-- Total Retards -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider" data-i18n="totalRetards">Élèves en retard</p>
+          <h3 class="text-3xl font-black text-amber-500 mt-1" id="statRetards">0</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Classes avec appel validé -->
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider" data-i18n="validatedRollCalls">Appels Validés</p>
+          <h3 class="text-3xl font-black text-emerald-600 mt-1" id="statCalls">1 / 1</h3>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= SECTION GESTION DU GUICHET (BILLET DE RETARD) ================= -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900" data-i18n="liveAlertsTitle">Gestion des Absents & Délivrance des Billets d'Entrée</h2>
+          <p class="text-xs text-slate-500" data-i18n="liveAlertsSubtitle">Validez le billet d'un élève pour mettre à jour instantanément la classe sans vous déplacer</p>
+        </div>
+      </div>
+
+      <!-- Tableau des élèves signalés -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase bg-slate-50/50">
+              <th class="py-3 px-4" data-i18n="colStudent">Élève</th>
+              <th class="py-3 px-4" data-i18n="colClass">Classe</th>
+              <th class="py-3 px-4" data-i18n="colStatus">Statut actuel</th>
+              <th class="py-3 px-4" data-i18n="colAction">Action (وصل الدخول)</th>
+            </tr>
+          </thead>
+          <tbody id="alertsTableBody" class="divide-y divide-slate-100 font-medium">
+            <!-- Rempli par JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= LOGIQUE SUPABASE & INTERACTION ================= -->
+  <script>
+    // --- 1. CONFIGURATION SUPABASE ---
+    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Dictionnaire bilingue
+    const i18n = {
+      fr: {
+        dir: 'ltr',
+        langBtn: 'العربية',
+        dashboardTitle: "Vie Scolaire & Surveillance",
+        dashboardSubtitle: "Suivi des absences et retards en direct",
+        liveActive: "Temps réel actif",
+        totalAbsents: "Total Absents",
+        totalRetards: "Élèves en retard",
+        validatedRollCalls: "Appels Validés",
+        liveAlertsTitle: "Gestion des Absents & Délivrance des Billets d'Entrée",
+        liveAlertsSubtitle: "Validez le billet d'un élève pour mettre à jour instantanément la classe sans vous déplacer",
+        colStudent: "Élève",
+        colClass: "Classe",
+        colStatus: "Statut actuel",
+        colAction: "Action (Billet d'entrée)",
+        present: "Présent",
+        absent: "Absent",
+        retard: "En retard",
+        grantTicket: "Délivrer Billet d'Entrée",
+        ticketGranted: "Billet Accordé ✓"
+      },
+      ar: {
+        dir: 'rtl',
+        langBtn: 'Français',
+        dashboardTitle: "مصلحة الاستشارة والتربية",
+        dashboardSubtitle: "متابعة الغيابات والتأخرات في الوقت الحقيقي",
+        liveActive: "البث المباشر نشط",
+        totalAbsents: "مجموع الغائبين",
+        totalRetards: "المتأخرون",
+        validatedRollCalls: "أوراق الغياب المؤكدة",
+        liveAlertsTitle: "معالجة الغيابات وتسليم وصولات الدخول",
+        liveAlertsSubtitle: "امنح وصل الدخول للتلميذ ليظهر فورا للأستاذ في القسم دون الحاجة للتنقل",
+        colStudent: "التلميذ",
+        colClass: "القسم",
+        colStatus: "الحالة الحالية",
+        colAction: "الإجراء (وصل الدخول)",
+        present: "حاضر",
+        absent: "غائب",
+        retard: "متأخر",
+        grantTicket: "منح وصل الدخول",
+        ticketGranted: "تم منح الوصل ✓"
+      }
+    };
+
+    let currentLang = 'fr';
+
+    // Données locales réactives
+    let attendanceData = [
+      { id: 101, seance_id: 1, matricule: "2026/041", nom_fr: "Benali Yacine", nom_ar: "بن علي ياسين", classe: "3AS-S1", statut: "present", billet_delivre: false },
+      { id: 102, seance_id: 1, matricule: "2026/088", nom_fr: "Mansouri Amina", nom_ar: "منصوري أمينة", classe: "3AS-S1", statut: "absent", billet_delivre: false },
+      { id: 103, seance_id: 1, matricule: "2026/114", nom_fr: "Brahimi Karim", nom_ar: "إبراهيمي كريم", classe: "3AS-S1", statut: "retard", billet_delivre: false }
+    ];
+
+    // --- 2. GESTION DE LA LANGUE & RTL ---
+    const langBtn = document.getElementById('langBtn');
+
+    function applyLanguage(lang) {
+      currentLang = lang;
+      const dict = i18n[lang];
+      document.documentElement.setAttribute('dir', dict.dir);
+      document.documentElement.setAttribute('lang', lang);
+      langBtn.textContent = dict.langBtn;
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+
+      renderTable();
+      updateStats();
+    }
+
+    langBtn.addEventListener('click', () => {
+      applyLanguage(currentLang === 'fr' ? 'ar' : 'fr');
+    });
+
+    // --- 3. RENDU DU TABLEAU ET STATS ---
+    const alertsTableBody = document.getElementById('alertsTableBody');
+
+    function updateStats() {
+      const absents = attendanceData.filter(d => d.statut === 'absent').length;
+      const retards = attendanceData.filter(d => d.statut === 'retard').length;
+      
+      document.getElementById('statAbsents').textContent = absents;
+      document.getElementById('statRetards').textContent = retards;
+    }
+
+    function renderTable() {
+      alertsTableBody.innerHTML = '';
+      const isAr = currentLang === 'ar';
+
+      // On affiche les élèves qui ne sont pas déclarés présents
+      const filtered = attendanceData.filter(d => d.statut !== 'present');
+
+      if (filtered.length === 0) {
+        alertsTableBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="py-6 text-center text-slate-400 text-sm">
+              ${isAr ? 'لا توجد غيابات أو تأخرات مسجلة حالياً' : 'Aucune absence ou retard signalé pour le moment.'}
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition";
+
+        const studentName = isAr ? item.nom_ar : item.nom_fr;
+
+        // Badge Statut
+        let statusBadge = '';
+        if (item.statut === 'absent') {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">${i18n[currentLang].absent}</span>`;
+        } else if (item.statut === 'retard') {
+          statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">${i18n[currentLang].retard}</span>`;
+        }
+
+        tr.innerHTML = `
+          <td class="py-3 px-4">
+            <p class="font-bold text-slate-900">${studentName}</p>
+            <p class="text-xs text-slate-400 font-mono">N° ${item.matricule}</p>
+          </td>
+          <td class="py-3 px-4 text-slate-600 font-semibold">${item.classe}</td>
+          <td class="py-3 px-4">${statusBadge}</td>
+          <td class="py-3 px-4">
+            ${item.billet_delivre ? `
+              <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                ${i18n[currentLang].ticketGranted}
+              </span>
+            ` : `
+              <button onclick="delivrerBillet(${item.id},${item.seance_id})" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs rounded-lg shadow-sm transition">
+                ${i18n[currentLang].grantTicket}
+              </button>
+            `}
+          </td>
+        `;
+
+        alertsTableBody.appendChild(tr);
+      });
+    }
+
+    // --- 4. ACTION : DÉLIVRER UN BILLET D'ENTRÉE (وصل دخول) ---
+    window.delivrerBillet = async function(eleveId, seanceId) {
+      // 1. Mise à jour immédiate côté UI
+      const eleve = attendanceData.find(d => d.id === eleveId);
+      if (eleve) {
+        eleve.billet_delivre = true;
+        eleve.statut = 'retard'; // ou passage en retard accepté
+        renderTable();
+      }
+
+      // 2. Envoi de l'événement vers Supabase
+      try {
+        const { error } = await supabaseClient
+          .from('pointages')
+          .update({
+            billet_entree_delivre: true,
+            mis_a_jour_a: new Date().toISOString()
+          })
+          .match({ seance_id: seanceId, eleve_id: eleveId });
+
+        if (error) console.error("Erreur Supabase :", error);
+      } catch (err) {
+        console.error("Erreur réseau :", err);
+      }
+    };
+
+    // --- 5. ÉCOUTE TEMPS RÉEL SUPABASE ---
+    function initRealtime() {
+      supabaseClient
+        .channel('superviseur-suivi-global')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'pointages' },
+          (payload) => {
+            const data = payload.new;
+            if (!data) return;
+
+            // Mettre à jour l'enregistrement existant ou l'ajouter
+            const index = attendanceData.findIndex(d => d.id === data.eleve_id);
+            if (index !== -1) {
+              attendanceData[index].statut = data.statut;
+              attendanceData[index].billet_delivre = data.billet_entree_delivre;
+            }
+
+            renderTable();
+            updateStats();
+          }
+        )
+        .subscribe();
+    }
+
+    // Initialisation au chargement
+    applyLanguage('fr');
+    initRealtime();
+  </script>
+</body>
+</html>
