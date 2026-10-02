@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<html lang="fr" dir="ltr" id="doc-root">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,7 +10,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts pour l'Arabe (Cairo) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
   <style>
+    body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     @media print {
       body * { visibility: hidden; }
       #zone-impression-billet, #zone-impression-billet * { visibility: visible; }
@@ -18,7 +24,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
   <!-- En-tête / Header -->
   <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
@@ -28,18 +34,28 @@
           <i class="fa-solid fa-shield-halved text-xl"></i>
         </div>
         <div>
-          <h1 class="text-xl font-bold tracking-tight">Espace Vie Scolaire & Surveillance</h1>
-          <p class="text-xs text-slate-400">ثانوية شعبان أعمر أوقاس - متابعة الغيابات والتأخرات</p>
+          <h1 class="text-lg sm:text-xl font-bold tracking-tight">
+            <span>Espace Vie Scolaire</span>
+            <span class="text-indigo-400 mx-1">|</span>
+            <span dir="rtl" class="font-bold">فضاء الاستشارة التربوية</span>
+          </h1>
+          <p class="text-xs text-slate-400">
+            <span>ثانوية شعبان أعمر أوقاس</span> - <span>Suivi des Absences & Retards</span>
+          </p>
         </div>
       </div>
       
       <div class="flex items-center gap-3">
+        <!-- Lien vers la vue prof -->
         <a href="index.html" class="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl transition flex items-center gap-2 border border-slate-700">
-          <i class="fa-solid fa-chalkboard-user"></i> Vue Enseignant
+          <i class="fa-solid fa-chalkboard-user text-indigo-400"></i> 
+          <span>Vue Enseignant / فضاء الأستاذ</span>
         </a>
+
+        <!-- Badge temps réel -->
         <div id="conn-badge" class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs font-medium border border-slate-700">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="conn-text">Temps réel actif</span>
+          <span id="conn-text">En ligne / متصل</span>
         </div>
       </div>
     </div>
@@ -50,40 +66,44 @@
 
     <!-- Cartes Statistiques / KPI du Jour -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Séances validées -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between text-slate-500 mb-1">
-          <span class="text-xs font-semibold uppercase tracking-wider">Appels validés</span>
+          <span class="text-xs font-bold uppercase tracking-wider">Appels faits / الحصص المنجزة</span>
           <i class="fa-solid fa-clipboard-check text-indigo-500 text-lg"></i>
         </div>
         <div class="text-2xl sm:text-3xl font-extrabold text-slate-800" id="kpi-seances">0</div>
-        <p class="text-xs text-slate-400 mt-1">Séances enregistrées aujourd'hui</p>
+        <p class="text-xs text-slate-400 mt-1">Aujourd'hui / اليوم</p>
       </div>
 
+      <!-- Absences -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between text-rose-500 mb-1">
-          <span class="text-xs font-semibold uppercase tracking-wider">Total Absences</span>
+          <span class="text-xs font-bold uppercase tracking-wider">Absences / الغيابات</span>
           <i class="fa-solid fa-user-xmark text-rose-500 text-lg"></i>
         </div>
         <div class="text-2xl sm:text-3xl font-extrabold text-rose-600" id="kpi-absents">0</div>
-        <p class="text-xs text-slate-400 mt-1">Élèves signalés absents</p>
+        <p class="text-xs text-slate-400 mt-1">Élèves signalés / حالة غياب</p>
       </div>
 
+      <!-- Retards -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between text-amber-500 mb-1">
-          <span class="text-xs font-semibold uppercase tracking-wider">Total Retards</span>
+          <span class="text-xs font-bold uppercase tracking-wider">Retards / التأخرات</span>
           <i class="fa-solid fa-user-clock text-amber-500 text-lg"></i>
         </div>
         <div class="text-2xl sm:text-3xl font-extrabold text-amber-600" id="kpi-retards">0</div>
-        <p class="text-xs text-slate-400 mt-1">Élèves arrivés en retard</p>
+        <p class="text-xs text-slate-400 mt-1">Élèves en retard / حالة تأخر</p>
       </div>
 
+      <!-- Taux de présence -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between text-emerald-500 mb-1">
-          <span class="text-xs font-semibold uppercase tracking-wider">Taux Présence</span>
+          <span class="text-xs font-bold uppercase tracking-wider">Présence / نسبة الحضور</span>
           <i class="fa-solid fa-chart-pie text-emerald-500 text-lg"></i>
         </div>
         <div class="text-2xl sm:text-3xl font-extrabold text-emerald-600" id="kpi-taux">--%</div>
-        <p class="text-xs text-slate-400 mt-1">Sur les classes ayant fait l'appel</p>
+        <p class="text-xs text-slate-400 mt-1">Moyenne globale / النسبة الإجمالية</p>
       </div>
     </div>
 
@@ -92,33 +112,40 @@
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
         <!-- Filtre Date -->
         <div>
-          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Date</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">
+            <span>Date</span> / <span dir="rtl">التاريخ</span>
+          </label>
           <input type="date" id="filtre-date" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
 
         <!-- Filtre Classe -->
         <div>
-          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Division / Classe</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">
+            <span>Classe</span> / <span dir="rtl">القسم أو الفوج</span>
+          </label>
           <select id="filtre-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="ALL">Toutes les classes</option>
+            <option value="ALL">Toutes les classes / كل الأقسام</option>
           </select>
         </div>
 
         <!-- Filtre Statut -->
         <div>
-          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Statut</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">
+            <span>Statut</span> / <span dir="rtl">الحالة</span>
+          </label>
           <select id="filtre-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="A_R">Absences & Retards uniquement</option>
-            <option value="A">Absents uniquement (غائب)</option>
-            <option value="R">Retards uniquement (متأخر)</option>
-            <option value="ALL">Tous les pointages</option>
+            <option value="A_R">Absences & Retards / الغيابات والتأخرات</option>
+            <option value="A">Absents uniquement / الغائبون فقط</option>
+            <option value="R">Retards uniquement / المتأخرون فقط</option>
+            <option value="ALL">Tous les pointages / كل الحالات</option>
           </select>
         </div>
       </div>
 
       <div class="flex items-center gap-2 self-end md:self-auto pt-2 md:pt-0">
-        <button id="btn-refresh" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
-          <i class="fa-solid fa-arrows-rotate"></i> Actualiser
+        <button id="btn-refresh" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2">
+          <i class="fa-solid fa-arrows-rotate text-indigo-600"></i>
+          <span>Actualiser / تحديث</span>
         </button>
       </div>
     </div>
@@ -127,29 +154,31 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50/70">
         <div>
-          <h2 class="text-lg font-bold text-slate-800">Registre Journalier des Incidents</h2>
-          <p class="text-xs text-slate-500" id="registre-count">Chargement des données...</p>
+          <h2 class="text-base sm:text-lg font-bold text-slate-800">
+            <span>Registre Journalier des Absences</span> - <span dir="rtl">سجل الغيابات اليومي</span>
+          </h2>
+          <p class="text-xs text-slate-500" id="registre-count">Chargement en cours / جاري التحميل...</p>
         </div>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-slate-100 text-slate-600 text-xs uppercase border-b border-slate-200">
-              <th class="py-3 px-4 w-12 text-center">N°</th>
-              <th class="py-3 px-4">Élève (اللقب والاسم)</th>
-              <th class="py-3 px-4">Classe</th>
-              <th class="py-3 px-4">Séance & Matière</th>
-              <th class="py-3 px-4 text-center">Statut</th>
-              <th class="py-3 px-4 text-center">Justification</th>
-              <th class="py-3 px-4 text-center">Actions</th>
+            <tr class="bg-slate-100 text-slate-700 text-xs font-bold uppercase border-b border-slate-200">
+              <th class="py-3.5 px-4 w-12 text-center">N° / الرقم</th>
+              <th class="py-3.5 px-4">Élève / التلميذ(ة)</th>
+              <th class="py-3.5 px-4">Classe / القسم</th>
+              <th class="py-3.5 px-4">Séance & Matière / الحصة والمادة</th>
+              <th class="py-3.5 px-4 text-center">Statut / الحالة</th>
+              <th class="py-3.5 px-4 text-center">Justification / التبرير</th>
+              <th class="py-3.5 px-4 text-center">Actions / إجراءات</th>
             </tr>
           </thead>
           <tbody id="registre-body" class="divide-y divide-slate-100 text-sm">
             <tr>
               <td colspan="7" class="py-12 text-center text-slate-400">
                 <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
-                <p>Récupération des données en direct...</p>
+                <p>Récupération des données en direct / جاري استرجاع البيانات...</p>
               </td>
             </tr>
           </tbody>
@@ -159,7 +188,7 @@
 
   </main>
 
-  <!-- Zone masquée pour l'impression du billet d'entrée (A6 / Reçu officiel) -->
+  <!-- Zone masquée pour l'impression du billet d'entrée (ورقة الدخول A6) -->
   <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white text-slate-900 border-2 border-dashed border-slate-800 max-w-lg mx-auto my-6 rounded-lg">
     <div class="text-center border-b pb-3 mb-4">
       <p class="text-xs uppercase font-bold tracking-widest">الجمهورية الجزائرية الديمقراطية الشعبية</p>
@@ -169,12 +198,12 @@
     </div>
 
     <div class="space-y-2 text-sm leading-relaxed" id="billet-details">
-      <!-- Rempli par JavaScript lors de l'impression -->
+      <!-- Rempli par JavaScript -->
     </div>
 
     <div class="mt-6 pt-4 border-t flex justify-between items-center text-xs">
       <div>
-        <p>تاريخ الإصدار : <span id="billet-date-emission"></span></p>
+        <p>تاريخ وساعة الإصدار : <span id="billet-date-emission"></span></p>
       </div>
       <div class="text-center font-bold">
         <p>تأشيرة مستشار التربية / المساعد التربوي</p>
@@ -185,17 +214,15 @@
 
   <script>
     // ========================================================
-    // 1. CONFIGURATION SUPABASE
+    // 1. CONFIGURATION SUPABASE (remettez vos clés ici)
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Variables globales
     let classesCache = [];
     let pointagesData = [];
 
-    // Sélecteurs DOM
     const filtreDate = document.getElementById('filtre-date');
     const filtreClasse = document.getElementById('filtre-classe');
     const filtreStatut = document.getElementById('filtre-statut');
@@ -203,11 +230,10 @@
     const registreCount = document.getElementById('registre-count');
     const btnRefresh = document.getElementById('btn-refresh');
 
-    // Mettre la date d'aujourd'hui par défaut
     filtreDate.value = new Date().toISOString().split('T')[0];
 
     // ========================================================
-    // 2. CHARGEMENT INITIAL DES CLASSES
+    // 2. CHARGEMENT DES CLASSES
     // ========================================================
     async function loadClasses() {
       try {
@@ -219,7 +245,7 @@
         if (error) throw error;
         classesCache = data || [];
 
-        filtreClasse.innerHTML = '<option value="ALL">Toutes les classes</option>';
+        filtreClasse.innerHTML = '<option value="ALL">Toutes les classes / كل الأقسام</option>';
         classesCache.forEach(c => {
           const opt = document.createElement('option');
           opt.value = c.id;
@@ -227,12 +253,12 @@
           filtreClasse.appendChild(opt);
         });
       } catch (err) {
-        console.error('Erreur chargement classes:', err);
+        console.error('Erreur classes:', err);
       }
     }
 
     // ========================================================
-    // 3. RÉCUPÉRATION DES SÉANCES ET DES POINTAGES
+    // 3. RÉCUPÉRATION DES DONNÉES
     // ========================================================
     async function fetchDonnees() {
       const dateChoisie = filtreDate.value;
@@ -242,12 +268,11 @@
         <tr>
           <td colspan="7" class="py-12 text-center text-slate-400">
             <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
-            <p>Chargement des données pour le ${dateChoisie}...</p>
+            <p>Chargement des données / جاري جلب المعطيات (${dateChoisie})...</p>
           </td>
         </tr>`;
 
       try {
-        // Récupérer les pointages de la journée avec jointures élèves et séances
         const { data, error } = await supabaseClient
           .from('pointages')
           .select(`
@@ -268,21 +293,17 @@
         calculerKPIs();
         renderTableau();
       } catch (err) {
-        console.error('Erreur fetch pointages:', err);
+        console.error('Erreur fetch:', err);
         registreBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 text-sm">Erreur: ${err.message}</td></tr>`;
       }
     }
 
     // ========================================================
-    // 4. CALCUL DES KPI DU TABLEAU DE BORD
+    // 4. STATISTIQUES KPI
     // ========================================================
     function calculerKPIs() {
       const seancesIds = new Set(pointagesData.map(p => p.seances?.id).filter(Boolean));
-      const totalSeances = seancesIds.size;
-
-      let absents = 0;
-      let retards = 0;
-      let presents = 0;
+      let absents = 0, retards = 0, presents = 0;
 
       pointagesData.forEach(p => {
         if (p.statut === 'A') absents++;
@@ -290,48 +311,38 @@
         else if (p.statut === 'P') presents++;
       });
 
-      const totalPointages = pointagesData.length;
-      const tauxPresence = totalPointages > 0 ? Math.round((presents / totalPointages) * 100) : '--';
+      const total = pointagesData.length;
+      const tauxPresence = total > 0 ? Math.round((presents / total) * 100) : '--';
 
-      document.getElementById('kpi-seances').textContent = totalSeances;
+      document.getElementById('kpi-seances').textContent = seancesIds.size;
       document.getElementById('kpi-absents').textContent = absents;
       document.getElementById('kpi-retards').textContent = retards;
       document.getElementById('kpi-taux').textContent = tauxPresence !== '--' ? `${tauxPresence}%` : '--%';
     }
 
     // ========================================================
-    // 5. AFFICHAGE DU TABLEAU AVEC FILTRES
+    // 5. AFFICHAGE DU TABLEAU
     // ========================================================
     function renderTableau() {
       const classeFiltre = filtreClasse.value;
       const statutFiltre = filtreStatut.value;
 
-      // Filtrer les données en mémoire
       const filtrer = pointagesData.filter(p => {
-        // Filtre classe
-        if (classeFiltre !== 'ALL' && p.seances?.classe_id != classeFiltre) {
-          return false;
-        }
-
-        // Filtre statut
-        if (statutFiltre === 'A_R') {
-          return p.statut === 'A' || p.statut === 'R';
-        } else if (statutFiltre === 'A') {
-          return p.statut === 'A';
-        } else if (statutFiltre === 'R') {
-          return p.statut === 'R';
-        }
+        if (classeFiltre !== 'ALL' && p.seances?.classe_id != classeFiltre) return false;
+        if (statutFiltre === 'A_R') return p.statut === 'A' || p.statut === 'R';
+        if (statutFiltre === 'A') return p.statut === 'A';
+        if (statutFiltre === 'R') return p.statut === 'R';
         return true;
       });
 
-      registreCount.textContent = `${filtrer.length} enregistrement(s) affiché(s)`;
+      registreCount.textContent = `${filtrer.length} enregistrement(s) trouvé(s) / حالة مسجلة`;
 
       if (filtrer.length === 0) {
         registreBody.innerHTML = `
           <tr>
             <td colspan="7" class="py-12 text-center text-slate-400">
               <i class="fa-solid fa-check-circle text-2xl text-emerald-400 mb-2"></i>
-              <p>Aucune absence ou retard signalé selon ces critères.</p>
+              <p>Aucune absence ou retard à signaler / لا توجد أي غيابات أو تأخرات مسجلة</p>
             </td>
           </tr>`;
         return;
@@ -345,16 +356,16 @@
 
         let badgeStatut = '';
         if (item.statut === 'A') {
-          badgeStatut = '<span class="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-xmark mr-1"></i> Absent</span>';
+          badgeStatut = '<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-xmark"></i> Absent / غائب</span>';
         } else if (item.statut === 'R') {
-          badgeStatut = '<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-clock mr-1"></i> Retard</span>';
+          badgeStatut = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> Retard / متأخر</span>';
         } else {
-          badgeStatut = '<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-check mr-1"></i> Présent</span>';
+          badgeStatut = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Présent / حاضر</span>';
         }
 
         const badgeJustifie = item.justifie 
-          ? `<span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200" title="${item.motif_justification || 'Justifié'}">Justifié</span>` 
-          : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Non justifié</span>`;
+          ? `<span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold" title="${item.motif_justification || ''}">Justifié / مبرر</span>` 
+          : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Non justifié / غير مبرر</span>`;
 
         const row = document.createElement('tr');
         row.className = index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50';
@@ -363,29 +374,29 @@
           <td class="py-3 px-4 text-center font-bold text-slate-400 text-xs">${index + 1}</td>
           <td class="py-3 px-4">
             <div class="font-bold text-slate-900">${eleve.nom || ''} ${eleve.prenom || ''}</div>
-            <div class="text-xs text-slate-500 font-arabic" dir="rtl">${eleve.nom_ar || ''} ${eleve.prenom_ar || ''}</div>
+            <div class="text-xs text-slate-500 font-bold" dir="rtl">${eleve.nom_ar || ''} ${eleve.prenom_ar || ''}</div>
           </td>
-          <td class="py-3 px-4 font-semibold text-slate-700">
-            <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold border border-indigo-100">
+          <td class="py-3 px-4">
+            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-indigo-100">
               ${classe.nom_court || 'N/A'}
             </span>
           </td>
           <td class="py-3 px-4 text-xs text-slate-600">
             <div class="font-bold text-slate-800">${seance.matiere || 'Cours'}</div>
-            <div class="text-slate-400 font-mono">${seance.heure_debut?.substring(0,5)} - ${seance.heure_fin?.substring(0,5)}</div>
+            <div class="text-slate-400 font-mono mt-0.5">${seance.heure_debut?.substring(0,5)} - ${seance.heure_fin?.substring(0,5)}</div>
           </td>
           <td class="py-3 px-4 text-center">${badgeStatut}</td>
           <td class="py-3 px-4 text-center">${badgeJustifie}</td>
           <td class="py-3 px-4 text-center">
             <div class="flex items-center justify-center gap-1.5">
               ${!item.justifie ? `
-                <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Justifier">
-                  <i class="fa-solid fa-file-pen mr-1"></i> Justifier
+                <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Justifier / تبرير">
+                  <i class="fa-solid fa-file-pen mr-1"></i> Justifier / تبرير
                 </button>
               ` : ''}
               <button onclick="imprimerBillet('${eleve.nom || ''}', '${eleve.prenom || ''}', '${eleve.nom_ar || ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court || ''}', '${seance.date_cours || ''}', '${seance.heure_debut || ''}', '${item.statut}', '${item.motif_justification || ''}')" 
-                class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Imprimer le billet">
-                <i class="fa-solid fa-print"></i> Billet
+                class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Imprimer le billet / طباعة رخصة الدخول">
+                <i class="fa-solid fa-print"></i> Billet / السند
               </button>
             </div>
           </td>
@@ -398,7 +409,7 @@
     // 6. ACTION : JUSTIFIER UNE ABSENCE
     // ========================================================
     window.justifierAbsence = async function(pointageId) {
-      const motif = prompt('Entrez le motif de la justification (ex: Certificat médical, Convocation, Raison familiale) :');
+      const motif = prompt('Entrez le motif de justification / أدخل سبب تبرير الغياب :\n(ex: Certificat médical / شهادة طبية, Convocation / استدعاء...)');
       if (motif === null || motif.trim() === '') return;
 
       try {
@@ -413,7 +424,7 @@
         if (error) throw error;
         await fetchDonnees();
       } catch (err) {
-        alert('Erreur lors de la justification : ' + err.message);
+        alert('Erreur / خطأ : ' + err.message);
       }
     };
 
@@ -421,58 +432,51 @@
     // 7. IMPRESSION DU BILLET D'ENTRÉE (ورقة الدخول)
     // ========================================================
     window.imprimerBillet = function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, motif) {
-      const typeLabel = statut === 'A' ? 'غياب (Absence)' : 'تأخر (Retard)';
+      const typeLabel = statut === 'A' ? 'غياب / Absence' : 'تأخر / Retard';
       const zoneDetails = document.getElementById('billet-details');
       
       zoneDetails.innerHTML = `
         <div class="grid grid-cols-2 gap-2 border-b pb-2">
           <p><strong>Nom & Prénom :</strong> ${nom} ${prenom}</p>
-          <p class="text-right font-arabic" dir="rtl"><strong>اللقب والاسم :</strong> ${nomAr} ${prenomAr}</p>
+          <p class="text-right font-bold" dir="rtl"><strong>اللقب والاسم :</strong> ${nomAr} ${prenomAr}</p>
         </div>
         <div class="grid grid-cols-2 gap-2 border-b pb-2">
           <p><strong>Classe / القسم :</strong> <span class="font-bold">${classe}</span></p>
           <p><strong>Nature / الطبيعة :</strong> <span class="font-bold text-rose-600">${typeLabel}</span></p>
         </div>
         <div class="grid grid-cols-2 gap-2 border-b pb-2">
-          <p><strong>Date de l'incident :</strong> ${date}</p>
-          <p><strong>Séance :</strong> ${heure.substring(0,5)}</p>
+          <p><strong>Date / التاريخ :</strong> ${date}</p>
+          <p><strong>Séance / الحصة :</strong> ${heure.substring(0,5)}</p>
         </div>
         <div class="pt-1">
-          <p><strong>Motif / المبرر :</strong> ${motif || 'مقبول بموجب هذا السند (Admis sous réserve)'}</p>
+          <p><strong>Motif / المبرر :</strong> ${motif || 'مقبول(ة) بموجب هذا السند (Admis sous réserve)'}</p>
         </div>
-        <p class="text-xs text-slate-500 italic mt-2">يُسلّم هذا السند لأستاذ الحصة قبل الدخول إلى القاعة.</p>
+        <p class="text-xs text-slate-500 italic mt-2">يُسلّم هذا السند للأستاذ قبل الدخول إلى قاعة التدريس.</p>
       `;
 
       document.getElementById('billet-date-emission').textContent = new Date().toLocaleDateString('fr-DZ', {
         year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
       });
 
-      // Lancer la boîte de dialogue d'impression
       window.print();
     };
 
     // ========================================================
-    // 8. ABONNEMENT TEMPS RÉEL (SUPABASE REALTIME)
+    // 8. ABONNEMENT EN TEMPS RÉEL (SUPABASE REALTIME)
     // ========================================================
     function setupRealtime() {
       supabaseClient
         .channel('superviseur-realtime')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pointages' }, (payload) => {
-          fetchDonnees();
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'seances' }, (payload) => {
-          fetchDonnees();
-        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pointages' }, () => fetchDonnees())
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'seances' }, () => fetchDonnees())
         .subscribe();
     }
 
-    // Écouteurs d'événements
     filtreDate.addEventListener('change', fetchDonnees);
     filtreClasse.addEventListener('change', renderTableau);
     filtreStatut.addEventListener('change', renderTableau);
     btnRefresh.addEventListener('click', fetchDonnees);
 
-    // Démarrage
     window.addEventListener('DOMContentLoaded', async () => {
       await loadClasses();
       await fetchDonnees();
