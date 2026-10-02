@@ -1,120 +1,157 @@
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tableau de Bord Vie Scolaire | لوحة تحكم مستشار التربية</title>
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Superviseur - ثانوية شعبان أعمر أوقاس</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Supabase JS Client v2 CDN -->
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- Polices Google Fonts (Inter & Cairo pour l'arabe) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    html[dir="rtl"] body {
-      font-family: 'Cairo', sans-serif;
+    @media print {
+      body * { visibility: hidden; }
+      #zone-impression-billet, #zone-impression-billet * { visibility: visible; }
+      #zone-impression-billet { position: absolute; left: 0; top: 0; width: 100%; }
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
 
-  <!-- ================= BARRE SUPÉRIEURE ================= -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 px-6 py-3 shadow-sm">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <!-- En-tête / Header -->
+  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
-          LV
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md">
+          <i class="fa-solid fa-shield-halved text-xl"></i>
         </div>
         <div>
-          <h1 class="text-lg font-bold text-slate-900 leading-tight" data-i18n="dashboardTitle">Vie Scolaire & Surveillance</h1>
-          <p class="text-xs text-slate-500" data-i18n="dashboardSubtitle">Suivi des absences et retards en direct</p>
+          <h1 class="text-xl font-bold tracking-tight">Espace Vie Scolaire & Surveillance</h1>
+          <p class="text-xs text-slate-400">ثانوية شعبان أعمر أوقاس - متابعة الغيابات والتأخرات</p>
         </div>
       </div>
-
+      
       <div class="flex items-center gap-3">
-        <!-- Indicateur de connexion Realtime -->
-        <div id="liveIndicator" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span data-i18n="liveActive">Temps réel actif</span>
+        <a href="index.html" class="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl transition flex items-center gap-2 border border-slate-700">
+          <i class="fa-solid fa-chalkboard-user"></i> Vue Enseignant
+        </a>
+        <div id="conn-badge" class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs font-medium border border-slate-700">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="conn-text">Temps réel actif</span>
         </div>
-
-        <!-- Bouton bascule de langue -->
-        <button id="langBtn" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
-          العربية
-        </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+  <!-- Contenu Principal -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- ================= STATISTIQUES EN DIRECT ================= -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <!-- Total Absents -->
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider" data-i18n="totalAbsents">Total Absents</p>
-          <h3 class="text-3xl font-black text-rose-600 mt-1" id="statAbsents">0</h3>
+    <!-- Cartes Statistiques / KPI du Jour -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between text-slate-500 mb-1">
+          <span class="text-xs font-semibold uppercase tracking-wider">Appels validés</span>
+          <i class="fa-solid fa-clipboard-check text-indigo-500 text-lg"></i>
         </div>
-        <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-slate-800" id="kpi-seances">0</div>
+        <p class="text-xs text-slate-400 mt-1">Séances enregistrées aujourd'hui</p>
       </div>
 
-      <!-- Total Retards -->
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider" data-i18n="totalRetards">Élèves en retard</p>
-          <h3 class="text-3xl font-black text-amber-500 mt-1" id="statRetards">0</h3>
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between text-rose-500 mb-1">
+          <span class="text-xs font-semibold uppercase tracking-wider">Total Absences</span>
+          <i class="fa-solid fa-user-xmark text-rose-500 text-lg"></i>
         </div>
-        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-rose-600" id="kpi-absents">0</div>
+        <p class="text-xs text-slate-400 mt-1">Élèves signalés absents</p>
       </div>
 
-      <!-- Classes avec appel validé -->
-      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
-        <div>
-          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider" data-i18n="validatedRollCalls">Appels Validés</p>
-          <h3 class="text-3xl font-black text-emerald-600 mt-1" id="statCalls">1 / 1</h3>
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between text-amber-500 mb-1">
+          <span class="text-xs font-semibold uppercase tracking-wider">Total Retards</span>
+          <i class="fa-solid fa-user-clock text-amber-500 text-lg"></i>
         </div>
-        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="text-2xl sm:text-3xl font-extrabold text-amber-600" id="kpi-retards">0</div>
+        <p class="text-xs text-slate-400 mt-1">Élèves arrivés en retard</p>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between text-emerald-500 mb-1">
+          <span class="text-xs font-semibold uppercase tracking-wider">Taux Présence</span>
+          <i class="fa-solid fa-chart-pie text-emerald-500 text-lg"></i>
         </div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-emerald-600" id="kpi-taux">--%</div>
+        <p class="text-xs text-slate-400 mt-1">Sur les classes ayant fait l'appel</p>
       </div>
     </div>
 
-    <!-- ================= SECTION GESTION DU GUICHET (BILLET DE RETARD) ================= -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+    <!-- Barre de Filtres et Outils -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+        <!-- Filtre Date -->
         <div>
-          <h2 class="text-base font-bold text-slate-900" data-i18n="liveAlertsTitle">Gestion des Absents & Délivrance des Billets d'Entrée</h2>
-          <p class="text-xs text-slate-500" data-i18n="liveAlertsSubtitle">Validez le billet d'un élève pour mettre à jour instantanément la classe sans vous déplacer</p>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Date</label>
+          <input type="date" id="filtre-date" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+        </div>
+
+        <!-- Filtre Classe -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Division / Classe</label>
+          <select id="filtre-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="ALL">Toutes les classes</option>
+          </select>
+        </div>
+
+        <!-- Filtre Statut -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Statut</label>
+          <select id="filtre-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="A_R">Absences & Retards uniquement</option>
+            <option value="A">Absents uniquement (غائب)</option>
+            <option value="R">Retards uniquement (متأخر)</option>
+            <option value="ALL">Tous les pointages</option>
+          </select>
         </div>
       </div>
 
-      <!-- Tableau des élèves signalés -->
+      <div class="flex items-center gap-2 self-end md:self-auto pt-2 md:pt-0">
+        <button id="btn-refresh" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-2">
+          <i class="fa-solid fa-arrows-rotate"></i> Actualiser
+        </button>
+      </div>
+    </div>
+
+    <!-- Registre Central des Pointages -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50/70">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800">Registre Journalier des Incidents</h2>
+          <p class="text-xs text-slate-500" id="registre-count">Chargement des données...</p>
+        </div>
+      </div>
+
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
+        <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase bg-slate-50/50">
-              <th class="py-3 px-4" data-i18n="colStudent">Élève</th>
-              <th class="py-3 px-4" data-i18n="colClass">Classe</th>
-              <th class="py-3 px-4" data-i18n="colStatus">Statut actuel</th>
-              <th class="py-3 px-4" data-i18n="colAction">Action (وصل الدخول)</th>
+            <tr class="bg-slate-100 text-slate-600 text-xs uppercase border-b border-slate-200">
+              <th class="py-3 px-4 w-12 text-center">N°</th>
+              <th class="py-3 px-4">Élève (اللقب والاسم)</th>
+              <th class="py-3 px-4">Classe</th>
+              <th class="py-3 px-4">Séance & Matière</th>
+              <th class="py-3 px-4 text-center">Statut</th>
+              <th class="py-3 px-4 text-center">Justification</th>
+              <th class="py-3 px-4 text-center">Actions</th>
             </tr>
           </thead>
-          <tbody id="alertsTableBody" class="divide-y divide-slate-100 font-medium">
-            <!-- Rempli par JavaScript -->
+          <tbody id="registre-body" class="divide-y divide-slate-100 text-sm">
+            <tr>
+              <td colspan="7" class="py-12 text-center text-slate-400">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
+                <p>Récupération des données en direct...</p>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -122,212 +159,325 @@
 
   </main>
 
-  <!-- ================= LOGIQUE SUPABASE & INTERACTION ================= -->
+  <!-- Zone masquée pour l'impression du billet d'entrée (A6 / Reçu officiel) -->
+  <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white text-slate-900 border-2 border-dashed border-slate-800 max-w-lg mx-auto my-6 rounded-lg">
+    <div class="text-center border-b pb-3 mb-4">
+      <p class="text-xs uppercase font-bold tracking-widest">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+      <p class="text-xs font-semibold">وزارة التربية الوطنية - مديرية التربية لولاية بجاية</p>
+      <h3 class="text-base font-extrabold mt-1">ثانوية شعبان أعمر أوقاس</h3>
+      <h2 class="text-lg font-black uppercase mt-2 bg-slate-100 inline-block px-4 py-1 border border-slate-400 rounded">رخصة الدخول إلى القسم / Billet d'Entrée</h2>
+    </div>
+
+    <div class="space-y-2 text-sm leading-relaxed" id="billet-details">
+      <!-- Rempli par JavaScript lors de l'impression -->
+    </div>
+
+    <div class="mt-6 pt-4 border-t flex justify-between items-center text-xs">
+      <div>
+        <p>تاريخ الإصدار : <span id="billet-date-emission"></span></p>
+      </div>
+      <div class="text-center font-bold">
+        <p>تأشيرة مستشار التربية / المساعد التربوي</p>
+        <div class="h-12 w-28 border-b border-dashed border-slate-400 mt-2"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // --- 1. CONFIGURATION SUPABASE ---
-    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
+    // ========================================================
+    // 1. CONFIGURATION SUPABASE
+    // ========================================================
+    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Dictionnaire bilingue
-    const i18n = {
-      fr: {
-        dir: 'ltr',
-        langBtn: 'العربية',
-        dashboardTitle: "Vie Scolaire & Surveillance",
-        dashboardSubtitle: "Suivi des absences et retards en direct",
-        liveActive: "Temps réel actif",
-        totalAbsents: "Total Absents",
-        totalRetards: "Élèves en retard",
-        validatedRollCalls: "Appels Validés",
-        liveAlertsTitle: "Gestion des Absents & Délivrance des Billets d'Entrée",
-        liveAlertsSubtitle: "Validez le billet d'un élève pour mettre à jour instantanément la classe sans vous déplacer",
-        colStudent: "Élève",
-        colClass: "Classe",
-        colStatus: "Statut actuel",
-        colAction: "Action (Billet d'entrée)",
-        present: "Présent",
-        absent: "Absent",
-        retard: "En retard",
-        grantTicket: "Délivrer Billet d'Entrée",
-        ticketGranted: "Billet Accordé ✓"
-      },
-      ar: {
-        dir: 'rtl',
-        langBtn: 'Français',
-        dashboardTitle: "مصلحة الاستشارة والتربية",
-        dashboardSubtitle: "متابعة الغيابات والتأخرات في الوقت الحقيقي",
-        liveActive: "البث المباشر نشط",
-        totalAbsents: "مجموع الغائبين",
-        totalRetards: "المتأخرون",
-        validatedRollCalls: "أوراق الغياب المؤكدة",
-        liveAlertsTitle: "معالجة الغيابات وتسليم وصولات الدخول",
-        liveAlertsSubtitle: "امنح وصل الدخول للتلميذ ليظهر فورا للأستاذ في القسم دون الحاجة للتنقل",
-        colStudent: "التلميذ",
-        colClass: "القسم",
-        colStatus: "الحالة الحالية",
-        colAction: "الإجراء (وصل الدخول)",
-        present: "حاضر",
-        absent: "غائب",
-        retard: "متأخر",
-        grantTicket: "منح وصل الدخول",
-        ticketGranted: "تم منح الوصل ✓"
+    // Variables globales
+    let classesCache = [];
+    let pointagesData = [];
+
+    // Sélecteurs DOM
+    const filtreDate = document.getElementById('filtre-date');
+    const filtreClasse = document.getElementById('filtre-classe');
+    const filtreStatut = document.getElementById('filtre-statut');
+    const registreBody = document.getElementById('registre-body');
+    const registreCount = document.getElementById('registre-count');
+    const btnRefresh = document.getElementById('btn-refresh');
+
+    // Mettre la date d'aujourd'hui par défaut
+    filtreDate.value = new Date().toISOString().split('T')[0];
+
+    // ========================================================
+    // 2. CHARGEMENT INITIAL DES CLASSES
+    // ========================================================
+    async function loadClasses() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('classes')
+          .select('id, nom_court, nom_complet')
+          .order('nom_court', { ascending: true });
+
+        if (error) throw error;
+        classesCache = data || [];
+
+        filtreClasse.innerHTML = '<option value="ALL">Toutes les classes</option>';
+        classesCache.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.nom_court} - ${c.nom_complet}`;
+          filtreClasse.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Erreur chargement classes:', err);
       }
-    };
+    }
 
-    let currentLang = 'fr';
+    // ========================================================
+    // 3. RÉCUPÉRATION DES SÉANCES ET DES POINTAGES
+    // ========================================================
+    async function fetchDonnees() {
+      const dateChoisie = filtreDate.value;
+      if (!dateChoisie) return;
 
-    // Données locales réactives
-    let attendanceData = [
-      { id: 101, seance_id: 1, matricule: "2026/041", nom_fr: "Benali Yacine", nom_ar: "بن علي ياسين", classe: "3AS-S1", statut: "present", billet_delivre: false },
-      { id: 102, seance_id: 1, matricule: "2026/088", nom_fr: "Mansouri Amina", nom_ar: "منصوري أمينة", classe: "3AS-S1", statut: "absent", billet_delivre: false },
-      { id: 103, seance_id: 1, matricule: "2026/114", nom_fr: "Brahimi Karim", nom_ar: "إبراهيمي كريم", classe: "3AS-S1", statut: "retard", billet_delivre: false }
-    ];
+      registreBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="py-12 text-center text-slate-400">
+            <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
+            <p>Chargement des données pour le ${dateChoisie}...</p>
+          </td>
+        </tr>`;
 
-    // --- 2. GESTION DE LA LANGUE & RTL ---
-    const langBtn = document.getElementById('langBtn');
+      try {
+        // Récupérer les pointages de la journée avec jointures élèves et séances
+        const { data, error } = await supabaseClient
+          .from('pointages')
+          .select(`
+            id,
+            statut,
+            justifie,
+            motif_justification,
+            cree_a,
+            eleves (id, matricule, nom, prenom, nom_ar, prenom_ar, classe_id),
+            seances!inner (id, date_cours, heure_debut, heure_fin, matiere, classe_id, classes (nom_court, nom_complet))
+          `)
+          .eq('seances.date_cours', dateChoisie)
+          .order('cree_a', { ascending: false });
 
-    function applyLanguage(lang) {
-      currentLang = lang;
-      const dict = i18n[lang];
-      document.documentElement.setAttribute('dir', dict.dir);
-      document.documentElement.setAttribute('lang', lang);
-      langBtn.textContent = dict.langBtn;
+        if (error) throw error;
+        pointagesData = data || [];
 
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (dict[key]) el.textContent = dict[key];
+        calculerKPIs();
+        renderTableau();
+      } catch (err) {
+        console.error('Erreur fetch pointages:', err);
+        registreBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 text-sm">Erreur: ${err.message}</td></tr>`;
+      }
+    }
+
+    // ========================================================
+    // 4. CALCUL DES KPI DU TABLEAU DE BORD
+    // ========================================================
+    function calculerKPIs() {
+      const seancesIds = new Set(pointagesData.map(p => p.seances?.id).filter(Boolean));
+      const totalSeances = seancesIds.size;
+
+      let absents = 0;
+      let retards = 0;
+      let presents = 0;
+
+      pointagesData.forEach(p => {
+        if (p.statut === 'A') absents++;
+        else if (p.statut === 'R') retards++;
+        else if (p.statut === 'P') presents++;
       });
 
-      renderTable();
-      updateStats();
+      const totalPointages = pointagesData.length;
+      const tauxPresence = totalPointages > 0 ? Math.round((presents / totalPointages) * 100) : '--';
+
+      document.getElementById('kpi-seances').textContent = totalSeances;
+      document.getElementById('kpi-absents').textContent = absents;
+      document.getElementById('kpi-retards').textContent = retards;
+      document.getElementById('kpi-taux').textContent = tauxPresence !== '--' ? `${tauxPresence}%` : '--%';
     }
 
-    langBtn.addEventListener('click', () => {
-      applyLanguage(currentLang === 'fr' ? 'ar' : 'fr');
-    });
+    // ========================================================
+    // 5. AFFICHAGE DU TABLEAU AVEC FILTRES
+    // ========================================================
+    function renderTableau() {
+      const classeFiltre = filtreClasse.value;
+      const statutFiltre = filtreStatut.value;
 
-    // --- 3. RENDU DU TABLEAU ET STATS ---
-    const alertsTableBody = document.getElementById('alertsTableBody');
+      // Filtrer les données en mémoire
+      const filtrer = pointagesData.filter(p => {
+        // Filtre classe
+        if (classeFiltre !== 'ALL' && p.seances?.classe_id != classeFiltre) {
+          return false;
+        }
 
-    function updateStats() {
-      const absents = attendanceData.filter(d => d.statut === 'absent').length;
-      const retards = attendanceData.filter(d => d.statut === 'retard').length;
-      
-      document.getElementById('statAbsents').textContent = absents;
-      document.getElementById('statRetards').textContent = retards;
-    }
+        // Filtre statut
+        if (statutFiltre === 'A_R') {
+          return p.statut === 'A' || p.statut === 'R';
+        } else if (statutFiltre === 'A') {
+          return p.statut === 'A';
+        } else if (statutFiltre === 'R') {
+          return p.statut === 'R';
+        }
+        return true;
+      });
 
-    function renderTable() {
-      alertsTableBody.innerHTML = '';
-      const isAr = currentLang === 'ar';
+      registreCount.textContent = `${filtrer.length} enregistrement(s) affiché(s)`;
 
-      // On affiche les élèves qui ne sont pas déclarés présents
-      const filtered = attendanceData.filter(d => d.statut !== 'present');
-
-      if (filtered.length === 0) {
-        alertsTableBody.innerHTML = `
+      if (filtrer.length === 0) {
+        registreBody.innerHTML = `
           <tr>
-            <td colspan="4" class="py-6 text-center text-slate-400 text-sm">
-              ${isAr ? 'لا توجد غيابات أو تأخرات مسجلة حالياً' : 'Aucune absence ou retard signalé pour le moment.'}
+            <td colspan="7" class="py-12 text-center text-slate-400">
+              <i class="fa-solid fa-check-circle text-2xl text-emerald-400 mb-2"></i>
+              <p>Aucune absence ou retard signalé selon ces critères.</p>
             </td>
-          </tr>
-        `;
+          </tr>`;
         return;
       }
 
-      filtered.forEach(item => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition";
+      registreBody.innerHTML = '';
+      filtrer.forEach((item, index) => {
+        const eleve = item.eleves || {};
+        const seance = item.seances || {};
+        const classe = seance.classes || {};
 
-        const studentName = isAr ? item.nom_ar : item.nom_fr;
-
-        // Badge Statut
-        let statusBadge = '';
-        if (item.statut === 'absent') {
-          statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">${i18n[currentLang].absent}</span>`;
-        } else if (item.statut === 'retard') {
-          statusBadge = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">${i18n[currentLang].retard}</span>`;
+        let badgeStatut = '';
+        if (item.statut === 'A') {
+          badgeStatut = '<span class="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-xmark mr-1"></i> Absent</span>';
+        } else if (item.statut === 'R') {
+          badgeStatut = '<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-clock mr-1"></i> Retard</span>';
+        } else {
+          badgeStatut = '<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-check mr-1"></i> Présent</span>';
         }
 
-        tr.innerHTML = `
+        const badgeJustifie = item.justifie 
+          ? `<span class="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200" title="${item.motif_justification || 'Justifié'}">Justifié</span>` 
+          : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Non justifié</span>`;
+
+        const row = document.createElement('tr');
+        row.className = index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50';
+
+        row.innerHTML = `
+          <td class="py-3 px-4 text-center font-bold text-slate-400 text-xs">${index + 1}</td>
           <td class="py-3 px-4">
-            <p class="font-bold text-slate-900">${studentName}</p>
-            <p class="text-xs text-slate-400 font-mono">N° ${item.matricule}</p>
+            <div class="font-bold text-slate-900">${eleve.nom || ''} ${eleve.prenom || ''}</div>
+            <div class="text-xs text-slate-500 font-arabic" dir="rtl">${eleve.nom_ar || ''} ${eleve.prenom_ar || ''}</div>
           </td>
-          <td class="py-3 px-4 text-slate-600 font-semibold">${item.classe}</td>
-          <td class="py-3 px-4">${statusBadge}</td>
-          <td class="py-3 px-4">
-            ${item.billet_delivre ? `
-              <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                ${i18n[currentLang].ticketGranted}
-              </span>
-            ` : `
-              <button onclick="delivrerBillet(${item.id},${item.seance_id})" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs rounded-lg shadow-sm transition">
-                ${i18n[currentLang].grantTicket}
+          <td class="py-3 px-4 font-semibold text-slate-700">
+            <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-lg text-xs font-bold border border-indigo-100">
+              ${classe.nom_court || 'N/A'}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-xs text-slate-600">
+            <div class="font-bold text-slate-800">${seance.matiere || 'Cours'}</div>
+            <div class="text-slate-400 font-mono">${seance.heure_debut?.substring(0,5)} - ${seance.heure_fin?.substring(0,5)}</div>
+          </td>
+          <td class="py-3 px-4 text-center">${badgeStatut}</td>
+          <td class="py-3 px-4 text-center">${badgeJustifie}</td>
+          <td class="py-3 px-4 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              ${!item.justifie ? `
+                <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Justifier">
+                  <i class="fa-solid fa-file-pen mr-1"></i> Justifier
+                </button>
+              ` : ''}
+              <button onclick="imprimerBillet('${eleve.nom || ''}', '${eleve.prenom || ''}', '${eleve.nom_ar || ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court || ''}', '${seance.date_cours || ''}', '${seance.heure_debut || ''}', '${item.statut}', '${item.motif_justification || ''}')" 
+                class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Imprimer le billet">
+                <i class="fa-solid fa-print"></i> Billet
               </button>
-            `}
+            </div>
           </td>
         `;
-
-        alertsTableBody.appendChild(tr);
+        registreBody.appendChild(row);
       });
     }
 
-    // --- 4. ACTION : DÉLIVRER UN BILLET D'ENTRÉE (وصل دخول) ---
-    window.delivrerBillet = async function(eleveId, seanceId) {
-      // 1. Mise à jour immédiate côté UI
-      const eleve = attendanceData.find(d => d.id === eleveId);
-      if (eleve) {
-        eleve.billet_delivre = true;
-        eleve.statut = 'retard'; // ou passage en retard accepté
-        renderTable();
-      }
+    // ========================================================
+    // 6. ACTION : JUSTIFIER UNE ABSENCE
+    // ========================================================
+    window.justifierAbsence = async function(pointageId) {
+      const motif = prompt('Entrez le motif de la justification (ex: Certificat médical, Convocation, Raison familiale) :');
+      if (motif === null || motif.trim() === '') return;
 
-      // 2. Envoi de l'événement vers Supabase
       try {
         const { error } = await supabaseClient
           .from('pointages')
           .update({
-            billet_entree_delivre: true,
-            mis_a_jour_a: new Date().toISOString()
+            justifie: true,
+            motif_justification: motif.trim()
           })
-          .match({ seance_id: seanceId, eleve_id: eleveId });
+          .eq('id', pointageId);
 
-        if (error) console.error("Erreur Supabase :", error);
+        if (error) throw error;
+        await fetchDonnees();
       } catch (err) {
-        console.error("Erreur réseau :", err);
+        alert('Erreur lors de la justification : ' + err.message);
       }
     };
 
-    // --- 5. ÉCOUTE TEMPS RÉEL SUPABASE ---
-    function initRealtime() {
+    // ========================================================
+    // 7. IMPRESSION DU BILLET D'ENTRÉE (ورقة الدخول)
+    // ========================================================
+    window.imprimerBillet = function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, motif) {
+      const typeLabel = statut === 'A' ? 'غياب (Absence)' : 'تأخر (Retard)';
+      const zoneDetails = document.getElementById('billet-details');
+      
+      zoneDetails.innerHTML = `
+        <div class="grid grid-cols-2 gap-2 border-b pb-2">
+          <p><strong>Nom & Prénom :</strong> ${nom} ${prenom}</p>
+          <p class="text-right font-arabic" dir="rtl"><strong>اللقب والاسم :</strong> ${nomAr} ${prenomAr}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 border-b pb-2">
+          <p><strong>Classe / القسم :</strong> <span class="font-bold">${classe}</span></p>
+          <p><strong>Nature / الطبيعة :</strong> <span class="font-bold text-rose-600">${typeLabel}</span></p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 border-b pb-2">
+          <p><strong>Date de l'incident :</strong> ${date}</p>
+          <p><strong>Séance :</strong> ${heure.substring(0,5)}</p>
+        </div>
+        <div class="pt-1">
+          <p><strong>Motif / المبرر :</strong> ${motif || 'مقبول بموجب هذا السند (Admis sous réserve)'}</p>
+        </div>
+        <p class="text-xs text-slate-500 italic mt-2">يُسلّم هذا السند لأستاذ الحصة قبل الدخول إلى القاعة.</p>
+      `;
+
+      document.getElementById('billet-date-emission').textContent = new Date().toLocaleDateString('fr-DZ', {
+        year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+
+      // Lancer la boîte de dialogue d'impression
+      window.print();
+    };
+
+    // ========================================================
+    // 8. ABONNEMENT TEMPS RÉEL (SUPABASE REALTIME)
+    // ========================================================
+    function setupRealtime() {
       supabaseClient
-        .channel('superviseur-suivi-global')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'pointages' },
-          (payload) => {
-            const data = payload.new;
-            if (!data) return;
-
-            // Mettre à jour l'enregistrement existant ou l'ajouter
-            const index = attendanceData.findIndex(d => d.id === data.eleve_id);
-            if (index !== -1) {
-              attendanceData[index].statut = data.statut;
-              attendanceData[index].billet_delivre = data.billet_entree_delivre;
-            }
-
-            renderTable();
-            updateStats();
-          }
-        )
+        .channel('superviseur-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pointages' }, (payload) => {
+          fetchDonnees();
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'seances' }, (payload) => {
+          fetchDonnees();
+        })
         .subscribe();
     }
 
-    // Initialisation au chargement
-    applyLanguage('fr');
-    initRealtime();
+    // Écouteurs d'événements
+    filtreDate.addEventListener('change', fetchDonnees);
+    filtreClasse.addEventListener('change', renderTableau);
+    filtreStatut.addEventListener('change', renderTableau);
+    btnRefresh.addEventListener('click', fetchDonnees);
+
+    // Démarrage
+    window.addEventListener('DOMContentLoaded', async () => {
+      await loadClasses();
+      await fetchDonnees();
+      setupRealtime();
+    });
   </script>
 </body>
 </html>
