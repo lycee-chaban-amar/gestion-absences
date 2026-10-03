@@ -88,10 +88,9 @@
           <span>Vue Enseignant</span>
         </a>
 
-        <button id="btn-lock" class="text-xs font-semibold text-rose-300 hover:text-white bg-slate-800 hover:bg-rose-950/80 px-3 py-2 rounded-xl transition flex items-center gap-1.5 border border-slate-700" title="Verrouiller la session">
-          <i class="fa-solid fa-lock text-rose-400"></i>
-          <span>Verrouiller</span>
-        </button>
+        <button id="btn-valider-pin" type="button" onclick="validerCode()" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
+  Déverrouiller / الدخول
+</button>
 
         <div id="conn-badge" class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs font-medium border border-slate-700">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -316,104 +315,106 @@
     // ========================================================
     // 1. INITIALISATION SUPABASE EN PRIORITÉ ABSOLUE
     // ========================================================
-    const SUPABASE_URL = 'Vhttps://eixdnxponkbsmelircjm.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+   <script>
+  // ========================================================
+  // 1. INITIALISATION SUPABASE EN PRIORITÉ ABSOLUE
+  // ========================================================
+  const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let classesCache = [];
-    let pointagesData = [];
+  let classesCache = [];
+  let pointagesData = [];
 
-    // ========================================================
-    // 2. GESTION DU CODE PIN CÔTÉ SERVEUR (RPC) + SECOURS LOCAL
-    // ========================================================
-    const pinScreen = document.getElementById('pin-screen');
-    const inputPin = document.getElementById('input-pin');
-    const btnValiderPin = document.getElementById('btn-valider-pin');
-    const pinError = document.getElementById('pin-error');
-    const btnLock = document.getElementById('btn-lock');
+  // ========================================================
+  // 2. GESTION DU CODE PIN CÔTÉ SERVEUR (RPC) + SECOURS LOCAL
+  // ========================================================
+  const pinScreen = document.getElementById('pin-screen');
+  const inputPin = document.getElementById('input-pin');
+  const btnValiderPin = document.getElementById('btn-valider-pin');
+  const pinError = document.getElementById('pin-error');
+  const btnLock = document.getElementById('btn-lock');
 
-    function verifierSession() {
-      if (sessionStorage.getItem('superviseur_auth') === 'true') {
-        if (pinScreen) pinScreen.classList.add('hidden');
-        initialiserApplication();
-      } else {
-        if (pinScreen) pinScreen.classList.remove('hidden');
-        if (inputPin) {
-          inputPin.value = '';
-          inputPin.focus();
-        }
+  function verifierSession() {
+    if (sessionStorage.getItem('superviseur_auth') === 'true') {
+      if (pinScreen) pinScreen.classList.add('hidden');
+      initialiserApplication();
+    } else {
+      if (pinScreen) pinScreen.classList.remove('hidden');
+      if (inputPin) {
+        inputPin.value = '';
+        inputPin.focus();
       }
     }
+  }
 
-    async function validerCode() {
-      const pin = (inputPin ? inputPin.value : '').trim();
-      if (!pin) {
-        if (inputPin) inputPin.focus();
-        return;
-      }
+  // Fonction appelée au clic sur le bouton Déverrouiller
+  window.validerCode = async function() {
+    const pin = (inputPin ? inputPin.value : '').trim();
+    if (!pin) {
+      if (inputPin) inputPin.focus();
+      return;
+    }
 
-      if (btnValiderPin) {
-        btnValiderPin.disabled = true;
-        btnValiderPin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Vérification...';
-      }
-      if (pinError) pinError.classList.add('hidden');
+    if (btnValiderPin) {
+      btnValiderPin.disabled = true;
+      btnValiderPin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Vérification...';
+    }
+    if (pinError) pinError.classList.add('hidden');
 
-      let autorisationAccordee = false;
+    let autorisationAccordee = false;
 
-      try {
-        // Tentative de vérification RPC côté serveur
-        const { data: estValide, error } = await supabaseClient.rpc('verifier_code_pin', {
-          role_demande: 'superviseur',
-          pin_saisi: pin
-        });
+    try {
+      const { data: estValide, error } = await supabaseClient.rpc('verifier_code_pin', {
+        role_demande: 'superviseur',
+        pin_saisi: pin
+      });
 
-        if (error) {
-          console.warn('RPC indisponible, vérification locale de secours:', error.message);
-          // Secours si la fonction RPC n'a pas été exécutée dans SQL
-          if (pin === '2626') autorisationAccordee = true;
-        } else {
-          autorisationAccordee = (estValide === true);
-        }
-      } catch (err) {
-        console.warn('Erreur réseau/RPC, repli secours:', err);
+      if (error) {
+        console.warn('RPC indisponible, repli secours:', error.message);
         if (pin === '2026') autorisationAccordee = true;
-      }
-
-      if (autorisationAccordee) {
-        sessionStorage.setItem('superviseur_auth', 'true');
-        if (pinScreen) pinScreen.classList.add('hidden');
-        initialiserApplication();
       } else {
-        if (pinError) pinError.classList.remove('hidden');
-        if (inputPin) {
-          inputPin.value = '';
-          inputPin.focus();
-        }
+        autorisationAccordee = (estValide === true);
       }
+    } catch (err) {
+      console.warn('Erreur réseau, repli secours:', err);
+      if (pin === '2026') autorisationAccordee = true;
+    }
 
-      if (btnValiderPin) {
-        btnValiderPin.disabled = false;
-        btnValiderPin.innerHTML = 'Déverrouiller / الدخول';
+    if (autorisationAccordee) {
+      sessionStorage.setItem('superviseur_auth', 'true');
+      if (pinScreen) pinScreen.classList.add('hidden');
+      initialiserApplication();
+    } else {
+      if (pinError) pinError.classList.remove('hidden');
+      if (inputPin) {
+        inputPin.value = '';
+        inputPin.focus();
       }
     }
 
-    if (btnValiderPin) btnValiderPin.addEventListener('click', validerCode);
-    if (inputPin) {
-      inputPin.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          validerCode();
-        }
-      });
+    if (btnValiderPin) {
+      btnValiderPin.disabled = false;
+      btnValiderPin.innerHTML = 'Déverrouiller / الدخول';
     }
+  };
 
-    if (btnLock) {
-      btnLock.addEventListener('click', () => {
-        sessionStorage.removeItem('superviseur_auth');
-        verifierSession();
-      });
-    }
+  if (btnValiderPin) btnValiderPin.addEventListener('click', window.validerCode);
+  if (inputPin) {
+    inputPin.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        window.validerCode();
+      }
+    });
+  }
 
+  if (btnLock) {
+    btnLock.addEventListener('click', () => {
+      sessionStorage.removeItem('superviseur_auth');
+      verifierSession();
+    });
+  }
     // ========================================================
     // 3. LOGIQUE MÉTIER & CHARGEMENT
     // ========================================================
