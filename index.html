@@ -186,26 +186,39 @@
       }
     }
 
-    function validerPinProf() {
-      if (inputPinProf.value === CODE_PIN_PROF) {
-        sessionStorage.setItem('prof_auth', 'true');
-        pinScreenProf.classList.add('hidden');
-        pinProfError.classList.add('hidden');
-      } else {
-        pinProfError.classList.remove('hidden');
-        inputPinProf.value = '';
-        inputPinProf.focus();
+    async function validerPinProf() {
+      const pin = inputPinProf.value.trim();
+      if (!pin) return;
+
+      btnValiderPinProf.disabled = true;
+      btnValiderPinProf.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Vérification...';
+
+      try {
+        // Appel de la fonction RPC sur le serveur Supabase
+        const { data: estValide, error } = await supabaseClient.rpc('verifier_code_pin', {
+          role_demande: 'prof',
+          pin_saisi: pin
+        });
+
+        if (error) throw error;
+
+        if (estValide === true) {
+          sessionStorage.setItem('prof_auth', 'true');
+          pinScreenProf.classList.add('hidden');
+          pinProfError.classList.add('hidden');
+        } else {
+          pinProfError.classList.remove('hidden');
+          inputPinProf.value = '';
+          inputPinProf.focus();
+        }
+      } catch (err) {
+        console.error('Erreur vérification PIN:', err);
+        alert('Erreur lors de la vérification du code : ' + err.message);
+      } finally {
+        btnValiderPinProf.disabled = false;
+        btnValiderPinProf.innerHTML = 'Ouvrir la feuille d\'appel / دخول';
       }
     }
-
-    btnValiderPinProf.addEventListener('click', validerPinProf);
-    inputPinProf.addEventListener('keypress', (e) => { if (e.key === 'Enter') validerPinProf(); });
-    btnLockProf.addEventListener('click', () => {
-      sessionStorage.removeItem('prof_auth');
-      verifierSessionProf();
-    });
-
-    verifierSessionProf();
 
     // ========================================================
     // 2. CONFIGURATION SUPABASE (remettez vos clés ici)
