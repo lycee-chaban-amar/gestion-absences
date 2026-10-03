@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Superviseur - ثانوية شعبان أعمر أوقاس</title>
+  <!-- PWA & Métadonnées -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135755.png">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Supabase JS Client -->
@@ -18,36 +22,46 @@
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     
-    /* GESTION INTELLIGENTE DE L'IMPRESSION */
     @media print {
       body * { visibility: hidden; }
-      
-      /* Mode impression Billet d'entrée */
       body.print-billet #zone-impression-billet, 
-      body.print-billet #zone-impression-billet * { 
-        visibility: visible; 
-      }
-      body.print-billet #zone-impression-billet { 
-        position: absolute; left: 0; top: 0; width: 100%; display: block !important; 
-      }
+      body.print-billet #zone-impression-billet * { visibility: visible; }
+      body.print-billet #zone-impression-billet { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
 
-      /* Mode impression Rapport Journalier Censeur */
       body.print-rapport #zone-impression-rapport, 
-      body.print-rapport #zone-impression-rapport * { 
-        visibility: visible; 
-      }
-      body.print-rapport #zone-impression-rapport { 
-        position: absolute; left: 0; top: 0; width: 100%; display: block !important; 
-      }
+      body.print-rapport #zone-impression-rapport * { visibility: visible; }
+      body.print-rapport #zone-impression-rapport { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
 
-      @page {
-        size: A4 portrait;
-        margin: 15mm;
-      }
+      @page { size: A4 portrait; margin: 15mm; }
     }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- ======================================================== -->
+  <!-- ÉCRAN DE VERROUILLAGE PAR CODE PIN (Sécurité) -->
+  <!-- ======================================================== -->
+  <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 animate-fade-in">
+      <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+        <i class="fa-solid fa-lock"></i>
+      </div>
+      <h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
+      
+      <div class="space-y-4">
+        <div>
+          <input type="password" id="input-pin" maxlength="6" placeholder="••••" autocomplete="off"
+            class="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
+          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
+        </div>
+        <button id="btn-valider-pin" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition">
+          Déverrouiller / الدخول
+        </button>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au Conseiller d'Éducation et à l'Administration</p>
+    </div>
+  </div>
 
   <!-- En-tête / Header -->
   <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
@@ -71,12 +85,18 @@
       <div class="flex items-center gap-3">
         <a href="index.html" class="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl transition flex items-center gap-2 border border-slate-700">
           <i class="fa-solid fa-chalkboard-user text-indigo-400"></i> 
-          <span>Vue Enseignant / فضاء الأستاذ</span>
+          <span>Vue Enseignant</span>
         </a>
+
+        <!-- Bouton Verrouiller -->
+        <button id="btn-lock" class="text-xs font-semibold text-rose-300 hover:text-white bg-slate-800 hover:bg-rose-950/80 px-3 py-2 rounded-xl transition flex items-center gap-1.5 border border-slate-700" title="Verrouiller la session">
+          <i class="fa-solid fa-lock text-rose-400"></i>
+          <span>Verrouiller</span>
+        </button>
 
         <div id="conn-badge" class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs font-medium border border-slate-700">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="conn-text">En ligne / متصل</span>
+          <span id="conn-text">En ligne</span>
         </div>
       </div>
     </div>
@@ -127,29 +147,20 @@
     <!-- Barre de Filtres et Outils -->
     <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-        <!-- Filtre Date -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">
-            <span>Date</span> / <span dir="rtl">التاريخ</span>
-          </label>
+          <label class="block text-xs font-bold text-slate-600 mb-1"><span>Date</span> / <span dir="rtl">التاريخ</span></label>
           <input type="date" id="filtre-date" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
 
-        <!-- Filtre Classe -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">
-            <span>Classe</span> / <span dir="rtl">القسم أو الفوج</span>
-          </label>
+          <label class="block text-xs font-bold text-slate-600 mb-1"><span>Classe</span> / <span dir="rtl">القسم أو الفوج</span></label>
           <select id="filtre-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
             <option value="ALL">Toutes les classes / كل الأقسام</option>
           </select>
         </div>
 
-        <!-- Filtre Statut -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">
-            <span>Statut</span> / <span dir="rtl">الحالة</span>
-          </label>
+          <label class="block text-xs font-bold text-slate-600 mb-1"><span>Statut</span> / <span dir="rtl">الحالة</span></label>
           <select id="filtre-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
             <option value="A_R">Absences & Retards / الغيابات والتأخرات</option>
             <option value="A">Absents uniquement / الغائبون فقط</option>
@@ -159,7 +170,6 @@
         </div>
       </div>
 
-      <!-- BOUTONS D'ACTION : RAPPORT CENSEUR + ACTUALISER -->
       <div class="flex items-center gap-2 self-end md:self-auto pt-2 md:pt-0">
         <button id="btn-imprimer-rapport" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-2">
           <i class="fa-solid fa-file-invoice text-amber-300"></i>
@@ -180,7 +190,7 @@
           <h2 class="text-base sm:text-lg font-bold text-slate-800">
             <span>Registre Journalier des Absences</span> - <span dir="rtl">سجل الغيابات اليومي</span>
           </h2>
-          <p class="text-xs text-slate-500" id="registre-count">Chargement en cours / جاري التحميل...</p>
+          <p class="text-xs text-slate-500" id="registre-count">Chargement en cours...</p>
         </div>
       </div>
 
@@ -201,7 +211,7 @@
             <tr>
               <td colspan="7" class="py-12 text-center text-slate-400">
                 <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
-                <p>Récupération des données en direct / جاري استرجاع البيانات...</p>
+                <p>Récupération des données en direct...</p>
               </td>
             </tr>
           </tbody>
@@ -211,11 +221,8 @@
 
   </main>
 
-  <!-- ======================================================== -->
-  <!-- ZONE D'IMPRESSION DU COMPTE-RENDU QUOTIDIEN (CENSEUR / A4) -->
-  <!-- ======================================================== -->
+  <!-- Zones d'impression (Compte-Rendu Censeur & Billet d'entrée) -->
   <div id="zone-impression-rapport" class="hidden p-6 text-slate-900 bg-white">
-    <!-- En-tête officiel algérien -->
     <div class="text-center border-b-2 border-slate-800 pb-3 mb-4">
       <p class="text-xs font-bold uppercase tracking-wider">الجمهورية الجزائرية الديمقراطية الشعبية</p>
       <p class="text-xs font-bold">RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE</p>
@@ -231,7 +238,6 @@
           <p class="font-bold">ثانوية شعبان أعمر - أوقاس</p>
         </div>
       </div>
-      
       <div class="mt-4 py-1.5 px-4 bg-slate-100 border border-slate-400 rounded-lg inline-block">
         <h2 class="text-base font-extrabold uppercase tracking-wide">
           <span>التقرير اليومي لغياب وتأخر التلاميذ</span> / <span>Compte-Rendu Journalier des Absences</span>
@@ -242,65 +248,54 @@
       </div>
     </div>
 
-    <!-- Synthèse Chiffrée -->
     <div class="grid grid-cols-4 gap-2 mb-4 text-center text-xs">
       <div class="border border-slate-300 p-2 rounded">
-        <p class="text-slate-500 font-bold">Séances faites / الحصص المنجزة</p>
+        <p class="text-slate-500 font-bold">Séances / الحصص</p>
         <p class="text-base font-extrabold mt-0.5" id="rapport-kpi-seances">0</p>
       </div>
       <div class="border border-slate-300 p-2 rounded">
-        <p class="text-slate-500 font-bold">Total Absences / مجموع الغيابات</p>
+        <p class="text-slate-500 font-bold">Absences / الغيابات</p>
         <p class="text-base font-extrabold text-rose-700 mt-0.5" id="rapport-kpi-absents">0</p>
       </div>
       <div class="border border-slate-300 p-2 rounded">
-        <p class="text-slate-500 font-bold">Total Retards / مجموع التأخرات</p>
+        <p class="text-slate-500 font-bold">Retards / التأخرات</p>
         <p class="text-base font-extrabold text-amber-700 mt-0.5" id="rapport-kpi-retards">0</p>
       </div>
       <div class="border border-slate-300 p-2 rounded">
-        <p class="text-slate-500 font-bold">Taux Présence / نسبة الحضور</p>
+        <p class="text-slate-500 font-bold">Présence / الحضور</p>
         <p class="text-base font-extrabold text-emerald-700 mt-0.5" id="rapport-kpi-taux">--%</p>
       </div>
     </div>
 
-    <!-- Tableau nominatif pour le Censeur -->
     <div class="mb-6">
-      <h3 class="text-xs font-bold uppercase mb-1.5 border-b border-slate-300 pb-1">
-        Détail Nominatif des Absences et Retards / القائمة الاسمية لحالات الغياب والتأخر :
-      </h3>
       <table class="w-full text-left border-collapse text-xs border border-slate-400">
         <thead>
           <tr class="bg-slate-100 text-slate-800 font-bold border-b border-slate-400">
             <th class="py-1.5 px-2 w-8 text-center border-r border-slate-300">N°</th>
             <th class="py-1.5 px-2 border-r border-slate-300">Nom & Prénom / اللقب والاسم</th>
             <th class="py-1.5 px-2 border-r border-slate-300">Classe / القسم</th>
-            <th class="py-1.5 px-2 border-r border-slate-300">Matière & Créneau / المادة والتوقيت</th>
-            <th class="py-1.5 px-2 text-center border-r border-slate-300">Statut / الحالة</th>
-            <th class="py-1.5 px-2 border-r border-slate-300">Motif / التبرير</th>
-            <th class="py-1.5 px-2 text-center w-24">Décision Censeur</th>
+            <th class="py-1.5 px-2 border-r border-slate-300">Matière & Séance</th>
+            <th class="py-1.5 px-2 text-center border-r border-slate-300">Statut</th>
+            <th class="py-1.5 px-2 border-r border-slate-300">Motif</th>
+            <th class="py-1.5 px-2 text-center w-24">Visa Censeur</th>
           </tr>
         </thead>
-        <tbody id="rapport-table-body" class="divide-y divide-slate-300">
-          <!-- Rempli par JavaScript -->
-        </tbody>
+        <tbody id="rapport-table-body" class="divide-y divide-slate-300"></tbody>
       </table>
     </div>
 
-    <!-- Signatures & Visas réglementaires -->
     <div class="grid grid-cols-2 gap-8 text-xs pt-4 border-t border-slate-300">
       <div class="text-center">
         <p class="font-bold">مستشار التربية / Le Conseiller d'Éducation</p>
-        <p class="text-[10px] text-slate-500">(Nom, visa et signature)</p>
         <div class="h-16 border-b border-dashed border-slate-400 mt-2"></div>
       </div>
       <div class="text-center">
         <p class="font-bold">السيد ناظر الدراسات / Le Censeur des Études</p>
-        <p class="text-[10px] text-slate-500">(Visa pour contrôle et transmission)</p>
         <div class="h-16 border-b border-dashed border-slate-400 mt-2"></div>
       </div>
     </div>
   </div>
 
-  <!-- Zone masquée pour le Billet d'entrée individuel -->
   <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white text-slate-900 border-2 border-dashed border-slate-800 max-w-lg mx-auto my-6 rounded-lg">
     <div class="text-center border-b pb-3 mb-4">
       <p class="text-xs uppercase font-bold tracking-widest">الجمهورية الجزائرية الديمقراطية الشعبية</p>
@@ -308,13 +303,9 @@
       <h3 class="text-base font-extrabold mt-1">ثانوية شعبان أعمر أوقاس</h3>
       <h2 class="text-lg font-black uppercase mt-2 bg-slate-100 inline-block px-4 py-1 border border-slate-400 rounded">رخصة الدخول إلى القسم / Billet d'Entrée</h2>
     </div>
-
     <div class="space-y-2 text-sm leading-relaxed" id="billet-details"></div>
-
     <div class="mt-6 pt-4 border-t flex justify-between items-center text-xs">
-      <div>
-        <p>تاريخ وساعة الإصدار : <span id="billet-date-emission"></span></p>
-      </div>
+      <div><p>تاريخ وساعة الإصدار : <span id="billet-date-emission"></span></p></div>
       <div class="text-center font-bold">
         <p>تأشيرة مستشار التربية / المساعد التربوي</p>
         <div class="h-12 w-28 border-b border-dashed border-slate-400 mt-2"></div>
@@ -324,7 +315,50 @@
 
   <script>
     // ========================================================
-    // 1. CONFIGURATION SUPABASE (remettez vos clés ici)
+    // SÉCURITÉ PAR CODE PIN (Option D)
+    // ========================================================
+    const CODE_PIN_CORRECT = '2026'; // Vous pouvez modifier votre code ici
+
+    const pinScreen = document.getElementById('pin-screen');
+    const inputPin = document.getElementById('input-pin');
+    const btnValiderPin = document.getElementById('btn-valider-pin');
+    const pinError = document.getElementById('pin-error');
+    const btnLock = document.getElementById('btn-lock');
+
+    function verifierSession() {
+      if (sessionStorage.getItem('superviseur_auth') === 'true') {
+        pinScreen.classList.add('hidden');
+      } else {
+        pinScreen.classList.remove('hidden');
+        inputPin.value = '';
+        inputPin.focus();
+      }
+    }
+
+    function validerCode() {
+      if (inputPin.value === CODE_PIN_CORRECT) {
+        sessionStorage.setItem('superviseur_auth', 'true');
+        pinScreen.classList.add('hidden');
+        pinError.classList.add('hidden');
+      } else {
+        pinError.classList.remove('hidden');
+        inputPin.value = '';
+        inputPin.focus();
+      }
+    }
+
+    btnValiderPin.addEventListener('click', validerCode);
+    inputPin.addEventListener('keypress', (e) => { if (e.key === 'Enter') validerCode(); });
+
+    btnLock.addEventListener('click', () => {
+      sessionStorage.removeItem('superviseur_auth');
+      verifierSession();
+    });
+
+    verifierSession();
+
+    // ========================================================
+    // CONFIGURATION SUPABASE (remettez vos clés ici)
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co'; 
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
@@ -343,9 +377,6 @@
 
     filtreDate.value = new Date().toISOString().split('T')[0];
 
-    // ========================================================
-    // 2. CHARGEMENT DES CLASSES
-    // ========================================================
     async function loadClasses() {
       try {
         const { data, error } = await supabaseClient
@@ -368,9 +399,6 @@
       }
     }
 
-    // ========================================================
-    // 3. RÉCUPÉRATION DES DONNÉES
-    // ========================================================
     async function fetchDonnees() {
       const dateChoisie = filtreDate.value;
       if (!dateChoisie) return;
@@ -379,7 +407,7 @@
         <tr>
           <td colspan="7" class="py-12 text-center text-slate-400">
             <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
-            <p>Chargement des données / جاري جلب المعطيات (${dateChoisie})...</p>
+            <p>Chargement des données / جاري جلب المعطيات...</p>
           </td>
         </tr>`;
 
@@ -387,11 +415,7 @@
         const { data, error } = await supabaseClient
           .from('pointages')
           .select(`
-            id,
-            statut,
-            justifie,
-            motif_justification,
-            cree_a,
+            id, statut, justifie, motif_justification, cree_a,
             eleves (id, matricule, nom, prenom, nom_ar, prenom_ar, classe_id),
             seances!inner (id, date_cours, heure_debut, heure_fin, matiere, classe_id, classes (nom_court, nom_complet))
           `)
@@ -409,9 +433,6 @@
       }
     }
 
-    // ========================================================
-    // 4. STATISTIQUES KPI
-    // ========================================================
     function calculerKPIs() {
       const seancesIds = new Set(pointagesData.map(p => p.seances?.id).filter(Boolean));
       let absents = 0, retards = 0, presents = 0;
@@ -431,9 +452,6 @@
       document.getElementById('kpi-taux').textContent = tauxPresence !== '--' ? `${tauxPresence}%` : '--%';
     }
 
-    // ========================================================
-    // 5. AFFICHAGE DU TABLEAU À L'ÉCRAN
-    // ========================================================
     function renderTableau() {
       const classeFiltre = filtreClasse.value;
       const statutFiltre = filtreStatut.value;
@@ -446,14 +464,14 @@
         return true;
       });
 
-      registreCount.textContent = `${filtrer.length} enregistrement(s) trouvé(s) / حالة مسجلة`;
+      registreCount.textContent = `${filtrer.length} enregistrement(s) trouvé(s)`;
 
       if (filtrer.length === 0) {
         registreBody.innerHTML = `
           <tr>
             <td colspan="7" class="py-12 text-center text-slate-400">
               <i class="fa-solid fa-check-circle text-2xl text-emerald-400 mb-2"></i>
-              <p>Aucune absence ou retard à signaler / لا توجد أي غيابات أو تأخرات مسجلة</p>
+              <p>Aucune absence ou retard à signaler.</p>
             </td>
           </tr>`;
         return;
@@ -467,16 +485,16 @@
 
         let badgeStatut = '';
         if (item.statut === 'A') {
-          badgeStatut = '<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-xmark"></i> Absent / غائب</span>';
+          badgeStatut = '<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-xmark"></i> Absent</span>';
         } else if (item.statut === 'R') {
-          badgeStatut = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> Retard / متأخر</span>';
+          badgeStatut = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> Retard</span>';
         } else {
-          badgeStatut = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Présent / حاضر</span>';
+          badgeStatut = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Présent</span>';
         }
 
         const badgeJustifie = item.justifie 
-          ? `<span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold" title="${item.motif_justification || ''}">Justifié / مبرر</span>` 
-          : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Non justifié / غير مبرر</span>`;
+          ? `<span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold">${item.motif_justification || 'Justifié'}</span>` 
+          : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Non justifié</span>`;
 
         const row = document.createElement('tr');
         row.className = index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50';
@@ -501,7 +519,7 @@
           <td class="py-3 px-4 text-center">
             <div class="flex items-center justify-center gap-1.5">
               ${!item.justifie ? `
-                <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Justifier / تبرير">
+                <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Justifier">
                   <i class="fa-solid fa-file-pen mr-1"></i> Justifier
                 </button>
               ` : ''}
@@ -516,25 +534,15 @@
       });
     }
 
-    // ========================================================
-    // 6. GÉNÉRATION & IMPRESSION DU COMPTE-RENDU CENSEUR (1 CLIC)
-    // ========================================================
     btnImprimerRapport.addEventListener('click', () => {
       const dateChoisie = filtreDate.value;
       if (!dateChoisie) {
-        alert('Veuillez sélectionner une date valide.');
+        alert('Veuillez sélectionner une date.');
         return;
       }
 
-      // Filtrer les élèves absents ou en retard de la journée
       const incidentsJour = pointagesData.filter(p => p.statut === 'A' || p.statut === 'R');
 
-      if (incidentsJour.length === 0) {
-        const continuer = confirm('Aucune absence ou retard enregistré pour cette journée. Voulez-vous quand même imprimer un rapport vierge ?');
-        if (!continuer) return;
-      }
-
-      // Mettre à jour les données dans la fiche A4
       document.getElementById('rapport-date').textContent = new Date(dateChoisie).toLocaleDateString('fr-DZ', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
       });
@@ -556,7 +564,7 @@
           const classe = seance.classes || {};
           const statutLabel = item.statut === 'A' ? 'غائب / Absent' : 'متأخر / Retard';
           const statutClass = item.statut === 'A' ? 'text-rose-700 font-bold' : 'text-amber-700 font-bold';
-          const motifLabel = item.justifie ? (item.motif_justification || 'مبرر / Justifié') : 'غير مبرر / Non justifié';
+          const motifLabel = item.justifie ? (item.motif_justification || 'مبرر') : 'غير مبرر';
 
           const tr = document.createElement('tr');
           tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
@@ -575,38 +583,28 @@
         });
       }
 
-      // Activer la vue d'impression pour le rapport
       document.body.classList.remove('print-billet');
       document.body.classList.add('print-rapport');
       window.print();
     });
 
-    // ========================================================
-    // 7. JUSTIFIER UNE ABSENCE
-    // ========================================================
     window.justifierAbsence = async function(pointageId) {
-      const motif = prompt('Entrez le motif de justification / أدخل سبب تبرير الغياب :\n(ex: Certificat médical / شهادة طبية, Convocation / استدعاء...)');
+      const motif = prompt('Entrez le motif de justification / سبب التبرير :');
       if (motif === null || motif.trim() === '') return;
 
       try {
         const { error } = await supabaseClient
           .from('pointages')
-          .update({
-            justifie: true,
-            motif_justification: motif.trim()
-          })
+          .update({ justifie: true, motif_justification: motif.trim() })
           .eq('id', pointageId);
 
         if (error) throw error;
         await fetchDonnees();
       } catch (err) {
-        alert('Erreur / خطأ : ' + err.message);
+        alert('Erreur: ' + err.message);
       }
     };
 
-    // ========================================================
-    // 8. IMPRESSION DU BILLET D'ENTRÉE INDIVIDUEL
-    // ========================================================
     window.imprimerBillet = function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, motif) {
       const typeLabel = statut === 'A' ? 'غياب / Absence' : 'تأخر / Retard';
       const zoneDetails = document.getElementById('billet-details');
@@ -639,9 +637,6 @@
       window.print();
     };
 
-    // ========================================================
-    // 9. ABONNEMENT EN TEMPS RÉEL (SUPABASE REALTIME)
-    // ========================================================
     function setupRealtime() {
       supabaseClient
         .channel('superviseur-realtime')
