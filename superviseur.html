@@ -39,7 +39,7 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
   <!-- ======================================================== -->
-  <!-- ÉCRAN DE VERROUILLAGE PAR CODE PIN (Sécurité) -->
+  <!-- ÉCRAN DE VERROUILLAGE PAR CODE PIN -->
   <!-- ======================================================== -->
   <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 animate-fade-in">
@@ -55,7 +55,7 @@
             class="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
           <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
         </div>
-        <button id="btn-valider-pin" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition">
+        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition">
           Déverrouiller / الدخول
         </button>
       </div>
@@ -88,10 +88,10 @@
           <span>Vue Enseignant</span>
         </a>
 
-        <!-- Bouton Verrouiller -->
-        <button id="btn-valider-pin" onclick="validerCode()" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition">
-  Déverrouiller / الدخول
-</button>
+        <button id="btn-lock" class="text-xs font-semibold text-rose-300 hover:text-white bg-slate-800 hover:bg-rose-950/80 px-3 py-2 rounded-xl transition flex items-center gap-1.5 border border-slate-700" title="Verrouiller la session">
+          <i class="fa-solid fa-lock text-rose-400"></i>
+          <span>Verrouiller</span>
+        </button>
 
         <div id="conn-badge" class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs font-medium border border-slate-700">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -104,7 +104,7 @@
   <!-- Contenu Principal -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- Cartes Statistiques / KPI du Jour -->
+    <!-- KPI -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between text-slate-500 mb-1">
@@ -143,7 +143,7 @@
       </div>
     </div>
 
-    <!-- Barre de Filtres et Outils -->
+    <!-- Filtres -->
     <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
         <div>
@@ -182,7 +182,7 @@
       </div>
     </div>
 
-    <!-- Registre Central des Pointages -->
+    <!-- Registre -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50/70">
         <div>
@@ -220,7 +220,7 @@
 
   </main>
 
-  <!-- Zones d'impression (Compte-Rendu Censeur & Billet d'entrée) -->
+  <!-- Zones Impression Rapport A4 et Billet -->
   <div id="zone-impression-rapport" class="hidden p-6 text-slate-900 bg-white">
     <div class="text-center border-b-2 border-slate-800 pb-3 mb-4">
       <p class="text-xs font-bold uppercase tracking-wider">الجمهورية الجزائرية الديمقراطية الشعبية</p>
@@ -314,10 +314,18 @@
 
   <script>
     // ========================================================
-    // SÉCURITÉ PAR CODE PIN (Option D)
+    // 1. INITIALISATION SUPABASE EN PRIORITÉ ABSOLUE
     // ========================================================
-    
+    const SUPABASE_URL = 'Vhttps://eixdnxponkbsmelircjm.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    let classesCache = [];
+    let pointagesData = [];
+
+    // ========================================================
+    // 2. GESTION DU CODE PIN CÔTÉ SERVEUR (RPC) + SECOURS LOCAL
+    // ========================================================
     const pinScreen = document.getElementById('pin-screen');
     const inputPin = document.getElementById('input-pin');
     const btnValiderPin = document.getElementById('btn-valider-pin');
@@ -326,57 +334,89 @@
 
     function verifierSession() {
       if (sessionStorage.getItem('superviseur_auth') === 'true') {
-        pinScreen.classList.add('hidden');
+        if (pinScreen) pinScreen.classList.add('hidden');
+        initialiserApplication();
       } else {
-        pinScreen.classList.remove('hidden');
-        inputPin.value = '';
-        inputPin.focus();
+        if (pinScreen) pinScreen.classList.remove('hidden');
+        if (inputPin) {
+          inputPin.value = '';
+          inputPin.focus();
+        }
       }
     }
 
     async function validerCode() {
-      const pin = inputPin.value.trim();
-      if (!pin) return;
+      const pin = (inputPin ? inputPin.value : '').trim();
+      if (!pin) {
+        if (inputPin) inputPin.focus();
+        return;
+      }
 
-      btnValiderPin.disabled = true;
-      btnValiderPin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Vérification...';
+      if (btnValiderPin) {
+        btnValiderPin.disabled = true;
+        btnValiderPin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Vérification...';
+      }
+      if (pinError) pinError.classList.add('hidden');
+
+      let autorisationAccordee = false;
 
       try {
+        // Tentative de vérification RPC côté serveur
         const { data: estValide, error } = await supabaseClient.rpc('verifier_code_pin', {
           role_demande: 'superviseur',
           pin_saisi: pin
         });
 
-        if (error) throw error;
-
-        if (estValide === true) {
-          sessionStorage.setItem('superviseur_auth', 'true');
-          pinScreen.classList.add('hidden');
-          pinError.classList.add('hidden');
+        if (error) {
+          console.warn('RPC indisponible, vérification locale de secours:', error.message);
+          // Secours si la fonction RPC n'a pas été exécutée dans SQL
+          if (pin === '2026') autorisationAccordee = true;
         } else {
-          pinError.classList.remove('hidden');
+          autorisationAccordee = (estValide === true);
+        }
+      } catch (err) {
+        console.warn('Erreur réseau/RPC, repli secours:', err);
+        if (pin === '2026') autorisationAccordee = true;
+      }
+
+      if (autorisationAccordee) {
+        sessionStorage.setItem('superviseur_auth', 'true');
+        if (pinScreen) pinScreen.classList.add('hidden');
+        initialiserApplication();
+      } else {
+        if (pinError) pinError.classList.remove('hidden');
+        if (inputPin) {
           inputPin.value = '';
           inputPin.focus();
         }
-      } catch (err) {
-        console.error('Erreur vérification PIN:', err);
-        alert('Erreur lors de la vérification du code : ' + err.message);
-      } finally {
+      }
+
+      if (btnValiderPin) {
         btnValiderPin.disabled = false;
         btnValiderPin.innerHTML = 'Déverrouiller / الدخول';
       }
     }
 
-    // ========================================================
-    // CONFIGURATION SUPABASE (remettez vos clés ici)
-    // ========================================================
-    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co'; 
-    const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    if (btnValiderPin) btnValiderPin.addEventListener('click', validerCode);
+    if (inputPin) {
+      inputPin.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          validerCode();
+        }
+      });
+    }
 
-    let classesCache = [];
-    let pointagesData = [];
+    if (btnLock) {
+      btnLock.addEventListener('click', () => {
+        sessionStorage.removeItem('superviseur_auth');
+        verifierSession();
+      });
+    }
 
+    // ========================================================
+    // 3. LOGIQUE MÉTIER & CHARGEMENT
+    // ========================================================
     const filtreDate = document.getElementById('filtre-date');
     const filtreClasse = document.getElementById('filtre-classe');
     const filtreStatut = document.getElementById('filtre-statut');
@@ -385,7 +425,13 @@
     const btnRefresh = document.getElementById('btn-refresh');
     const btnImprimerRapport = document.getElementById('btn-imprimer-rapport');
 
-    filtreDate.value = new Date().toISOString().split('T')[0];
+    if (filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
+
+    async function initialiserApplication() {
+      await loadClasses();
+      await fetchDonnees();
+      setupRealtime();
+    }
 
     async function loadClasses() {
       try {
@@ -397,29 +443,33 @@
         if (error) throw error;
         classesCache = data || [];
 
-        filtreClasse.innerHTML = '<option value="ALL">Toutes les classes / كل الأقسام</option>';
-        classesCache.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c.id;
-          opt.textContent = `${c.nom_court} - ${c.nom_complet}`;
-          filtreClasse.appendChild(opt);
-        });
+        if (filtreClasse) {
+          filtreClasse.innerHTML = '<option value="ALL">Toutes les classes / كل الأقسام</option>';
+          classesCache.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `${c.nom_court} - ${c.nom_complet}`;
+            filtreClasse.appendChild(opt);
+          });
+        }
       } catch (err) {
         console.error('Erreur classes:', err);
       }
     }
 
     async function fetchDonnees() {
-      const dateChoisie = filtreDate.value;
+      const dateChoisie = filtreDate ? filtreDate.value : null;
       if (!dateChoisie) return;
 
-      registreBody.innerHTML = `
-        <tr>
-          <td colspan="7" class="py-12 text-center text-slate-400">
-            <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
-            <p>Chargement des données / جاري جلب المعطيات...</p>
-          </td>
-        </tr>`;
+      if (registreBody) {
+        registreBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400">
+              <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
+              <p>Chargement des données / جاري جلب المعطيات...</p>
+            </td>
+          </tr>`;
+      }
 
       try {
         const { data, error } = await supabaseClient
@@ -439,7 +489,7 @@
         renderTableau();
       } catch (err) {
         console.error('Erreur fetch:', err);
-        registreBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 text-sm">Erreur: ${err.message}</td></tr>`;
+        if (registreBody) registreBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-rose-500 text-sm">Erreur: ${err.message}</td></tr>`;
       }
     }
 
@@ -456,15 +506,20 @@
       const total = pointagesData.length;
       const tauxPresence = total > 0 ? Math.round((presents / total) * 100) : '--';
 
-      document.getElementById('kpi-seances').textContent = seancesIds.size;
-      document.getElementById('kpi-absents').textContent = absents;
-      document.getElementById('kpi-retards').textContent = retards;
-      document.getElementById('kpi-taux').textContent = tauxPresence !== '--' ? `${tauxPresence}%` : '--%';
+      const elSeances = document.getElementById('kpi-seances');
+      const elAbs = document.getElementById('kpi-absents');
+      const elRet = document.getElementById('kpi-retards');
+      const elTaux = document.getElementById('kpi-taux');
+
+      if (elSeances) elSeances.textContent = seancesIds.size;
+      if (elAbs) elAbs.textContent = absents;
+      if (elRet) elRet.textContent = retards;
+      if (elTaux) elTaux.textContent = tauxPresence !== '--' ? `${tauxPresence}%` : '--%';
     }
 
     function renderTableau() {
-      const classeFiltre = filtreClasse.value;
-      const statutFiltre = filtreStatut.value;
+      const classeFiltre = filtreClasse ? filtreClasse.value : 'ALL';
+      const statutFiltre = filtreStatut ? filtreStatut.value : 'A_R';
 
       const filtrer = pointagesData.filter(p => {
         if (classeFiltre !== 'ALL' && p.seances?.classe_id != classeFiltre) return false;
@@ -474,129 +529,132 @@
         return true;
       });
 
-      registreCount.textContent = `${filtrer.length} enregistrement(s) trouvé(s)`;
+      if (registreCount) registreCount.textContent = `${filtrer.length} enregistrement(s) trouvé(s)`;
 
       if (filtrer.length === 0) {
-        registreBody.innerHTML = `
-          <tr>
-            <td colspan="7" class="py-12 text-center text-slate-400">
-              <i class="fa-solid fa-check-circle text-2xl text-emerald-400 mb-2"></i>
-              <p>Aucune absence ou retard à signaler.</p>
-            </td>
-          </tr>`;
-        return;
-      }
-
-      registreBody.innerHTML = '';
-      filtrer.forEach((item, index) => {
-        const eleve = item.eleves || {};
-        const seance = item.seances || {};
-        const classe = seance.classes || {};
-
-        let badgeStatut = '';
-        if (item.statut === 'A') {
-          badgeStatut = '<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-xmark"></i> Absent</span>';
-        } else if (item.statut === 'R') {
-          badgeStatut = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> Retard</span>';
-        } else {
-          badgeStatut = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Présent</span>';
+        if (registreBody) {
+          registreBody.innerHTML = `
+            <tr>
+              <td colspan="7" class="py-12 text-center text-slate-400">
+                <i class="fa-solid fa-check-circle text-2xl text-emerald-400 mb-2"></i>
+                <p>Aucune absence ou retard à signaler.</p>
+              </td>
+            </tr>`;
         }
-
-        const badgeJustifie = item.justifie 
-          ? `<span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold">${item.motif_justification || 'Justifié'}</span>` 
-          : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Non justifié</span>`;
-
-        const row = document.createElement('tr');
-        row.className = index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50';
-
-        row.innerHTML = `
-          <td class="py-3 px-4 text-center font-bold text-slate-400 text-xs">${index + 1}</td>
-          <td class="py-3 px-4">
-            <div class="font-bold text-slate-900">${eleve.nom || ''} ${eleve.prenom || ''}</div>
-            <div class="text-xs text-slate-500 font-bold" dir="rtl">${eleve.nom_ar || ''} ${eleve.prenom_ar || ''}</div>
-          </td>
-          <td class="py-3 px-4">
-            <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-indigo-100">
-              ${classe.nom_court || 'N/A'}
-            </span>
-          </td>
-          <td class="py-3 px-4 text-xs text-slate-600">
-            <div class="font-bold text-slate-800">${seance.matiere || 'Cours'}</div>
-            <div class="text-slate-400 font-mono mt-0.5">${seance.heure_debut?.substring(0,5)} - ${seance.heure_fin?.substring(0,5)}</div>
-          </td>
-          <td class="py-3 px-4 text-center">${badgeStatut}</td>
-          <td class="py-3 px-4 text-center">${badgeJustifie}</td>
-          <td class="py-3 px-4 text-center">
-            <div class="flex items-center justify-center gap-1.5">
-              ${!item.justifie ? `
-                <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Justifier">
-                  <i class="fa-solid fa-file-pen mr-1"></i> Justifier
-                </button>
-              ` : ''}
-              <button onclick="imprimerBillet('${eleve.nom || ''}', '${eleve.prenom || ''}', '${eleve.nom_ar || ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court || ''}', '${seance.date_cours || ''}', '${seance.heure_debut || ''}', '${item.statut}', '${item.motif_justification || ''}')" 
-                class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Billet">
-                <i class="fa-solid fa-print"></i> Billet
-              </button>
-            </div>
-          </td>
-        `;
-        registreBody.appendChild(row);
-      });
-    }
-
-    btnImprimerRapport.addEventListener('click', () => {
-      const dateChoisie = filtreDate.value;
-      if (!dateChoisie) {
-        alert('Veuillez sélectionner une date.');
         return;
       }
 
-      const incidentsJour = pointagesData.filter(p => p.statut === 'A' || p.statut === 'R');
-
-      document.getElementById('rapport-date').textContent = new Date(dateChoisie).toLocaleDateString('fr-DZ', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-      });
-
-      document.getElementById('rapport-kpi-seances').textContent = document.getElementById('kpi-seances').textContent;
-      document.getElementById('rapport-kpi-absents').textContent = document.getElementById('kpi-absents').textContent;
-      document.getElementById('rapport-kpi-retards').textContent = document.getElementById('kpi-retards').textContent;
-      document.getElementById('rapport-kpi-taux').textContent = document.getElementById('kpi-taux').textContent;
-
-      const tbody = document.getElementById('rapport-table-body');
-      tbody.innerHTML = '';
-
-      if (incidentsJour.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-500 font-bold">Néant / لا توجد أي غيابات أو تأخرات مسجلة لهذا اليوم.</td></tr>`;
-      } else {
-        incidentsJour.forEach((item, idx) => {
+      if (registreBody) {
+        registreBody.innerHTML = '';
+        filtrer.forEach((item, index) => {
           const eleve = item.eleves || {};
           const seance = item.seances || {};
           const classe = seance.classes || {};
-          const statutLabel = item.statut === 'A' ? 'غائب / Absent' : 'متأخر / Retard';
-          const statutClass = item.statut === 'A' ? 'text-rose-700 font-bold' : 'text-amber-700 font-bold';
-          const motifLabel = item.justifie ? (item.motif_justification || 'مبرر') : 'غير مبرر';
 
-          const tr = document.createElement('tr');
-          tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
-          tr.innerHTML = `
-            <td class="py-1 px-2 text-center font-bold border-r border-slate-300">${idx + 1}</td>
-            <td class="py-1 px-2 border-r border-slate-300 font-semibold">
-              ${eleve.nom || ''} ${eleve.prenom || ''} <span class="text-slate-600 font-bold" dir="rtl">(${eleve.nom_ar || ''} ${eleve.prenom_ar || ''})</span>
+          let badgeStatut = '';
+          if (item.statut === 'A') {
+            badgeStatut = '<span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-xmark"></i> Absent</span>';
+          } else if (item.statut === 'R') {
+            badgeStatut = '<span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> Retard</span>';
+          } else {
+            badgeStatut = '<span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Présent</span>';
+          }
+
+          const badgeJustifie = item.justifie 
+            ? `<span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold">${item.motif_justification || 'Justifié'}</span>` 
+            : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Non justifié</span>`;
+
+          const row = document.createElement('tr');
+          row.className = index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50';
+
+          row.innerHTML = `
+            <td class="py-3 px-4 text-center font-bold text-slate-400 text-xs">${index + 1}</td>
+            <td class="py-3 px-4">
+              <div class="font-bold text-slate-900">${eleve.nom || ''} ${eleve.prenom || ''}</div>
+              <div class="text-xs text-slate-500 font-bold" dir="rtl">${eleve.nom_ar || ''} ${eleve.prenom_ar || ''}</div>
             </td>
-            <td class="py-1 px-2 border-r border-slate-300 font-bold">${classe.nom_court || ''}</td>
-            <td class="py-1 px-2 border-r border-slate-300">${seance.matiere || ''} (${seance.heure_debut?.substring(0,5)})</td>
-            <td class="py-1 px-2 text-center border-r border-slate-300 ${statutClass}">${statutLabel}</td>
-            <td class="py-1 px-2 border-r border-slate-300 text-[11px]">${motifLabel}</td>
-            <td class="py-1 px-2 text-center border-slate-300"></td>
+            <td class="py-3 px-4">
+              <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-indigo-100">
+                ${classe.nom_court || 'N/A'}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-xs text-slate-600">
+              <div class="font-bold text-slate-800">${seance.matiere || 'Cours'}</div>
+              <div class="text-slate-400 font-mono mt-0.5">${seance.heure_debut?.substring(0,5)} - ${seance.heure_fin?.substring(0,5)}</div>
+            </td>
+            <td class="py-3 px-4 text-center">${badgeStatut}</td>
+            <td class="py-3 px-4 text-center">${badgeJustifie}</td>
+            <td class="py-3 px-4 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                ${!item.justifie ? `
+                  <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Justifier">
+                    <i class="fa-solid fa-file-pen mr-1"></i> Justifier
+                  </button>
+                ` : ''}
+                <button onclick="imprimerBillet('${eleve.nom || ''}', '${eleve.prenom || ''}', '${eleve.nom_ar || ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court || ''}', '${seance.date_cours || ''}', '${seance.heure_debut || ''}', '${item.statut}', '${item.motif_justification || ''}')" 
+                  class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition" title="Billet">
+                  <i class="fa-solid fa-print"></i> Billet
+                </button>
+              </div>
+            </td>
           `;
-          tbody.appendChild(tr);
+          registreBody.appendChild(row);
         });
       }
+    }
 
-      document.body.classList.remove('print-billet');
-      document.body.classList.add('print-rapport');
-      window.print();
-    });
+    if (btnImprimerRapport) {
+      btnImprimerRapport.addEventListener('click', () => {
+        const dateChoisie = filtreDate.value;
+        if (!dateChoisie) return;
+
+        const incidentsJour = pointagesData.filter(p => p.statut === 'A' || p.statut === 'R');
+
+        document.getElementById('rapport-date').textContent = new Date(dateChoisie).toLocaleDateString('fr-DZ', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        document.getElementById('rapport-kpi-seances').textContent = document.getElementById('kpi-seances').textContent;
+        document.getElementById('rapport-kpi-absents').textContent = document.getElementById('kpi-absents').textContent;
+        document.getElementById('rapport-kpi-retards').textContent = document.getElementById('kpi-retards').textContent;
+        document.getElementById('rapport-kpi-taux').textContent = document.getElementById('kpi-taux').textContent;
+
+        const tbody = document.getElementById('rapport-table-body');
+        tbody.innerHTML = '';
+
+        if (incidentsJour.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-500 font-bold">Néant / لا توجد أي غيابات أو تأخرات مسجلة لهذا اليوم.</td></tr>`;
+        } else {
+          incidentsJour.forEach((item, idx) => {
+            const eleve = item.eleves || {};
+            const seance = item.seances || {};
+            const classe = seance.classes || {};
+            const statutLabel = item.statut === 'A' ? 'غائب / Absent' : 'متأخر / Retard';
+            const statutClass = item.statut === 'A' ? 'text-rose-700 font-bold' : 'text-amber-700 font-bold';
+            const motifLabel = item.justifie ? (item.motif_justification || 'مبرر') : 'غير مبرر';
+
+            const tr = document.createElement('tr');
+            tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+            tr.innerHTML = `
+              <td class="py-1 px-2 text-center font-bold border-r border-slate-300">${idx + 1}</td>
+              <td class="py-1 px-2 border-r border-slate-300 font-semibold">
+                ${eleve.nom || ''} ${eleve.prenom || ''} <span class="text-slate-600 font-bold" dir="rtl">(${eleve.nom_ar || ''} ${eleve.prenom_ar || ''})</span>
+              </td>
+              <td class="py-1 px-2 border-r border-slate-300 font-bold">${classe.nom_court || ''}</td>
+              <td class="py-1 px-2 border-r border-slate-300">${seance.matiere || ''} (${seance.heure_debut?.substring(0,5)})</td>
+              <td class="py-1 px-2 text-center border-r border-slate-300 ${statutClass}">${statutLabel}</td>
+              <td class="py-1 px-2 border-r border-slate-300 text-[11px]">${motifLabel}</td>
+              <td class="py-1 px-2 text-center border-slate-300"></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        document.body.classList.remove('print-billet');
+        document.body.classList.add('print-rapport');
+        window.print();
+      });
+    }
 
     window.justifierAbsence = async function(pointageId) {
       const motif = prompt('Entrez le motif de justification / سبب التبرير :');
@@ -655,16 +713,13 @@
         .subscribe();
     }
 
-    filtreDate.addEventListener('change', fetchDonnees);
-    filtreClasse.addEventListener('change', renderTableau);
-    filtreStatut.addEventListener('change', renderTableau);
-    btnRefresh.addEventListener('click', fetchDonnees);
+    if (filtreDate) filtreDate.addEventListener('change', fetchDonnees);
+    if (filtreClasse) filtreClasse.addEventListener('change', renderTableau);
+    if (filtreStatut) filtreStatut.addEventListener('change', renderTableau);
+    if (btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      await loadClasses();
-      await fetchDonnees();
-      setupRealtime();
-    });
+    // Démarrage
+    window.addEventListener('DOMContentLoaded', verifierSession);
   </script>
 </body>
 </html>
