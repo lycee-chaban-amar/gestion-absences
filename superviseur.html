@@ -370,7 +370,7 @@
         if (error) {
           console.warn('RPC indisponible, vérification locale de secours:', error.message);
           // Secours si la fonction RPC n'a pas été exécutée dans SQL
-          if (pin === '2026') autorisationAccordee = true;
+          if (pin === '2626') autorisationAccordee = true;
         } else {
           autorisationAccordee = (estValide === true);
         }
