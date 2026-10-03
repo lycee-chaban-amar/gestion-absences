@@ -41,7 +41,7 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
   <!-- ======================================================== -->
-  <!-- ÉCRAN DE VERROUILLAGE SUPERVISEUR (CODE PIN HACHÉ) -->
+  <!-- ÉCRAN DE VERROUILLAGE SUPERVISEUR (CODE PIN MASQUÉ) -->
   <!-- ======================================================== -->
   <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
@@ -327,16 +327,9 @@
     let pointagesData = [];
 
     // ========================================================
-    // 2. GESTION DU CODE PIN SUPERVISEUR (SHA-256 SANS PIN EN CLAIR)
+    // 2. GESTION DU CODE PIN SUPERVISEUR (MASQUÉ)
     // ========================================================
-    // Empreinte SHA-256 correspondant au code 2626
-    const HASH_SUPERVISEUR_2626 = "e2776c5075d9e5db3a84b5fe4feecfa5e5fb493ee235ef9d8d6fbbbe15fe5c1b";
-
-    async function calculerHash(texte) {
-      const buffer = new TextEncoder().encode(texte + "_sel_lycee_chaabane_aokas_2026");
-      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
+    const PIN_SECRETE_MASQUEE = "MjYyNg=="; // 2626 masqué
 
     function verifierSession() {
       const pinScreen = document.getElementById('pin-screen');
@@ -353,9 +346,8 @@
       }
     }
 
-    window.deverrouillerDirect = async function() {
+    window.deverrouillerDirect = function() {
       const input = document.getElementById('input-pin');
-      const btn = document.getElementById('btn-valider-pin');
       const pinError = document.getElementById('pin-error');
       const pinScreen = document.getElementById('pin-screen');
       
@@ -366,34 +358,10 @@
         return;
       }
 
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Vérification...';
-      }
-      if (pinError) pinError.classList.add('hidden');
-
-      let autorise = false;
-
-      // Tentative RPC Supabase
-      try {
-        const { data: estValide, error } = await supabaseClient.rpc('verifier_code_pin', {
-          role_demande: 'superviseur',
-          pin_saisi: pin
-        });
-        if (!error && estValide === true) autorise = true;
-      } catch (e) {
-        // Repli local en cas d'indisponibilité RPC
-      }
-
-      // Vérification cryptographique locale
-      if (!autorise) {
-        const hash = await calculerHash(pin);
-        if (hash === HASH_SUPERVISEUR_2626) autorise = true;
-      }
-
-      if (autorise) {
+      if (pin === atob(PIN_SECRETE_MASQUEE)) {
         sessionStorage.setItem('superviseur_auth', 'true');
         if (pinScreen) pinScreen.style.display = 'none';
+        if (pinError) pinError.classList.add('hidden');
         initialiserApplication();
       } else {
         if (pinError) pinError.classList.remove('hidden');
@@ -401,11 +369,6 @@
           input.value = '';
           input.focus();
         }
-      }
-
-      if (btn) {
-        btn.disabled = false;
-        btn.innerHTML = 'Déverrouiller / الدخول';
       }
     };
 
@@ -649,7 +612,7 @@
             const classe = seance.classes || {};
             const statutLabel = item.statut === 'A' ? 'غائب / Absent' : 'متأخر / Retard';
             const statutClass = item.statut === 'A' ? 'text-rose-700 font-bold' : 'text-amber-700 font-bold';
-            const motifLabel = item.justifie ? (item.motif_justification || 'مبرر') : 'غير مبرr';
+            const motifLabel = item.justifie ? (item.motif_justification || 'مبرر') : 'غير مبرر';
 
             const tr = document.createElement('tr');
             tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
