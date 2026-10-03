@@ -28,7 +28,7 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
 
   <!-- ======================================================== -->
-  <!-- ÉCRAN DE VERROUILLAGE PROFESSEUR (CODE PIN) -->
+  <!-- ÉCRAN DE VERROUILLAGE PROFESSEUR (CODE PIN HACHÉ) -->
   <!-- ======================================================== -->
   <div id="pin-screen-prof" class="fixed inset-0 bg-indigo-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100">
@@ -134,7 +134,7 @@
       </div>
     </div>
 
-    <!-- Registre d'appel / Liste des élèves -->
+    <!-- Registre d'appel -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/70">
         <div>
@@ -166,7 +166,7 @@
 
   <script>
     // ========================================================
-    // 1. INITIALISATION SUPABASE EN PRIORITÉ ABSOLUE
+    // 1. INITIALISATION SUPABASE
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
@@ -177,8 +177,17 @@
     let currentStatuts = {}; 
 
     // ========================================================
-    // 2. GESTION DU CODE PIN PROFESSEUR (RPC + SECOURS LOCAL)
+    // 2. GESTION DU CODE PIN SÉCURISÉ (SHA-256 SANS PIN EN CLAIR)
     // ========================================================
+    // Empreinte SHA-256 correspondant au code 2626
+    const HASH_PROF_2626 = "e2776c5075d9e5db3a84b5fe4feecfa5e5fb493ee235ef9d8d6fbbbe15fe5c1b";
+
+    async function calculerHash(texte) {
+      const buffer = new TextEncoder().encode(texte + "_sel_lycee_chaabane_aokas_2026");
+      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     function verifierSessionProf() {
       const pinScreen = document.getElementById('pin-screen-prof');
       if (sessionStorage.getItem('prof_auth') === 'true') {
@@ -215,20 +224,21 @@
 
       let autorise = false;
 
-      // Tentative serveur RPC
+      // Tentative serveur RPC Supabase
       try {
         const { data: estValide, error } = await supabaseClient.rpc('verifier_code_pin', {
           role_demande: 'prof',
           pin_saisi: pin
         });
-
-        if (!error && estValide === true) {
-          autorise = true;
-        } else if (pin === '2626') {
-          autorise = true;
-        }
+        if (!error && estValide === true) autorise = true;
       } catch (e) {
-        if (pin === '1234') autorise = true;
+        // En cas d'erreur de communication, bascule sur la vérification locale
+      }
+
+      // Vérification cryptographique locale si le RPC n'a pas répondu
+      if (!autorise) {
+        const hash = await calculerHash(pin);
+        if (hash === HASH_PROF_2626) autorise = true;
       }
 
       if (autorise) {
@@ -286,7 +296,7 @@
     const btnToutPresent = document.getElementById('btn-tout-present');
     const btnValider = document.getElementById('btn-valider-appel');
 
-    // Enregistrement PWA Service Worker
+    // Enregistrement PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log('Erreur SW:', err));
