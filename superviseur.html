@@ -317,7 +317,7 @@
     // ========================================================
     // SÉCURITÉ PAR CODE PIN (Option D)
     // ========================================================
-    const CODE_PIN_CORRECT = '2626'; // Vous pouvez modifier votre code ici
+    
 
     const pinScreen = document.getElementById('pin-screen');
     const inputPin = document.getElementById('input-pin');
@@ -335,27 +335,38 @@
       }
     }
 
-    function validerCode() {
-      if (inputPin.value === CODE_PIN_CORRECT) {
-        sessionStorage.setItem('superviseur_auth', 'true');
-        pinScreen.classList.add('hidden');
-        pinError.classList.add('hidden');
-      } else {
-        pinError.classList.remove('hidden');
-        inputPin.value = '';
-        inputPin.focus();
+    async function validerCode() {
+      const pin = inputPin.value.trim();
+      if (!pin) return;
+
+      btnValiderPin.disabled = true;
+      btnValiderPin.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Vérification...';
+
+      try {
+        const { data: estValide, error } = await supabaseClient.rpc('verifier_code_pin', {
+          role_demande: 'superviseur',
+          pin_saisi: pin
+        });
+
+        if (error) throw error;
+
+        if (estValide === true) {
+          sessionStorage.setItem('superviseur_auth', 'true');
+          pinScreen.classList.add('hidden');
+          pinError.classList.add('hidden');
+        } else {
+          pinError.classList.remove('hidden');
+          inputPin.value = '';
+          inputPin.focus();
+        }
+      } catch (err) {
+        console.error('Erreur vérification PIN:', err);
+        alert('Erreur lors de la vérification du code : ' + err.message);
+      } finally {
+        btnValiderPin.disabled = false;
+        btnValiderPin.innerHTML = 'Déverrouiller / الدخول';
       }
     }
-
-    btnValiderPin.addEventListener('click', validerCode);
-    inputPin.addEventListener('keypress', (e) => { if (e.key === 'Enter') validerCode(); });
-
-    btnLock.addEventListener('click', () => {
-      sessionStorage.removeItem('superviseur_auth');
-      verifierSession();
-    });
-
-    verifierSession();
 
     // ========================================================
     // CONFIGURATION SUPABASE (remettez vos clés ici)
