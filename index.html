@@ -180,7 +180,6 @@
     // 2. GESTION DU CODE PIN SÉCURISÉ (MASQUÉ)
     // ========================================================
     const PIN_SECRETE_MASQUEE = "MjYyNg=="; // 2626 masqué
-
     function verifierSessionProf() {
       const pinScreen = document.getElementById('pin-screen-prof');
       if (sessionStorage.getItem('prof_auth') === 'true') {
@@ -265,7 +264,7 @@
       });
     }
 
-    async function initClasses() {
+  async function initClasses() {
       try {
         const { data, error } = await supabaseClient
           .from('classes')
@@ -275,15 +274,50 @@
         if (error) throw error;
 
         classesList = data || [];
-        if (selectClasse) {
-          selectClasse.innerHTML = '<option value="">-- Choisir la division --</option>';
-          classesList.forEach(cls => {
-            const opt = document.createElement('option');
-            opt.value = cls.id;
-            opt.textContent = `${cls.nom_court} - ${cls.nom_complet}`;
-            selectClasse.appendChild(opt);
-          });
-        }
+        if (!selectClasse) return;
+
+        selectClasse.innerHTML = '<option value="">-- Choisir la division / اختر الفوج --</option>';
+
+        // Définir les 3 groupes selon le système du lycée
+        const groupes = {
+          '1AS': { label: '🎓 1ère Année Secondaire (1AS / الأولى ثانوي)', el: document.createElement('optgroup') },
+          '2AS': { label: '🎓 2ème Année Secondaire (2AS / الثانية ثانوي)', el: document.createElement('optgroup') },
+          '3AS': { label: '🎓 3ème Année Secondaire - Bac (3AS / الثالثة ثانوي)', el: document.createElement('optgroup') },
+          'AUTRE': { label: 'Divisions Spécifiques', el: document.createElement('optgroup') }
+        };
+
+        // Assigner les titres aux groupes
+        Object.keys(groupes).forEach(k => {
+          groupes[k].el.label = groupes[k].label;
+        });
+
+        // Répartir chaque classe dans son palier
+        classesList.forEach(cls => {
+          const opt = document.createElement('option');
+          opt.value = cls.id;
+          
+          // Formatage propre : Code + Nom complet
+          opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+
+          const code = (cls.nom_court || '').toUpperCase();
+          if (code.startsWith('1AS')) {
+            groupes['1AS'].el.appendChild(opt);
+          } else if (code.startsWith('2AS')) {
+            groupes['2AS'].el.appendChild(opt);
+          } else if (code.startsWith('3AS')) {
+            groupes['3AS'].el.appendChild(opt);
+          } else {
+            groupes['AUTRE'].el.appendChild(opt);
+          }
+        });
+
+        // Ajouter uniquement les groupes non vides
+        ['1AS', '2AS', '3AS', 'AUTRE'].forEach(key => {
+          if (groupes[key].el.children.length > 0) {
+            selectClasse.appendChild(groupes[key].el);
+          }
+        });
+
       } catch (err) {
         console.error('Erreur chargement classes :', err);
         const connText = document.getElementById('conn-text');
