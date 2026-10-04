@@ -23,15 +23,68 @@
 
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
+
+    /* Transitions globales fluides */
+    button, select, input {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    button:active {
+      transform: scale(0.96);
+    }
+
+    /* Animation apparition cascade des élèves */
+    @keyframes slideUpFade {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-row {
+      animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Animation secousse PIN erroné */
+    @keyframes shakeBox {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake-error {
+      animation: shakeBox 0.35s ease-in-out;
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important;
+    }
+
+    /* Toast notification */
+    #toast-notification {
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+
+  <!-- Toast Notification Animé -->
+  <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
+    <div class="bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md">
+      <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-white" id="toast-titre">Opération réussie</h4>
+        <p class="text-xs text-slate-300" id="toast-message">Les données ont été envoyées.</p>
+      </div>
+    </div>
+  </div>
 
   <!-- ======================================================== -->
   <!-- ÉCRAN DE VERROUILLAGE PROFESSEUR (CODE PIN MASQUÉ) -->
   <!-- ======================================================== -->
   <div id="pin-screen-prof" class="fixed inset-0 bg-indigo-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100">
+    <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
         <i class="fa-solid fa-chalkboard-user"></i>
       </div>
@@ -105,7 +158,7 @@
           <label for="select-horaire" class="block text-sm font-medium text-slate-700 mb-1">
             Séance / التوقيت
           </label>
-   <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
             <option value="08:00-09:00">08:00 - 09:00</option>
             <option value="09:00-10:00">09:00 - 10:00</option>
             <option value="10:00-11:00">10:00 - 11:00</option>
@@ -118,17 +171,17 @@
       </div>
     </div>
 
-    <!-- Barre de statistiques en temps réel -->
+    <!-- Barre de statistiques en temps réel avec compteurs animés -->
     <div id="stats-bar" class="hidden grid grid-cols-3 gap-3">
-      <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center">
+      <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center shadow-sm">
         <span class="block text-xs font-semibold text-emerald-700 uppercase tracking-wider">Présents (حاضر)</span>
         <span id="count-presents" class="text-3xl font-extrabold text-emerald-600 mt-1 block">0</span>
       </div>
-      <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center">
+      <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center shadow-sm">
         <span class="block text-xs font-semibold text-rose-700 uppercase tracking-wider">Absents (غائب)</span>
         <span id="count-absents" class="text-3xl font-extrabold text-rose-600 mt-1 block">0</span>
       </div>
-      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center">
+      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center shadow-sm">
         <span class="block text-xs font-semibold text-amber-700 uppercase tracking-wider">Retards (متأخر)</span>
         <span id="count-retards" class="text-3xl font-extrabold text-amber-600 mt-1 block">0</span>
       </div>
@@ -141,7 +194,7 @@
           <h2 class="text-lg font-bold text-slate-800" id="classe-titre">Sélectionnez une classe</h2>
           <p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p>
         </div>
-        <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+        <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer active:scale-95">
           <i class="fa-solid fa-check-double text-indigo-600"></i> Tout marquer présent
         </button>
       </div>
@@ -156,7 +209,7 @@
 
     <!-- Bouton de validation de l'appel -->
     <div id="actions-footer" class="hidden pb-10">
-      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 text-base transition cursor-pointer">
+      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 text-base transition cursor-pointer active:scale-98">
         <i class="fa-solid fa-paper-plane"></i>
         <span>Valider et transmettre l'appel à la vie scolaire</span>
       </button>
@@ -176,10 +229,42 @@
     let currentEleves = [];
     let currentStatuts = {}; 
 
+    // Utilitaires d'animation
+    function animerChiffre(element, valeurCible) {
+      if (!element) return;
+      const depart = parseInt(element.textContent) || 0;
+      if (depart === valeurCible) return;
+      const duree = 300;
+      const debut = performance.now();
+
+      function frame(temps) {
+        const p = Math.min((temps - debut) / duree, 1);
+        element.textContent = Math.floor(depart + (valeurCible - depart) * p);
+        if (p < 1) requestAnimationFrame(frame);
+        else element.textContent = valeurCible;
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function afficherToast(titre, message) {
+      const toast = document.getElementById('toast-notification');
+      document.getElementById('toast-titre').textContent = titre;
+      document.getElementById('toast-message').textContent = message;
+
+      toast.classList.remove('-translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.add('-translate-y-24', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3500);
+    }
+
     // ========================================================
-    // 2. GESTION DU CODE PIN SÉCURISÉ (MASQUÉ)
+    // 2. GESTION DU CODE PIN SÉCURISÉ 
     // ========================================================
-    const PIN_SECRETE_MASQUEE = "MjYyNg=="; // 2626 masqué
+    const PIN_SECRETE_MASQUEE = "MjYyNg==";
+
     function verifierSessionProf() {
       const pinScreen = document.getElementById('pin-screen-prof');
       if (sessionStorage.getItem('prof_auth') === 'true') {
@@ -199,6 +284,7 @@
       const input = document.getElementById('input-pin-prof');
       const pinError = document.getElementById('pin-prof-error');
       const pinScreen = document.getElementById('pin-screen-prof');
+      const pinCard = document.getElementById('pin-card-prof');
 
       const pin = input ? input.value.trim() : '';
 
@@ -214,6 +300,11 @@
         initClasses();
       } else {
         if (pinError) pinError.classList.remove('hidden');
+        if (pinCard) {
+          pinCard.classList.remove('shake-error');
+          void pinCard.offsetWidth; // Force reflow
+          pinCard.classList.add('shake-error');
+        }
         if (input) {
           input.value = '';
           input.focus();
@@ -221,7 +312,7 @@
       }
     };
 
-    // Touche Entrée et Verrouillage
+    // Gestion touche Entrée et verrouillage
     document.addEventListener('DOMContentLoaded', () => {
       verifierSessionProf();
 
@@ -264,7 +355,8 @@
       });
     }
 
-  async function initClasses() {
+    // Chargement structuré des classes par palier (optgroup)
+    async function initClasses() {
       try {
         const { data, error } = await supabaseClient
           .from('classes')
@@ -278,7 +370,6 @@
 
         selectClasse.innerHTML = '<option value="">-- Choisir la division / اختر الفوج --</option>';
 
-        // Définir les 3 groupes selon le système du lycée
         const groupes = {
           '1AS': { label: '🎓 1ère Année Secondaire (1AS / الأولى ثانوي)', el: document.createElement('optgroup') },
           '2AS': { label: '🎓 2ème Année Secondaire (2AS / الثانية ثانوي)', el: document.createElement('optgroup') },
@@ -286,17 +377,13 @@
           'AUTRE': { label: 'Divisions Spécifiques', el: document.createElement('optgroup') }
         };
 
-        // Assigner les titres aux groupes
         Object.keys(groupes).forEach(k => {
           groupes[k].el.label = groupes[k].label;
         });
 
-        // Répartir chaque classe dans son palier
         classesList.forEach(cls => {
           const opt = document.createElement('option');
           opt.value = cls.id;
-          
-          // Formatage propre : Code + Nom complet
           opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
 
           const code = (cls.nom_court || '').toUpperCase();
@@ -311,7 +398,6 @@
           }
         });
 
-        // Ajouter uniquement les groupes non vides
         ['1AS', '2AS', '3AS', 'AUTRE'].forEach(key => {
           if (groupes[key].el.children.length > 0) {
             selectClasse.appendChild(groupes[key].el);
@@ -320,10 +406,6 @@
 
       } catch (err) {
         console.error('Erreur chargement classes :', err);
-        const connText = document.getElementById('conn-text');
-        const connBadge = document.getElementById('conn-badge');
-        if (connText) connText.textContent = 'Erreur de connexion';
-        if (connBadge) connBadge.classList.replace('bg-indigo-800/80', 'bg-rose-800');
       }
     }
 
@@ -376,6 +458,7 @@
       btnToutPresent.classList.remove('hidden');
     }
 
+    // Affichage des élèves avec animation cascade
     function afficherEleves() {
       if (currentEleves.length === 0) {
         elevesContainer.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm">Aucun élève trouvé dans cette classe.</div>';
@@ -387,7 +470,11 @@
         const row = document.createElement('div');
         const statut = currentStatuts[eleve.id] || 'P';
         
-        row.className = `w-full px-4 py-3 sm:px-6 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'} hover:bg-indigo-50/40`;
+        // Délai progressif pour chaque ligne
+        const delay = Math.min(index * 25, 400);
+
+        row.className = `animate-row w-full px-4 py-3 sm:px-6 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'} hover:bg-indigo-50/40`;
+        row.style.animationDelay = `${delay}ms`;
 
         row.innerHTML = `
           <div class="flex items-center gap-3.5 min-w-0">
@@ -403,19 +490,19 @@
           <div class="flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0">
             <button type="button" onclick="changerStatut(${eleve.id}, 'P')" 
               class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'P' ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-600/30' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}">
+              ${statut === 'P' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-600/30 scale-102' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 opacity-70'}">
               <i class="fa-solid fa-check"></i> Présent
             </button>
 
             <button type="button" onclick="changerStatut(${eleve.id}, 'A')" 
               class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'A' ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-600/30' : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700'}">
+              ${statut === 'A' ? 'bg-rose-600 text-white shadow-md ring-2 ring-rose-600/30 scale-102' : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700 opacity-70'}">
               <i class="fa-solid fa-xmark"></i> Absent
             </button>
 
             <button type="button" onclick="changerStatut(${eleve.id}, 'R')" 
               class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'R' ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-500/30' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700'}">
+              ${statut === 'R' ? 'bg-amber-500 text-white shadow-md ring-2 ring-amber-500/30 scale-102' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700 opacity-70'}">
               <i class="fa-solid fa-clock"></i> Retard
             </button>
           </div>
@@ -435,6 +522,7 @@
         currentEleves.forEach(e => currentStatuts[e.id] = 'P');
         afficherEleves();
         mettreAJourCompteurs();
+        afficherToast('Succès', 'Tous les élèves sont marqués présents.');
       });
     }
 
@@ -445,16 +533,16 @@
         else if (st === 'A') a++;
         else if (st === 'R') r++;
       });
-      document.getElementById('count-presents').textContent = p;
-      document.getElementById('count-absents').textContent = a;
-      document.getElementById('count-retards').textContent = r;
+      animerChiffre(document.getElementById('count-presents'), p);
+      animerChiffre(document.getElementById('count-absents'), a);
+      animerChiffre(document.getElementById('count-retards'), r);
     }
 
     if (btnValider) {
       btnValider.addEventListener('click', async () => {
         const classeId = selectClasse.value;
         if (!classeId || currentEleves.length === 0) {
-          alert('Veuillez sélectionner une division valide.');
+          afficherToast('Attention', 'Veuillez sélectionner une classe valide.');
           return;
         }
 
@@ -494,10 +582,10 @@
 
           if (ptError) throw ptError;
 
-          alert('✅ Appel validé et transmis avec succès à la vie scolaire !');
+          afficherToast('Appel validé !', 'Transmis avec succès à la vie scolaire.');
         } catch (err) {
           console.error('Erreur validation :', err);
-          alert('Erreur lors de la transmission : ' + err.message);
+          afficherToast('Erreur', err.message);
         } finally {
           btnValider.disabled = false;
           btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel à la vie scolaire`;
