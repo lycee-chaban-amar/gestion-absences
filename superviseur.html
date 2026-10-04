@@ -24,6 +24,41 @@
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     
+    /* Transitions douces */
+    button, select, input {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    button:active {
+      transform: scale(0.96);
+    }
+
+    /* Animation apparition cascade des lignes du tableau */
+    @keyframes slideUpFade {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-table-row {
+      animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Secousse PIN erroné */
+    @keyframes shakeBox {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake-error {
+      animation: shakeBox 0.35s ease-in-out;
+      border-color: #f43f5e !important;
+      box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important;
+    }
+
     @media print {
       body * { visibility: hidden; }
       body.print-billet #zone-impression-billet, 
@@ -44,7 +79,7 @@
   <!-- ÉCRAN DE VERROUILLAGE SUPERVISEUR (CODE PIN MASQUÉ) -->
   <!-- ======================================================== -->
   <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
+    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
         <i class="fa-solid fa-shield-halved"></i>
       </div>
@@ -106,7 +141,7 @@
   <!-- Contenu Principal -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- KPI Statistiques -->
+    <!-- KPI Statistiques avec compteurs animés -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between text-slate-500 mb-1">
@@ -172,12 +207,12 @@
       </div>
 
       <div class="flex items-center gap-2 self-end md:self-auto pt-2 md:pt-0">
-        <button id="btn-imprimer-rapport" type="button" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-2 cursor-pointer">
+        <button id="btn-imprimer-rapport" type="button" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-2 cursor-pointer active:scale-95">
           <i class="fa-solid fa-file-invoice text-amber-300"></i>
           <span>Compte-Rendu Censeur / تقرير الناظر</span>
         </button>
 
-        <button id="btn-refresh" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 cursor-pointer">
+        <button id="btn-refresh" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 cursor-pointer active:scale-95">
           <i class="fa-solid fa-arrows-rotate text-indigo-600"></i>
           <span>Actualiser</span>
         </button>
@@ -326,6 +361,23 @@
     let classesCache = [];
     let pointagesData = [];
 
+    // Animation compteur de chiffres
+    function animerChiffre(element, valeurCible) {
+      if (!element) return;
+      const depart = parseInt(element.textContent) || 0;
+      if (depart === valeurCible) return;
+      const duree = 300;
+      const debut = performance.now();
+
+      function frame(temps) {
+        const p = Math.min((temps - debut) / duree, 1);
+        element.textContent = Math.floor(depart + (valeurCible - depart) * p);
+        if (p < 1) requestAnimationFrame(frame);
+        else element.textContent = valeurCible;
+      }
+      requestAnimationFrame(frame);
+    }
+
     // ========================================================
     // 2. GESTION DU CODE PIN SUPERVISEUR 
     // ========================================================
@@ -350,6 +402,7 @@
       const input = document.getElementById('input-pin');
       const pinError = document.getElementById('pin-error');
       const pinScreen = document.getElementById('pin-screen');
+      const pinCard = document.getElementById('pin-card');
       
       const pin = input ? input.value.trim() : '';
 
@@ -365,6 +418,11 @@
         initialiserApplication();
       } else {
         if (pinError) pinError.classList.remove('hidden');
+        if (pinCard) {
+          pinCard.classList.remove('shake-error');
+          void pinCard.offsetWidth; // Force reflow
+          pinCard.classList.add('shake-error');
+        }
         if (input) {
           input.value = '';
           input.focus();
@@ -372,7 +430,7 @@
       }
     };
 
-    // Gestion touche Entrée et bouton Verrouiller
+    // Gestion touche Entrée et verrouillage
     document.addEventListener('DOMContentLoaded', () => {
       verifierSession();
 
@@ -414,7 +472,6 @@
       setupRealtime();
     }
 
-    // Chargement des classes organisé par palier (1AS / 2AS / 3AS)
     async function loadClasses() {
       try {
         const { data, error } = await supabaseClient
@@ -516,17 +573,15 @@
       const total = pointagesData.length;
       const tauxPresence = total > 0 ? Math.round((presents / total) * 100) : '--';
 
-      const elSeances = document.getElementById('kpi-seances');
-      const elAbs = document.getElementById('kpi-absents');
-      const elRet = document.getElementById('kpi-retards');
-      const elTaux = document.getElementById('kpi-taux');
+      animerChiffre(document.getElementById('kpi-seances'), seancesIds.size);
+      animerChiffre(document.getElementById('kpi-absents'), absents);
+      animerChiffre(document.getElementById('kpi-retards'), retards);
 
-      if (elSeances) elSeances.textContent = seancesIds.size;
-      if (elAbs) elAbs.textContent = absents;
-      if (elRet) elRet.textContent = retards;
+      const elTaux = document.getElementById('kpi-taux');
       if (elTaux) elTaux.textContent = tauxPresence !== '--' ? `${tauxPresence}%` : '--%';
     }
 
+    // Affichage des données avec animation cascade
     function renderTableau() {
       const classeFiltre = filtreClasse ? filtreClasse.value : 'ALL';
       const statutFiltre = filtreStatut ? filtreStatut.value : 'A_R';
@@ -575,7 +630,10 @@
             : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Non justifié</span>`;
 
           const row = document.createElement('tr');
-          row.className = index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50';
+          const delay = Math.min(index * 20, 350);
+
+          row.className = `animate-table-row ${index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50'}`;
+          row.style.animationDelay = `${delay}ms`;
 
           row.innerHTML = `
             <td class="py-3 px-4 text-center font-bold text-slate-400 text-xs">${index + 1}</td>
@@ -597,12 +655,12 @@
             <td class="py-3 px-4 text-center">
               <div class="flex items-center justify-center gap-1.5">
                 ${!item.justifie ? `
-                  <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer" title="Justifier">
+                  <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer active:scale-95" title="Justifier">
                     <i class="fa-solid fa-file-pen mr-1"></i> Justifier
                   </button>
                 ` : ''}
                 <button onclick="imprimerBillet('${eleve.nom || ''}', '${eleve.prenom || ''}', '${eleve.nom_ar || ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court || ''}', '${seance.date_cours || ''}', '${seance.heure_debut || ''}', '${item.statut}', '${item.motif_justification || ''}')" 
-                  class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer" title="Billet">
+                  class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer active:scale-95" title="Billet">
                   <i class="fa-solid fa-print"></i> Billet
                 </button>
               </div>
