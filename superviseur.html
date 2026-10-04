@@ -46,7 +46,7 @@
   <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-        <i class="fa-solid fa-lock"></i>
+        <i class="fa-solid fa-shield-halved"></i>
       </div>
       <h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2>
       <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
@@ -145,7 +145,7 @@
       </div>
     </div>
 
-    <!-- Filtres -->
+    <!-- Filtres & Actions -->
     <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
         <div>
@@ -184,7 +184,7 @@
       </div>
     </div>
 
-    <!-- Registre des absences -->
+    <!-- Registre Central des Absences -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50/70">
         <div>
@@ -327,9 +327,9 @@
     let pointagesData = [];
 
     // ========================================================
-    // 2. GESTION DU CODE PIN SUPERVISEUR (MASQUÉ)
+    // 2. GESTION DU CODE PIN SUPERVISEUR 
     // ========================================================
-    const PIN_SECRETE_MASQUEE = "MjYyNg=="; // 2626 masqué
+    const PIN_SECRETE_MASQUEE = "MjYyNg==";
 
     function verifierSession() {
       const pinScreen = document.getElementById('pin-screen');
@@ -372,7 +372,7 @@
       }
     };
 
-    // Touche Entrée et bouton Verrouiller
+    // Gestion touche Entrée et bouton Verrouiller
     document.addEventListener('DOMContentLoaded', () => {
       verifierSession();
 
@@ -414,6 +414,7 @@
       setupRealtime();
     }
 
+    // Chargement des classes organisé par palier (1AS / 2AS / 3AS)
     async function loadClasses() {
       try {
         const { data, error } = await supabaseClient
@@ -426,11 +427,39 @@
 
         if (filtreClasse) {
           filtreClasse.innerHTML = '<option value="ALL">Toutes les classes / كل الأقسام</option>';
-          classesCache.forEach(c => {
+
+          const groupes = {
+            '1AS': { label: '🎓 1ère Année Secondaire (1AS / الأولى ثانوي)', el: document.createElement('optgroup') },
+            '2AS': { label: '🎓 2ème Année Secondaire (2AS / الثانية ثانوي)', el: document.createElement('optgroup') },
+            '3AS': { label: '🎓 3ème Année Secondaire - Bac (3AS / الثالثة ثانوي)', el: document.createElement('optgroup') },
+            'AUTRE': { label: 'Autres divisions', el: document.createElement('optgroup') }
+          };
+
+          Object.keys(groupes).forEach(k => {
+            groupes[k].el.label = groupes[k].label;
+          });
+
+          classesCache.forEach(cls => {
             const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = `${c.nom_court} - ${c.nom_complet}`;
-            filtreClasse.appendChild(opt);
+            opt.value = cls.id;
+            opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+
+            const code = (cls.nom_court || '').toUpperCase();
+            if (code.startsWith('1AS')) {
+              groupes['1AS'].el.appendChild(opt);
+            } else if (code.startsWith('2AS')) {
+              groupes['2AS'].el.appendChild(opt);
+            } else if (code.startsWith('3AS')) {
+              groupes['3AS'].el.appendChild(opt);
+            } else {
+              groupes['AUTRE'].el.appendChild(opt);
+            }
+          });
+
+          ['1AS', '2AS', '3AS', 'AUTRE'].forEach(key => {
+            if (groupes[key].el.children.length > 0) {
+              filtreClasse.appendChild(groupes[key].el);
+            }
           });
         }
       } catch (err) {
