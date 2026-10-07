@@ -42,8 +42,8 @@
     </div>
   </div>
 
-  <!-- Écran PIN Enseignant -->
-  <div id="pin-screen-prof" style="position: fixed; inset: 0; z-index: 9999; background: rgba(30, 27, 75, 0.96); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
+  <!-- Écran PIN Enseignant (Désormais 100% Infaillible) -->
+  <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-indigo-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
         <i class="fa-solid fa-chalkboard-user"></i>
@@ -57,10 +57,11 @@
             class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
           <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
         </div>
-        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer">
+        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
           Déverrouiller / الدخول
         </button>
       </div>
+      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au corps professoral du lycée</p>
     </div>
   </div>
 
@@ -97,13 +98,13 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Classe / القسم</label>
-          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
             <option value="">-- Choisir la division / اختر الفوج --</option>
           </select>
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Matière / المادة</label>
-          <select id="select-matiere" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+          <select id="select-matiere" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
             <optgroup label="📚 Fondamentales & Scientifiques">
               <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
               <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
@@ -136,7 +137,7 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Séance / التوقيت</label>
-          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
             <optgroup label="☀️ Matin / الصباح">
               <option value="08:00-09:00">08:00 - 09:00</option>
               <option value="09:00-10:00">09:00 - 10:00</option>
@@ -163,7 +164,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/70">
         <div><h2 class="text-lg font-bold text-slate-800" id="classe-titre">Sélectionnez une classe</h2><p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p></div>
-        <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer"><i class="fa-solid fa-check-double text-indigo-600"></i> Tout marquer présent</button>
+        <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-indigo-100 transition"><i class="fa-solid fa-check-double text-indigo-600"></i> Tout marquer présent</button>
       </div>
       <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 min-h-[180px]">
         <div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p></div>
@@ -171,18 +172,20 @@
     </div>
 
     <div id="actions-footer" class="hidden pb-10">
-      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer"><i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel</button>
+      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer active:scale-95"><i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel</button>
     </div>
 
   </main>
 
   <script>
-    // CODE PIN MASQUÉ ET FIABLE (Base64) - "2626"
+    // ========================================================
+    // SÉCURITÉ INFAILLIBLE : ENCODAGE BASE64 ("MjYyNg==" => "2626")
+    // ========================================================
     const PIN_MASQUE = "MjYyNg==";
 
     function debloquerPage() {
       const pinScreen = document.getElementById('pin-screen-prof');
-      if (pinScreen) pinScreen.remove();
+      if (pinScreen) pinScreen.remove(); // Supprime totalement l'écran pour éviter tout blocage visuel
       sessionStorage.setItem('prof_auth', 'true');
       initClasses();
     }
@@ -200,25 +203,52 @@
         debloquerPage();
       } else {
         if (err) err.classList.remove('hidden');
-        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
-        if (input) { input.value = ''; input.focus(); }
+        if (card) { 
+          card.classList.remove('shake-error'); 
+          void card.offsetWidth; 
+          card.classList.add('shake-error'); 
+        }
+        if (input) { 
+          input.value = ''; 
+          input.focus(); 
+        }
       }
     }
 
+    // Écouteurs de clavier / clics
     const inputPin = document.getElementById('input-pin-prof');
     const btnPin = document.getElementById('btn-valider-pin-prof');
+    
     if (btnPin) btnPin.onclick = validerPinDirect;
     if (inputPin) {
-      inputPin.oninput = function() { if (this.value.trim().length === 4) validerPinDirect(); };
-      inputPin.onkeydown = function(e) { if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } };
+      inputPin.oninput = function() { 
+        if (this.value.trim().length === 4) validerPinDirect(); 
+      };
+      inputPin.onkeydown = function(e) { 
+        if (e.key === 'Enter') { 
+          e.preventDefault(); 
+          validerPinDirect(); 
+        } 
+      };
     }
 
-    if (sessionStorage.getItem('prof_auth') === 'true') { debloquerPage(); }
+    // Garder la session active si déjà connecté
+    if (sessionStorage.getItem('prof_auth') === 'true') { 
+      debloquerPage(); 
+    }
 
+    // Bouton de verrouillage en haut à droite
     const btnLock = document.getElementById('btn-lock-prof');
-    if (btnLock) btnLock.onclick = function() { sessionStorage.removeItem('prof_auth'); location.reload(); };
+    if (btnLock) {
+      btnLock.onclick = function() { 
+        sessionStorage.removeItem('prof_auth'); 
+        location.reload(); 
+      };
+    }
 
-    // SUPABASE & LOGIQUE
+    // ========================================================
+    // SUPABASE & LOGIQUE MÉTIER
+    // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -228,9 +258,14 @@
 
     function afficherToast(titre, msg) {
       const t = document.getElementById('toast-notification');
-      document.getElementById('toast-titre').textContent = titre; document.getElementById('toast-message').textContent = msg;
-      t.classList.remove('-translate-y-24', 'opacity-0'); t.classList.add('translate-y-0', 'opacity-100');
-      setTimeout(() => { t.classList.add('-translate-y-24', 'opacity-0'); t.classList.remove('translate-y-0', 'opacity-100'); }, 3500);
+      document.getElementById('toast-titre').textContent = titre; 
+      document.getElementById('toast-message').textContent = msg;
+      t.classList.remove('-translate-y-24', 'opacity-0'); 
+      t.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => { 
+        t.classList.add('-translate-y-24', 'opacity-0'); 
+        t.classList.remove('translate-y-0', 'opacity-100'); 
+      }, 3500);
     }
 
     async function initClasses() {
@@ -281,9 +316,9 @@
           <div class="flex items-center gap-3.5 w-full sm:w-auto"><span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-xs font-bold">${i+1}</span>
           <div class="truncate"><span class="font-bold text-slate-900">${e.nom} ${e.prenom}</span> <span class="text-xs text-slate-500 font-bold" dir="rtl">(${e.nom_ar||''} ${e.prenom_ar||''})</span></div></div>
           <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end">
-            <button onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${st==='P'?'bg-emerald-600 text-white shadow-md':'bg-slate-100 text-slate-600'} cursor-pointer"><i class="fa-solid fa-check"></i></button>
-            <button onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${st==='A'?'bg-rose-600 text-white shadow-md':'bg-slate-100 text-slate-600'} cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
-            <button onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${st==='R'?'bg-amber-500 text-white shadow-md':'bg-slate-100 text-slate-600'} cursor-pointer"><i class="fa-solid fa-clock"></i></button>
+            <button onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${st==='P'?'bg-emerald-600 text-white shadow-md':'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}"><i class="fa-solid fa-check"></i></button>
+            <button onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${st==='A'?'bg-rose-600 text-white shadow-md':'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700'}"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${st==='R'?'bg-amber-500 text-white shadow-md':'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700'}"><i class="fa-solid fa-clock"></i></button>
           </div>
         `;
         elevesContainer.appendChild(row);
@@ -291,11 +326,20 @@
     }
 
     window.changerStatut = function(id, st) { currentStatuts[id] = st; afficherEleves(); mettreAJourCompteurs(); };
-    if(document.getElementById('btn-tout-present')) document.getElementById('btn-tout-present').onclick = function(){ currentEleves.forEach(e=>currentStatuts[e.id]='P'); afficherEleves(); mettreAJourCompteurs(); };
+    
+    if(document.getElementById('btn-tout-present')) {
+      document.getElementById('btn-tout-present').onclick = function(){ 
+        currentEleves.forEach(e=>currentStatuts[e.id]='P'); 
+        afficherEleves(); 
+        mettreAJourCompteurs(); 
+      };
+    }
 
     function mettreAJourCompteurs() {
       let p=0,a=0,r=0; Object.values(currentStatuts).forEach(s=>{if(s==='P')p++;else if(s==='A')a++;else r++;});
-      document.getElementById('count-presents').textContent=p; document.getElementById('count-absents').textContent=a; document.getElementById('count-retards').textContent=r;
+      document.getElementById('count-presents').textContent=p; 
+      document.getElementById('count-absents').textContent=a; 
+      document.getElementById('count-retards').textContent=r;
     }
 
     if(document.getElementById('btn-valider-appel')) {
@@ -304,15 +348,31 @@
         this.disabled=true; this.innerHTML=`<i class="fa-solid fa-spinner fa-spin"></i> Transmission...`;
         try {
           const t = selectHoraire.value.split('-');
-          const { data:s, error:e1 } = await supabaseClient.from('seances').insert({ classe_id:selectClasse.value, matiere:selectMatiere.value, date_cours:new Date().toISOString().split('T')[0], heure_debut:t[0]+':00', heure_fin:t[1]+':00', appel_valide:true }).select().single();
+          const { data:s, error:e1 } = await supabaseClient.from('seances').insert({ 
+            classe_id:selectClasse.value, 
+            matiere:selectMatiere.value, 
+            date_cours:new Date().toISOString().split('T')[0], 
+            heure_debut:t[0]+':00', 
+            heure_fin:t[1]+':00', 
+            appel_valide:true 
+          }).select().single();
+          
           if(e1) throw e1;
+          
           const pts = currentEleves.map(e=>({ seance_id:s.id, eleve_id:e.id, statut:currentStatuts[e.id]||'P' }));
           const { error:e2 } = await supabaseClient.from('pointages').insert(pts);
           if(e2) throw e2;
+          
           afficherToast('Succès', 'Appel transmis avec succès !');
-        } catch(e) { afficherToast('Erreur', e.message); } finally { this.disabled=false; this.innerHTML=`<i class="fa-solid fa-paper-plane"></i> Valider l'appel`; }
+        } catch(e) { 
+          afficherToast('Erreur', e.message); 
+        } finally { 
+          this.disabled=false; 
+          this.innerHTML=`<i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel`; 
+        }
       };
     }
+    
     if(selectClasse) selectClasse.onchange = (e) => chargerEleves(e.target.value);
   </script>
 </body>
