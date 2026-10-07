@@ -134,17 +134,17 @@
       </div>
 
       <div class="flex items-center justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
-        <button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">
+        <button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
           Annuler
         </button>
-        <button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20">
+        <button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 cursor-pointer">
           Enregistrer / حفظ
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Écran PIN Masqué -->
+  <!-- Écran de Verrouillage PIN Sécurisé (2626) -->
   <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
@@ -460,7 +460,7 @@
 
   <script>
     // ========================================================
-    // 1. SUPABASE & ÉTAT
+    // 1. SUPABASE & CONFIGURATION
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
@@ -468,7 +468,7 @@
 
     let classesCache = [];
     let pointagesData = [];
-    let compteursAbsencesGlobal = {}; // Map: { eleve_id: nombre_total_absences }
+    let compteursAbsencesGlobal = {};
 
     function animerChiffre(element, valeurCible) {
       if (!element) return;
@@ -487,17 +487,17 @@
     }
 
     // ========================================================
-    // 2. CODE PIN (2626)
+    // 2. GESTION DU CODE PIN INFAILLIBLE (2626)
     // ========================================================
-    const PIN_SECRETE_MASQUEE = "MjYyNg==";
+    const CODE_PIN_CORRECT = "2626";
 
     function verifierSession() {
       const pinScreen = document.getElementById('pin-screen');
       if (sessionStorage.getItem('superviseur_auth') === 'true') {
-        if (pinScreen) pinScreen.style.display = 'none';
-        initialiserApplication();
+        if (pinScreen) pinScreen.style.setProperty('display', 'none', 'important');
+        initialiserApplication().catch(console.error);
       } else {
-        if (pinScreen) pinScreen.style.display = 'flex';
+        if (pinScreen) pinScreen.style.setProperty('display', 'flex', 'important');
         const input = document.getElementById('input-pin');
         if (input) {
           input.value = '';
@@ -514,16 +514,18 @@
       
       const pin = input ? input.value.trim() : '';
 
-      if (!pin) {
-        if (input) input.focus();
-        return;
-      }
-
-      if (pin === atob(PIN_SECRETE_MASQUEE)) {
+      if (pin === CODE_PIN_CORRECT) {
+        // 1. Déverrouillage visuel IMMÉDIAT
         sessionStorage.setItem('superviseur_auth', 'true');
-        if (pinScreen) pinScreen.style.display = 'none';
         if (pinError) pinError.classList.add('hidden');
-        initialiserApplication();
+        if (pinScreen) pinScreen.style.setProperty('display', 'none', 'important');
+
+        // 2. Chargement des données sans bloquer l'écran
+        try {
+          initialiserApplication().catch(err => console.error("Erreur chargement:", err));
+        } catch (e) {
+          console.error(e);
+        }
       } else {
         if (pinError) pinError.classList.remove('hidden');
         if (pinCard) {
@@ -543,6 +545,13 @@
 
       const input = document.getElementById('input-pin');
       if (input) {
+        // Déverrouillage automatique dès 4 chiffres tapés
+        input.addEventListener('input', () => {
+          if (input.value.trim().length === 4) {
+            window.deverrouillerDirect();
+          }
+        });
+
         input.addEventListener('keydown', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -581,7 +590,6 @@
       setupRealtime();
     }
 
-    // Récupère l'historique complet pour calculer les 3+ absences
     async function chargerCumulToutesAbsences() {
       try {
         const { data, error } = await supabaseClient
@@ -787,7 +795,6 @@
           const row = document.createElement('tr');
           const delay = Math.min(index * 20, 350);
 
-          // Si l'élève est en alerte (3+ absences), signal lumineux rouge sur la ligne
           const bgLigne = estEnAlerte 
             ? 'bg-rose-50/90 border-l-4 border-l-rose-600 hover:bg-rose-100/70' 
             : (index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50');
@@ -795,7 +802,6 @@
           row.className = `animate-table-row ${bgLigne} transition`;
           row.style.animationDelay = `${delay}ms`;
 
-          // Badge Alerte Rouge Clignotant
           const signalAlerteHtml = estEnAlerte ? `
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-sm shadow-rose-600/40 badge-alerte-rouge mt-0.5">
               <i class="fa-solid fa-bell"></i> 🚨 ALERTE : ${totalAbs} ABSENCES
@@ -833,23 +839,23 @@
             <td class="py-3 px-3 text-center">${badgeJustifie}</td>
             <td class="py-3 px-3 text-center">
               <div class="flex items-center justify-center gap-1.5">
-                <button onclick="ouvrirModalModifier(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold p-2 rounded-lg transition active:scale-95" title="Modifier le statut">
+                <button onclick="ouvrirModalModifier(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold p-2 rounded-lg transition active:scale-95 cursor-pointer" title="Modifier le statut">
                   <i class="fa-solid fa-pen-to-square"></i>
                 </button>
                 
                 <button onclick="imprimerBillet('${eleve.nom || ''}', '${eleve.prenom || ''}', '${eleve.nom_ar || ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court || ''}', '${seance.date_cours || ''}', '${seance.heure_debut || ''}', '${item.statut}', '${item.motif_justification || ''}')" 
-                  class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition active:scale-95" title="Billet">
+                  class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition active:scale-95 cursor-pointer" title="Billet">
                   <i class="fa-solid fa-print"></i> Billet
                 </button>
 
                 ${estEnAlerte ? `
                   <button onclick="imprimerConvocationParent('${eleve.nom \vert{}\vert{} ''}', '${eleve.prenom || ''}', '${eleve.nom_ar \vert{}\vert{} ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court \vert{}\vert{} ''}',${totalAbs})" 
-                    class="text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold px-2.5 py-1.5 rounded-lg transition active:scale-95 shadow-sm" title="Imprimer convocation tuteur">
+                    class="text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold px-2.5 py-1.5 rounded-lg transition active:scale-95 shadow-sm cursor-pointer" title="Imprimer convocation tuteur">
                     <i class="fa-solid fa-envelope-open-text"></i> Convocation
                   </button>
                 ` : ''}
 
-                <button onclick="supprimerPointage(${item.id})" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold p-2 rounded-lg transition active:scale-95" title="Supprimer">
+                <button onclick="supprimerPointage(${item.id})" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold p-2 rounded-lg transition active:scale-95 cursor-pointer" title="Supprimer">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
@@ -948,7 +954,7 @@
         <p class="text-justify text-xs leading-relaxed" dir="rtl">
           إلى السيد(ة) ولي أمر التلميذ(ة) المحترم(ة) :<br>
           نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجّل(ت) غيابات متكررة تجاوزت الحد القانوني المسموح به (<span class="font-bold text-rose-700">${totalAbs} غيابات</span>). 
-          وعليه، يُرجى منكم الحضور شخصياً إلى مقر ثانوية شعبan أعمر (مكتب مستشار التربية) في أقرب الآجال لتسوية وضعية التمدرس ولتبرير هذه الغيابات قبل اتخاذ الإجراءات التأديبية المنصوص عليها قانوناً.
+          وعليه، يُرجى منكم الحضور شخصياً إلى مقر ثانوية شعبان أعمر (مكتب مستشار التربية) في أقرب الآجال لتسوية وضعية التمدرس ولتبرير هذه الغيابات قبل اتخاذ الإجراءات التأديبية المنصوص عليها قانوناً.
         </p>
       `;
 
