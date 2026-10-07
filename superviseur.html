@@ -14,6 +14,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SheetJS pour Export Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- Google Fonts pour l'Arabe (Cairo) -->
@@ -76,7 +78,7 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
   <!-- ======================================================== -->
-  <!-- ÉCRAN DE VERROUILLAGE SUPERVISEUR (CODE PIN MASQUÉ) -->
+  <!-- ÉCRAN DE VERROUILLAGE SUPERVISEUR (CODE PIN MASQUÉ : 2626) -->
   <!-- ======================================================== -->
   <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
@@ -141,7 +143,7 @@
   <!-- Contenu Principal -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- KPI Statistiques avec compteurs animés -->
+    <!-- KPI Statistiques -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between text-slate-500 mb-1">
@@ -206,7 +208,14 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2 self-end md:self-auto pt-2 md:pt-0">
+      <!-- Boutons d'Action (Excel + Censeur + Actualiser) -->
+      <div class="flex flex-wrap items-center gap-2 self-end md:self-auto pt-2 md:pt-0">
+        <!-- Bouton OPTION B : Export Excel -->
+        <button id="btn-export-excel" type="button" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-2 cursor-pointer active:scale-95">
+          <i class="fa-solid fa-file-excel text-emerald-200 text-base"></i>
+          <span>Exporter Excel / تصدير إكسيل</span>
+        </button>
+
         <button id="btn-imprimer-rapport" type="button" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-2 cursor-pointer active:scale-95">
           <i class="fa-solid fa-file-invoice text-amber-300"></i>
           <span>Compte-Rendu Censeur / تقرير الناظر</span>
@@ -379,7 +388,7 @@
     }
 
     // ========================================================
-    // 2. GESTION DU CODE PIN SUPERVISEUR 
+    // 2. GESTION DU CODE PIN SUPERVISEUR (MASQUÉ : 2626)
     // ========================================================
     const PIN_SECRETE_MASQUEE = "MjYyNg==";
 
@@ -420,7 +429,7 @@
         if (pinError) pinError.classList.remove('hidden');
         if (pinCard) {
           pinCard.classList.remove('shake-error');
-          void pinCard.offsetWidth; // Force reflow
+          void pinCard.offsetWidth;
           pinCard.classList.add('shake-error');
         }
         if (input) {
@@ -463,6 +472,7 @@
     const registreCount = document.getElementById('registre-count');
     const btnRefresh = document.getElementById('btn-refresh');
     const btnImprimerRapport = document.getElementById('btn-imprimer-rapport');
+    const btnExportExcel = document.getElementById('btn-export-excel');
 
     if (filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
@@ -581,18 +591,21 @@
       if (elTaux) elTaux.textContent = tauxPresence !== '--' ? `${tauxPresence}%` : '--%';
     }
 
-    // Affichage des données avec animation cascade
-    function renderTableau() {
+    function obtenirDonneesFiltrees() {
       const classeFiltre = filtreClasse ? filtreClasse.value : 'ALL';
       const statutFiltre = filtreStatut ? filtreStatut.value : 'A_R';
 
-      const filtrer = pointagesData.filter(p => {
+      return pointagesData.filter(p => {
         if (classeFiltre !== 'ALL' && p.seances?.classe_id != classeFiltre) return false;
         if (statutFiltre === 'A_R') return p.statut === 'A' || p.statut === 'R';
         if (statutFiltre === 'A') return p.statut === 'A';
         if (statutFiltre === 'R') return p.statut === 'R';
         return true;
       });
+    }
+
+    function renderTableau() {
+      const filtrer = obtenirDonneesFiltrees();
 
       if (registreCount) registreCount.textContent = `${filtrer.length} enregistrement(s) trouvé(s)`;
 
@@ -669,6 +682,73 @@
           registreBody.appendChild(row);
         });
       }
+    }
+
+    // ========================================================
+    // 4. OPTION B : FONCTION D'EXPORT EXCEL (.XLSX)
+    // ========================================================
+    if (btnExportExcel) {
+      btnExportExcel.addEventListener('click', () => {
+        const donneesAExporter = obtenirDonneesFiltrees();
+
+        if (donneesAExporter.length === 0) {
+          alert('Aucune donnée à exporter pour les filtres sélectionnés.');
+          return;
+        }
+
+        // Préparation des lignes pour la feuille Excel
+        const rowsExcel = donneesAExporter.map((item, index) => {
+          const eleve = item.eleves || {};
+          const seance = item.seances || {};
+          const classe = seance.classes || {};
+
+          let statutTexte = 'Présent / حاضر';
+          if (item.statut === 'A') statutTexte = 'Absent / غائب';
+          else if (item.statut === 'R') statutTexte = 'Retard / متأخر';
+
+          return {
+            "N°": index + 1,
+            "Date": seance.date_cours || '',
+            "Séance": `${seance.heure_debut?.substring(0,5)} - ${seance.heure_fin?.substring(0,5)}`,
+            "Division / القسم": classe.nom_court || '',
+            "Nom (FR)": eleve.nom || '',
+            "Prénom (FR)": eleve.prenom || '',
+            "اللقب (AR)": eleve.nom_ar || '',
+            "الاسم (AR)": eleve.prenom_ar || '',
+            "Matière / المادة": seance.matiere || '',
+            "Statut / الحالة": statutTexte,
+            "Justifié / مبرر": item.justifie ? "OUI / نعم" : "NON / لا",
+            "Motif / سبب التبرير": item.motif_justification || ''
+          };
+        });
+
+        // Création du classeur Excel
+        const feuille = XLSX.utils.json_to_sheet(rowsExcel);
+
+        // Largeurs automatiques des colonnes
+        feuille['!cols'] = [
+          { wch: 5 },  // N°
+          { wch: 12 }, // Date
+          { wch: 14 }, // Séance
+          { wch: 12 }, // Division
+          { wch: 16 }, // Nom
+          { wch: 16 }, // Prénom
+          { wch: 16 }, // Nom AR
+          { wch: 16 }, // Prénom AR
+          { wch: 18 }, // Matière
+          { wch: 16 }, // Statut
+          { wch: 14 }, // Justifié
+          { wch: 25 }  // Motif
+        ];
+
+        const classeur = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(classeur, feuille, "Registre_Absences");
+
+        // Téléchargement du fichier .xlsx
+        const dateNom = filtreDate.value || 'export';
+        const nomFichier = `Absences_Chaabane_Aamar_${dateNom}.xlsx`;
+        XLSX.writeFile(classeur, nomFichier);
+      });
     }
 
     if (btnImprimerRapport) {
