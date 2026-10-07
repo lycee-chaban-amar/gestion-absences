@@ -1,30 +1,29 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<html lang="fr" dir="ltr" id="doc-root">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feuille d'Appel - ثانوية شعبان أعمر أوقاس</title>
+  <title>Superviseur - ثانوية شعبان أعمر أوقاس</title>
   
-  <!-- Configuration PWA -->
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#4338ca">
+  <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135755.png">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SheetJS pour Export Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <!-- Police Arabe (Cairo) -->
+  <!-- Google Fonts pour l'Arabe (Cairo) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-
+  
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
-
-    /* Transitions fluides */
+    
     button, select, input {
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -32,22 +31,14 @@
       transform: scale(0.96);
     }
 
-    /* Animation apparition cascade des élèves */
     @keyframes slideUpFade {
-      from {
-        opacity: 0;
-        transform: translateY(14px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .animate-row {
-      animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .animate-table-row {
+      animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Animation secousse PIN erroné */
     @keyframes shakeBox {
       0%, 100% { transform: translateX(0); }
       20%, 60% { transform: translateX(-8px); }
@@ -59,222 +50,497 @@
       box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important;
     }
 
-    /* Toast notification */
-    #toast-notification {
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    @keyframes alertPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.85; }
+    }
+    .badge-alerte-rouge {
+      animation: alertPulse 1.4s infinite ease-in-out;
+    }
+
+    @media print {
+      body * { visibility: hidden; }
+      body.print-billet #zone-impression-billet, 
+      body.print-billet #zone-impression-billet * { visibility: visible; }
+      body.print-billet #zone-impression-billet { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+
+      body.print-convocation #zone-impression-convocation, 
+      body.print-convocation #zone-impression-convocation * { visibility: visible; }
+      body.print-convocation #zone-impression-convocation { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+
+      body.print-rapport #zone-impression-rapport, 
+      body.print-rapport #zone-impression-rapport * { visibility: visible; }
+      body.print-rapport #zone-impression-rapport { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+
+      @page { size: A4 portrait; margin: 15mm; }
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
-
-  <!-- Toast Notification Animé -->
-  <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
-    <div class="bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md">
-      <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base">
-        <i class="fa-solid fa-check"></i>
-      </div>
-      <div>
-        <h4 class="text-sm font-bold text-white" id="toast-titre">Opération réussie</h4>
-        <p class="text-xs text-slate-300" id="toast-message">Les données ont été envoyées.</p>
-      </div>
-    </div>
-  </div>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
   <!-- ======================================================== -->
-  <!-- ÉCRAN DE VERROUILLAGE PROFESSEUR (CODE PIN : 2626) -->
+  <!-- ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ (2626) -->
   <!-- ======================================================== -->
-  <div id="pin-screen-prof" class="fixed inset-0 bg-indigo-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 transition-transform">
+  <div id="pin-screen" style="position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-        <i class="fa-solid fa-chalkboard-user"></i>
+        <i class="fa-solid fa-shield-halved"></i>
       </div>
-      <h2 class="text-xl font-extrabold text-slate-900">Espace Enseignant</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال رمز الأستاذ</p>
+      <h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
       
       <div class="space-y-4">
         <div>
-          <input type="password" id="input-pin-prof" maxlength="6" placeholder="••••" autocomplete="off"
-            class="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
-          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
+          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus
+            class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
+          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
         </div>
-        <button id="btn-valider-pin-prof" type="button" onclick="window.deverrouillerDirectProf()" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
-          Ouvrir la feuille d'appel / دخول
+        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
+          Déverrouiller / الدخول
         </button>
       </div>
-      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au corps professoral du lycée</p>
+      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au Conseiller d'Éducation et à l'Administration</p>
     </div>
   </div>
 
-  <!-- En-tête / Header -->
-  <header class="bg-indigo-700 text-white shadow-md">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
+  <!-- Modal Modifier Pointage -->
+  <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+          <span>Modifier l'enregistrement / تعديل الحالة</span>
+        </h3>
+        <button onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="edit-pointage-id" />
+
+      <div class="space-y-4 text-sm">
         <div>
-          <h1 class="text-xl font-bold tracking-tight">Feuille d'Appel Numérique</h1>
-          <p class="text-xs text-indigo-200">ثانوية شعبان أعمر أوقاس - تسجيل الحضور والغياب</p>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Élève / التلميذ(ة)</label>
+          <div id="edit-eleve-nom" class="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Statut de présence / الحالة</label>
+          <select id="edit-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="P">✅ Présent / حاضر (Annuler l'absence)</option>
+            <option value="A">❌ Absent / غائب</option>
+            <option value="R">⏳ Retard / متأخر</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Justification / التبرير</label>
+          <div class="flex items-center gap-4 mb-2">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-700">
+              <input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600 focus:ring-indigo-500" />
+              <span>Non justifié / غير مبرر</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700">
+              <input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600 focus:ring-emerald-500" />
+              <span>Justifié / مبرر</span>
+            </label>
+          </div>
+          <input type="text" id="edit-motif" placeholder="Motif (ex: Certificat médical, Billet...)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button id="btn-lock-prof" type="button" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-indigo-600 cursor-pointer">
-          <i class="fa-solid fa-lock text-amber-300"></i>
+
+      <div class="flex items-center justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
+        <button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
+          Annuler
+        </button>
+        <button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 cursor-pointer">
+          Enregistrer / حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md">
+          <i class="fa-solid fa-shield-halved text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold tracking-tight">
+            <span>Espace Vie Scolaire</span>
+            <span class="text-indigo-400 mx-1">|</span>
+            <span dir="rtl" class="font-bold">فضاء الاستشارة التربوية</span>
+          </h1>
+          <p class="text-xs text-slate-400">
+            <span>ثانوية شعبان أعمر أوقاس</span> - <span>Suivi des Absences & Alertes</span>
+          </p>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl transition flex items-center gap-2 border border-slate-700">
+          <i class="fa-solid fa-chalkboard-user text-indigo-400"></i> 
+          <span>Vue Enseignant</span>
+        </a>
+
+        <button id="btn-lock" type="button" class="text-xs font-semibold text-rose-300 hover:text-white bg-slate-800 hover:bg-rose-950/80 px-3 py-2 rounded-xl transition flex items-center gap-1.5 border border-slate-700 cursor-pointer">
+          <i class="fa-solid fa-lock text-rose-400"></i>
           <span>Verrouiller</span>
         </button>
-        <div id="conn-badge" class="flex items-center gap-2 bg-indigo-800/80 px-3 py-1.5 rounded-full text-xs font-medium">
+
+        <div id="conn-badge" class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full text-xs font-medium border border-slate-700">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="conn-text">Connecté à Supabase</span>
+          <span id="conn-text">En ligne</span>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Contenu Principal -->
-  <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- Paramètres du cours -->
-    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-sliders text-indigo-600"></i> Paramètres du Cours
-      </h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Sélection de la division -->
-        <div>
-          <label for="select-classe" class="block text-sm font-medium text-slate-700 mb-1">
-            Classe / القسم
-          </label>
-          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-            <option value="">-- Choisir la division / اختر الفوج --</option>
-          </select>
+    <!-- KPI Statistiques -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between text-slate-500 mb-1">
+          <span class="text-xs font-bold uppercase tracking-wider">Appels faits</span>
+          <i class="fa-solid fa-clipboard-check text-indigo-500 text-lg"></i>
         </div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-slate-800" id="kpi-seances">0</div>
+        <p class="text-[11px] text-slate-400 mt-1">Aujourd'hui / اليوم</p>
+      </div>
 
-        <!-- Sélection de la matière (Liste déroulante) -->
-        <div>
-          <label for="select-matiere" class="block text-sm font-medium text-slate-700 mb-1">
-            Matière / المادة
-          </label>
-          <select id="select-matiere" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-            <optgroup label="📚 Matières Fondamentales & Scientifiques">
-              <option value="Mathématiques / رياضيات" selected>رياضيات / Mathématiques</option>
-              <option value="Sciences Naturelles / علوم الطبيعة والحياة">علوم الطبيعة والحياة / Sciences Naturelles</option>
-              <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
-              <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
-            </optgroup>
-            
-            <optgroup label="⚙️ Spécialités Techniques & Économie">
-              <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
-              <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
-              <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
-              <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
-              <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
-              <option value="Droit / قانون">قانون / Droit</option>
-            </optgroup>
-
-            <optgroup label="📖 Lettres, Sciences Humaines & Langues">
-              <option value="Langue Arabe / لغة عربية وآدابها">لغة عربية وآدابها / Langue Arabe</option>
-              <option value="Langue Française / لغة فرنسية">لغة فرنسية / Langue Française</option>
-              <option value="Langue Anglaise / لغة إنجليزية">لغة إنجليزية / Langue Anglaise</option>
-              <option value="Langue Allemande / لغة ألمانية">لغة ألمانية / Langue Allemande</option>
-              <option value="Langue Espagnole / لغة إسبانية">لغة إسبانية / Langue Espagnole</option>
-              <option value="Langue Amazighe / لغة أمازيغية">لغة أمازيغية / Tamazight</option>
-              <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
-              <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
-              <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
-            </optgroup>
-
-            <optgroup label="🏃 Éducation Physique">
-              <option value="EPS / تربية بدنية ورياضية">تربية بدنية ورياضية / Sport (EPS)</option>
-            </optgroup>
-          </select>
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between text-rose-500 mb-1">
+          <span class="text-xs font-bold uppercase tracking-wider">Absences Jour</span>
+          <i class="fa-solid fa-user-xmark text-rose-500 text-lg"></i>
         </div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-rose-600" id="kpi-absents">0</div>
+        <p class="text-[11px] text-slate-400 mt-1">Signalés aujourd'hui</p>
+      </div>
 
-        <!-- Sélection de la séance (08h-12h et 13h-17h) -->
-        <div>
-          <label for="select-horaire" class="block text-sm font-medium text-slate-700 mb-1">
-            Séance / التوقيت
-          </label>
-          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
-            <optgroup label="☀️ Matin / الصباح">
-              <option value="08:00-09:00">08:00 - 09:00</option>
-              <option value="09:00-10:00">09:00 - 10:00</option>
-              <option value="10:00-11:00">10:00 - 11:00</option>
-              <option value="11:00-12:00">11:00 - 12:00</option>
-            </optgroup>
-            <optgroup label="🌤️ Après-midi / المساء">
-              <option value="13:00-14:00">13:00 - 14:00</option>
-              <option value="14:00-15:00">14:00 - 15:00</option>
-              <option value="15:00-16:00">15:00 - 16:00</option>
-              <option value="16:00-17:00">16:00 - 17:00</option>
-            </optgroup>
-          </select>
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between text-amber-500 mb-1">
+          <span class="text-xs font-bold uppercase tracking-wider">Retards Jour</span>
+          <i class="fa-solid fa-user-clock text-amber-500 text-lg"></i>
         </div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-amber-600" id="kpi-retards">0</div>
+        <p class="text-[11px] text-slate-400 mt-1">En retard / متأخر</p>
+      </div>
+
+      <!-- CARTE ALERTE (≥ 3 Absences) -->
+      <div class="bg-rose-50/70 p-4 rounded-2xl shadow-sm border-2 border-rose-300">
+        <div class="flex items-center justify-between text-rose-700 mb-1">
+          <span class="text-xs font-extrabold uppercase tracking-wider">Alerte (≥ 3 Abs)</span>
+          <i class="fa-solid fa-triangle-exclamation text-rose-600 text-lg badge-alerte-rouge"></i>
+        </div>
+        <div class="text-2xl sm:text-3xl font-black text-rose-700" id="kpi-alertes">0</div>
+        <p class="text-[11px] text-rose-500 font-bold mt-1">Élèves en récidive</p>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 col-span-2 lg:col-span-1">
+        <div class="flex items-center justify-between text-emerald-500 mb-1">
+          <span class="text-xs font-bold uppercase tracking-wider">Taux Présence</span>
+          <i class="fa-solid fa-chart-pie text-emerald-500 text-lg"></i>
+        </div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-emerald-600" id="kpi-taux">--%</div>
+        <p class="text-[11px] text-slate-400 mt-1">Moyenne globale</p>
       </div>
     </div>
 
-    <!-- Barre de statistiques en temps réel -->
-    <div id="stats-bar" class="hidden grid grid-cols-3 gap-3">
-      <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center shadow-sm">
-        <span class="block text-xs font-semibold text-emerald-700 uppercase tracking-wider">Présents (حاضر)</span>
-        <span id="count-presents" class="text-3xl font-extrabold text-emerald-600 mt-1 block">0</span>
-      </div>
-      <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center shadow-sm">
-        <span class="block text-xs font-semibold text-rose-700 uppercase tracking-wider">Absents (غائب)</span>
-        <span id="count-absents" class="text-3xl font-extrabold text-rose-600 mt-1 block">0</span>
-      </div>
-      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center shadow-sm">
-        <span class="block text-xs font-semibold text-amber-700 uppercase tracking-wider">Retards (متأخر)</span>
-        <span id="count-retards" class="text-3xl font-extrabold text-amber-600 mt-1 block">0</span>
-      </div>
-    </div>
-
-    <!-- Registre d'appel -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/70">
+    <!-- Filtres & Actions -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
         <div>
-          <h2 class="text-lg font-bold text-slate-800" id="classe-titre">Sélectionnez une classe</h2>
-          <p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Date / التاريخ</label>
+          <input type="date" id="filtre-date" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
-        <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer active:scale-95">
-          <i class="fa-solid fa-check-double text-indigo-600"></i> Tout marquer présent
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Classe / القسم</label>
+          <select id="filtre-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="ALL">Toutes les classes / كل الأقسام</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">Statut / الحالة</label>
+          <select id="filtre-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="A_R">Absences & Retards / الغيابات والتأخرات</option>
+            <option value="ALERTE_3">🚨 Élèves en alerte (3+ absences) فقط</option>
+            <option value="A">Absents uniquement / الغائبون فقط</option>
+            <option value="R">Retards uniquement / المتأخرون فقط</option>
+            <option value="ALL">Tous les pointages / كل الحالات</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 self-end md:self-auto pt-2 md:pt-0">
+        <button id="btn-export-excel" type="button" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-2 cursor-pointer active:scale-95">
+          <i class="fa-solid fa-file-excel text-emerald-200 text-base"></i>
+          <span>Exporter Excel</span>
+        </button>
+
+        <button id="btn-imprimer-rapport" type="button" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/20 transition flex items-center gap-2 cursor-pointer active:scale-95">
+          <i class="fa-solid fa-file-invoice text-amber-300"></i>
+          <span>Compte-Rendu Censeur</span>
+        </button>
+
+        <button id="btn-refresh" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 cursor-pointer active:scale-95">
+          <i class="fa-solid fa-arrows-rotate text-indigo-600"></i>
+          <span>Actualiser</span>
         </button>
       </div>
-
-      <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 min-h-[180px]">
-        <div class="py-12 text-center text-slate-400">
-          <i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i>
-          <p class="text-sm">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p>
-        </div>
-      </div>
     </div>
 
-    <!-- Bouton de validation de l'appel -->
-    <div id="actions-footer" class="hidden pb-10">
-      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 text-base transition cursor-pointer active:scale-98">
-        <i class="fa-solid fa-paper-plane"></i>
-        <span>Valider et transmettre l'appel à la vie scolaire</span>
-      </button>
+    <!-- Registre Central -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-slate-50/70">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-slate-800">
+            <span>Registre Quotidien des Absences</span> - <span dir="rtl">سجل الغيابات مع نظام الإنذار</span>
+          </h2>
+          <p class="text-xs text-slate-500" id="registre-count">Chargement en cours...</p>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 text-xs font-bold uppercase border-b border-slate-200">
+              <th class="py-3.5 px-3 w-12 text-center">N°</th>
+              <th class="py-3.5 px-4">Élève & Alerte / التلميذ والإنذار</th>
+              <th class="py-3.5 px-3">Classe</th>
+              <th class="py-3.5 px-3">Séance & Matière</th>
+              <th class="py-3.5 px-3 text-center">Cumul Abs.</th>
+              <th class="py-3.5 px-3 text-center">Statut</th>
+              <th class="py-3.5 px-3 text-center">Justification</th>
+              <th class="py-3.5 px-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="registre-body" class="divide-y divide-slate-100 text-sm">
+            <tr>
+              <td colspan="8" class="py-12 text-center text-slate-400">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
+                <p>Calcul des alertes et récupération des données...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </main>
 
+  <!-- Zone Impression Compte-Rendu Censeur A4 -->
+  <div id="zone-impression-rapport" class="hidden p-6 text-slate-900 bg-white">
+    <div class="text-center border-b-2 border-slate-800 pb-3 mb-4">
+      <p class="text-xs font-bold uppercase tracking-wider">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+      <p class="text-xs font-bold">RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE</p>
+      <div class="flex justify-between items-center text-xs mt-2 font-semibold">
+        <div class="text-left">
+          <p>Ministère de l'Éducation Nationale</p>
+          <p>Direction de l'Éducation de Béjaïa</p>
+          <p class="font-bold">Lycée Chaabane Aamar - Aokas</p>
+        </div>
+        <div class="text-right" dir="rtl">
+          <p>وزارة التربية الوطنية</p>
+          <p>مديرية التربية لولاية بجاية</p>
+          <p class="font-bold">ثانوية شعبان أعمر - أوقاس</p>
+        </div>
+      </div>
+      <div class="mt-4 py-1.5 px-4 bg-slate-100 border border-slate-400 rounded-lg inline-block">
+        <h2 class="text-base font-extrabold uppercase tracking-wide">
+          <span>التقرير اليومي لغياب وتأخر التلاميذ</span> / <span>Compte-Rendu Journalier des Absences</span>
+        </h2>
+        <p class="text-xs font-semibold text-slate-600 mt-0.5">
+          Journée du : <span id="rapport-date" class="font-bold text-slate-900"></span>
+        </p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-4 gap-2 mb-4 text-center text-xs">
+      <div class="border border-slate-300 p-2 rounded">
+        <p class="text-slate-500 font-bold">Séances</p>
+        <p class="text-base font-extrabold mt-0.5" id="rapport-kpi-seances">0</p>
+      </div>
+      <div class="border border-slate-300 p-2 rounded">
+        <p class="text-slate-500 font-bold">Absences</p>
+        <p class="text-base font-extrabold text-rose-700 mt-0.5" id="rapport-kpi-absents">0</p>
+      </div>
+      <div class="border border-slate-300 p-2 rounded">
+        <p class="text-slate-500 font-bold">Retards</p>
+        <p class="text-base font-extrabold text-amber-700 mt-0.5" id="rapport-kpi-retards">0</p>
+      </div>
+      <div class="border border-slate-300 p-2 rounded">
+        <p class="text-slate-500 font-bold">Présence</p>
+        <p class="text-base font-extrabold text-emerald-700 mt-0.5" id="rapport-kpi-taux">--%</p>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <table class="w-full text-left border-collapse text-xs border border-slate-400">
+        <thead>
+          <tr class="bg-slate-100 text-slate-800 font-bold border-b border-slate-400">
+            <th class="py-1.5 px-2 w-8 text-center border-r border-slate-300">N°</th>
+            <th class="py-1.5 px-2 border-r border-slate-300">Nom & Prénom / اللقب والاسم</th>
+            <th class="py-1.5 px-2 border-r border-slate-300">Classe</th>
+            <th class="py-1.5 px-2 border-r border-slate-300">Matière & Séance</th>
+            <th class="py-1.5 px-2 text-center border-r border-slate-300">Statut</th>
+            <th class="py-1.5 px-2 border-r border-slate-300">Motif</th>
+            <th class="py-1.5 px-2 text-center w-24">Visa Censeur</th>
+          </tr>
+        </thead>
+        <tbody id="rapport-table-body" class="divide-y divide-slate-300"></tbody>
+      </table>
+    </div>
+
+    <div class="grid grid-cols-2 gap-8 text-xs pt-4 border-t border-slate-300">
+      <div class="text-center">
+        <p class="font-bold">مستشار التربية / Le Conseiller d'Éducation</p>
+        <div class="h-16 border-b border-dashed border-slate-400 mt-2"></div>
+      </div>
+      <div class="text-center">
+        <p class="font-bold">السيد ناظر الدراسات / Le Censeur des Études</p>
+        <div class="h-16 border-b border-dashed border-slate-400 mt-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone Impression Billet Individuel -->
+  <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white text-slate-900 border-2 border-dashed border-slate-800 max-w-lg mx-auto my-6 rounded-lg">
+    <div class="text-center border-b pb-3 mb-4">
+      <p class="text-xs uppercase font-bold tracking-widest">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+      <p class="text-xs font-semibold">وزارة التربية الوطنية - مديرية التربية لولاية بجاية</p>
+      <h3 class="text-base font-extrabold mt-1">ثانوية شعبان أعمر أوقاس</h3>
+      <h2 class="text-lg font-black uppercase mt-2 bg-slate-100 inline-block px-4 py-1 border border-slate-400 rounded">رخصة الدخول إلى القسم / Billet d'Entrée</h2>
+    </div>
+    <div class="space-y-2 text-sm leading-relaxed" id="billet-details"></div>
+    <div class="mt-6 pt-4 border-t flex justify-between items-center text-xs">
+      <div><p>تاريخ وساعة الإصدار : <span id="billet-date-emission"></span></p></div>
+      <div class="text-center font-bold">
+        <p>تأشيرة مستشار التربية / المساعد التربوي</p>
+        <div class="h-12 w-28 border-b border-dashed border-slate-400 mt-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone Impression Convocation Parent -->
+  <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white text-slate-900 border-2 border-slate-900 max-w-xl mx-auto my-6 rounded-2xl">
+    <div class="text-center border-b-2 border-slate-900 pb-4 mb-5">
+      <p class="text-xs uppercase font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+      <p class="text-xs font-semibold">مديرية التربية لولاية بجاية - ثانوية شعبان أعمر أوقاس</p>
+      <h2 class="text-xl font-black uppercase mt-3 py-1.5 bg-rose-100 text-rose-900 border-2 border-rose-500 rounded-xl inline-block px-6">
+        استدعاء ولي أمر تلميذ (إشعار بتكرار الغياب)
+      </h2>
+      <p class="text-xs font-bold text-slate-600 mt-1">Convocation du Tuteur Légal - Absentéisme Répété</p>
+    </div>
+    
+    <div class="space-y-3 text-sm leading-relaxed" id="convocation-details"></div>
+
+    <div class="mt-8 pt-4 border-t border-slate-300 flex justify-between items-center text-xs">
+      <div>
+        <p>أوقاس في : <span id="convoc-date-emission" class="font-bold"></span></p>
+      </div>
+      <div class="text-center font-bold">
+        <p>ختم وإمضاء مستشار التربية</p>
+        <div class="h-16 w-36 border-b border-dashed border-slate-400 mt-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT PRINCIPAL : ROBUSTE & SÉCURISÉ -->
+  <!-- ======================================================== -->
   <script>
-    // ========================================================
-    // 1. INITIALISATION SUPABASE
-    // ========================================================
+    // 1. GESTION DU CODE PIN (2626) - AUCUN BLOCAGE POSSIBLE
+    const CODE_PIN_OFFICIEL = "2626";
+
+    function deverrouillerPage() {
+      const pinScreen = document.getElementById('pin-screen');
+      if (pinScreen) {
+        pinScreen.style.display = 'none';
+      }
+      sessionStorage.setItem('superviseur_auth', 'true');
+      initialiserApplication();
+    }
+
+    function verifierPinManuel() {
+      const input = document.getElementById('input-pin');
+      const err = document.getElementById('pin-error');
+      const card = document.getElementById('pin-card');
+      const val = input ? input.value.trim() : '';
+
+      if (val === CODE_PIN_OFFICIEL) {
+        if (err) err.classList.add('hidden');
+        deverrouillerPage();
+      } else {
+        if (err) err.classList.remove('hidden');
+        if (card) {
+          card.classList.remove('shake-error');
+          void card.offsetWidth;
+          card.classList.add('shake-error');
+        }
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      }
+    }
+
+    // Écouteurs PIN directs
+    const inputPin = document.getElementById('input-pin');
+    const btnPin = document.getElementById('btn-valider-pin');
+
+    if (btnPin) {
+      btnPin.onclick = verifierPinManuel;
+    }
+
+    if (inputPin) {
+      inputPin.oninput = function() {
+        if (this.value.trim().length === 4) {
+          verifierPinManuel();
+        }
+      };
+      inputPin.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          verifierPinManuel();
+        }
+      };
+    }
+
+    // Si déjà authentifié
+    if (sessionStorage.getItem('superviseur_auth') === 'true') {
+      const pinScreen = document.getElementById('pin-screen');
+      if (pinScreen) pinScreen.style.display = 'none';
+    }
+
+    // Verrouillage
+    const btnLock = document.getElementById('btn-lock');
+    if (btnLock) {
+      btnLock.onclick = function() {
+        sessionStorage.removeItem('superviseur_auth');
+        location.reload();
+      };
+    }
+
+    // 2. SUPABASE INITIALISATION
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let classesList = [];
-    let currentEleves = [];
-    let currentStatuts = {}; 
+    let classesCache = [];
+    let pointagesData = [];
+    let compteursAbsencesGlobal = {};
 
-    // Utilitaires d'animation
     function animerChiffre(element, valeurCible) {
       if (!element) return;
       const depart = parseInt(element.textContent) || 0;
       if (depart === valeurCible) return;
-      const duree = 300;
+      const duree = 250;
       const debut = performance.now();
 
       function frame(temps) {
@@ -286,117 +552,48 @@
       requestAnimationFrame(frame);
     }
 
-    function afficherToast(titre, message) {
-      const toast = document.getElementById('toast-notification');
-      document.getElementById('toast-titre').textContent = titre;
-      document.getElementById('toast-message').textContent = message;
+    // 3. LOGIQUE MÉTIER
+    const filtreDate = document.getElementById('filtre-date');
+    const filtreClasse = document.getElementById('filtre-classe');
+    const filtreStatut = document.getElementById('filtre-statut');
+    const registreBody = document.getElementById('registre-body');
+    const registreCount = document.getElementById('registre-count');
+    const btnRefresh = document.getElementById('btn-refresh');
+    const btnImprimerRapport = document.getElementById('btn-imprimer-rapport');
+    const btnExportExcel = document.getElementById('btn-export-excel');
 
-      toast.classList.remove('-translate-y-24', 'opacity-0');
-      toast.classList.add('translate-y-0', 'opacity-100');
+    if (filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
-      setTimeout(() => {
-        toast.classList.add('-translate-y-24', 'opacity-0');
-        toast.classList.remove('translate-y-0', 'opacity-100');
-      }, 3500);
-    }
-
-    // ========================================================
-    // 2. GESTION DU CODE PIN SÉCURISÉ (MASQUÉ : 2626)
-    // ========================================================
-    const PIN_SECRETE_MASQUEE = "MjYyNg==";
-
-    function verifierSessionProf() {
-      const pinScreen = document.getElementById('pin-screen-prof');
-      if (sessionStorage.getItem('prof_auth') === 'true') {
-        if (pinScreen) pinScreen.style.display = 'none';
-        initClasses();
-      } else {
-        if (pinScreen) pinScreen.style.display = 'flex';
-        const input = document.getElementById('input-pin-prof');
-        if (input) {
-          input.value = '';
-          setTimeout(() => input.focus(), 150);
-        }
+    async function initialiserApplication() {
+      try {
+        await loadClasses();
+        await fetchDonnees();
+      } catch (err) {
+        console.error("Initialisation error:", err);
       }
     }
 
-    window.deverrouillerDirectProf = function() {
-      const input = document.getElementById('input-pin-prof');
-      const pinError = document.getElementById('pin-prof-error');
-      const pinScreen = document.getElementById('pin-screen-prof');
-      const pinCard = document.getElementById('pin-card-prof');
+    async function chargerCumulToutesAbsences() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('pointages')
+          .select('eleve_id')
+          .eq('statut', 'A');
 
-      const pin = input ? input.value.trim() : '';
+        if (error) throw error;
 
-      if (!pin) {
-        if (input) input.focus();
-        return;
-      }
-
-      if (pin === atob(PIN_SECRETE_MASQUEE)) {
-        sessionStorage.setItem('prof_auth', 'true');
-        if (pinScreen) pinScreen.style.display = 'none';
-        if (pinError) pinError.classList.add('hidden');
-        initClasses();
-      } else {
-        if (pinError) pinError.classList.remove('hidden');
-        if (pinCard) {
-          pinCard.classList.remove('shake-error');
-          void pinCard.offsetWidth;
-          pinCard.classList.add('shake-error');
-        }
-        if (input) {
-          input.value = '';
-          input.focus();
-        }
-      }
-    };
-
-    // Gestion touche Entrée et verrouillage
-    document.addEventListener('DOMContentLoaded', () => {
-      verifierSessionProf();
-
-      const input = document.getElementById('input-pin-prof');
-      if (input) {
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            window.deverrouillerDirectProf();
+        compteursAbsencesGlobal = {};
+        (data || []).forEach(pt => {
+          if (pt.eleve_id) {
+            compteursAbsencesGlobal[pt.eleve_id] = (compteursAbsencesGlobal[pt.eleve_id] || 0) + 1;
           }
         });
+      } catch (err) {
+        console.error('Erreur cumul absences:', err);
       }
-
-      const btnLockProf = document.getElementById('btn-lock-prof');
-      if (btnLockProf) {
-        btnLockProf.addEventListener('click', () => {
-          sessionStorage.removeItem('prof_auth');
-          verifierSessionProf();
-        });
-      }
-    });
-
-    // ========================================================
-    // 3. LOGIQUE D'APPEL & INTERACTION SUPABASE
-    // ========================================================
-    const selectClasse = document.getElementById('select-classe');
-    const selectMatiere = document.getElementById('select-matiere');
-    const selectHoraire = document.getElementById('select-horaire');
-    const elevesContainer = document.getElementById('eleves-container');
-    const classeTitre = document.getElementById('classe-titre');
-    const classeEffectif = document.getElementById('classe-effectif');
-    const statsBar = document.getElementById('stats-bar');
-    const actionsFooter = document.getElementById('actions-footer');
-    const btnToutPresent = document.getElementById('btn-tout-present');
-    const btnValider = document.getElementById('btn-valider-appel');
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log('Erreur SW:', err));
-      });
     }
 
-    // Chargement structuré des classes par palier
-    async function initClasses() {
+    async function loadClasses() {
       try {
         const { data, error } = await supabaseClient
           .from('classes')
@@ -404,235 +601,484 @@
           .order('nom_court', { ascending: true });
 
         if (error) throw error;
+        classesCache = data || [];
 
-        classesList = data || [];
-        if (!selectClasse) return;
+        if (filtreClasse) {
+          filtreClasse.innerHTML = '<option value="ALL">Toutes les classes / كل الأقسام</option>';
 
-        selectClasse.innerHTML = '<option value="">-- Choisir la division / اختر الفوج --</option>';
+          const groupes = {
+            '1AS': { label: '🎓 1ère Année Secondaire (1AS / الأولى ثانوي)', el: document.createElement('optgroup') },
+            '2AS': { label: '🎓 2ème Année Secondaire (2AS / الثانية ثانوي)', el: document.createElement('optgroup') },
+            '3AS': { label: '🎓 3ème Année Secondaire - Bac (3AS / الثالثة ثانوي)', el: document.createElement('optgroup') },
+            'AUTRE': { label: 'Autres divisions', el: document.createElement('optgroup') }
+          };
 
-        const groupes = {
-          '1AS': { label: '🎓 1ère Année Secondaire (1AS / الأولى ثانوي)', el: document.createElement('optgroup') },
-          '2AS': { label: '🎓 2ème Année Secondaire (2AS / الثانية ثانوي)', el: document.createElement('optgroup') },
-          '3AS': { label: '🎓 3ème Année Secondaire - Bac (3AS / الثالثة ثانوي)', el: document.createElement('optgroup') },
-          'AUTRE': { label: 'Divisions Spécifiques', el: document.createElement('optgroup') }
-        };
+          Object.keys(groupes).forEach(k => {
+            groupes[k].el.label = groupes[k].label;
+          });
 
-        Object.keys(groupes).forEach(k => {
-          groupes[k].el.label = groupes[k].label;
-        });
+          classesCache.forEach(cls => {
+            const opt = document.createElement('option');
+            opt.value = cls.id;
+            opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
 
-        classesList.forEach(cls => {
-          const opt = document.createElement('option');
-          opt.value = cls.id;
-          opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+            const code = (cls.nom_court || '').toUpperCase();
+            if (code.startsWith('1AS')) {
+              groupes['1AS'].el.appendChild(opt);
+            } else if (code.startsWith('2AS')) {
+              groupes['2AS'].el.appendChild(opt);
+            } else if (code.startsWith('3AS')) {
+              groupes['3AS'].el.appendChild(opt);
+            } else {
+              groupes['AUTRE'].el.appendChild(opt);
+            }
+          });
 
-          const code = (cls.nom_court || '').toUpperCase();
-          if (code.startsWith('1AS')) {
-            groupes['1AS'].el.appendChild(opt);
-          } else if (code.startsWith('2AS')) {
-            groupes['2AS'].el.appendChild(opt);
-          } else if (code.startsWith('3AS')) {
-            groupes['3AS'].el.appendChild(opt);
-          } else {
-            groupes['AUTRE'].el.appendChild(opt);
-          }
-        });
-
-        ['1AS', '2AS', '3AS', 'AUTRE'].forEach(key => {
-          if (groupes[key].el.children.length > 0) {
-            selectClasse.appendChild(groupes[key].el);
-          }
-        });
-
+          ['1AS', '2AS', '3AS', 'AUTRE'].forEach(key => {
+            if (groupes[key].el.children.length > 0) {
+              filtreClasse.appendChild(groupes[key].el);
+            }
+          });
+        }
       } catch (err) {
-        console.error('Erreur chargement classes :', err);
+        console.error('Erreur classes:', err);
       }
     }
 
-    async function chargerEleves(classeId) {
-      if (!classeId) {
-        elevesContainer.innerHTML = `
-          <div class="py-12 text-center text-slate-400">
-            <i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i>
-            <p class="text-sm">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p>
-          </div>`;
-        classeTitre.textContent = 'Sélectionnez une classe';
-        classeEffectif.textContent = '0 élève chargé';
-        statsBar.classList.add('hidden');
-        actionsFooter.classList.add('hidden');
-        btnToutPresent.classList.add('hidden');
-        return;
+    async function fetchDonnees() {
+      const dateChoisie = filtreDate ? filtreDate.value : null;
+      if (!dateChoisie) return;
+
+      if (registreBody) {
+        registreBody.innerHTML = `
+          <tr>
+            <td colspan="8" class="py-12 text-center text-slate-400">
+              <i class="fa-solid fa-circle-notch fa-spin text-2xl text-indigo-500 mb-2"></i>
+              <p>Chargement des données & calcul des alertes...</p>
+            </td>
+          </tr>`;
       }
 
-      elevesContainer.innerHTML = `
-        <div class="py-12 text-center text-indigo-600">
-          <i class="fa-solid fa-circle-notch fa-spin text-3xl"></i>
-          <p class="text-xs text-slate-500 mt-2 font-medium">Chargement des élèves...</p>
-        </div>`;
+      try {
+        await chargerCumulToutesAbsences();
 
-      const selectedCls = classesList.find(c => c.id == classeId);
-      classeTitre.textContent = selectedCls ? `${selectedCls.nom_court} (${selectedCls.nom_complet})` : 'Classe';
+        const { data, error } = await supabaseClient
+          .from('pointages')
+          .select(`
+            id, statut, justifie, motif_justification, cree_a,
+            eleves (id, matricule, nom, prenom, nom_ar, prenom_ar, classe_id),
+            seances!inner (id, date_cours, heure_debut, heure_fin, matiere, classe_id, classes (nom_court, nom_complet))
+          `)
+          .eq('seances.date_cours', dateChoisie)
+          .order('cree_a', { ascending: false });
 
-      const { data, error } = await supabaseClient
-        .from('eleves')
-        .select('*')
-        .eq('classe_id', classeId)
-        .eq('actif', true)
-        .order('nom', { ascending: true });
+        if (error) throw error;
+        pointagesData = data || [];
 
-      if (error) {
-        elevesContainer.innerHTML = `<div class="p-6 text-rose-500 text-sm">Erreur: ${error.message}</div>`;
-        return;
+        calculerKPIs();
+        renderTableau();
+      } catch (err) {
+        console.error('Erreur fetch:', err);
+        if (registreBody) registreBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-rose-500 text-sm">Erreur: ${err.message}</td></tr>`;
       }
-
-      currentEleves = data || [];
-      classeEffectif.textContent = `${currentEleves.length} élèves inscrits`;
-
-      currentStatuts = {};
-      currentEleves.forEach(e => currentStatuts[e.id] = 'P');
-
-      afficherEleves();
-      mettreAJourCompteurs();
-      statsBar.classList.remove('hidden');
-      actionsFooter.classList.remove('hidden');
-      btnToutPresent.classList.remove('hidden');
     }
 
-    function afficherEleves() {
-      if (currentEleves.length === 0) {
-        elevesContainer.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm">Aucun élève trouvé dans cette classe.</div>';
-        return;
-      }
+    function calculerKPIs() {
+      const seancesIds = new Set(pointagesData.map(p => p.seances?.id).filter(Boolean));
+      let absents = 0, retards = 0, presents = 0, nbAlertes = 0;
+      const elevesVusAujourdhui = new Set();
 
-      elevesContainer.innerHTML = '';
-      currentEleves.forEach((eleve, index) => {
-        const row = document.createElement('div');
-        const statut = currentStatuts[eleve.id] || 'P';
-        const delay = Math.min(index * 25, 400);
+      pointagesData.forEach(p => {
+        if (p.statut === 'A') absents++;
+        else if (p.statut === 'R') retards++;
+        else if (p.statut === 'P') presents++;
 
-        row.className = `animate-row w-full px-4 py-3 sm:px-6 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'} hover:bg-indigo-50/40`;
-        row.style.animationDelay = `${delay}ms`;
+        const eId = p.eleves?.id;
+        if (eId && !elevesVusAujourdhui.has(eId)) {
+          elevesVusAujourdhui.add(eId);
+          if ((compteursAbsencesGlobal[eId] || 0) >= 3) {
+            nbAlertes++;
+          }
+        }
+      });
 
-        row.innerHTML = `
-          <div class="flex items-center gap-3.5 min-w-0">
-            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200/70 text-xs font-bold text-slate-600">
-              ${index + 1}
-            </span>
-            <div class="truncate">
-              <span class="font-bold text-slate-900 text-sm sm:text-base mr-2">${eleve.nom} ${eleve.prenom}</span>
-              <span class="text-xs sm:text-sm text-slate-500 font-bold" dir="rtl">(${eleve.nom_ar || ''} ${eleve.prenom_ar || ''})</span>
-            </div>
-          </div>
+      const total = pointagesData.length;
+      const tauxPresence = total > 0 ? Math.round((presents / total) * 100) : '--';
 
-          <div class="flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0">
-            <button type="button" onclick="changerStatut(${eleve.id}, 'P')" 
-              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'P' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-600/30 scale-102' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 opacity-70'}">
-              <i class="fa-solid fa-check"></i> Présent
-            </button>
+      animerChiffre(document.getElementById('kpi-seances'), seancesIds.size);
+      animerChiffre(document.getElementById('kpi-absents'), absents);
+      animerChiffre(document.getElementById('kpi-retards'), retards);
+      animerChiffre(document.getElementById('kpi-alertes'), nbAlertes);
 
-            <button type="button" onclick="changerStatut(${eleve.id}, 'A')" 
-              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'A' ? 'bg-rose-600 text-white shadow-md ring-2 ring-rose-600/30 scale-102' : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700 opacity-70'}">
-              <i class="fa-solid fa-xmark"></i> Absent
-            </button>
+      const elTaux = document.getElementById('kpi-taux');
+      if (elTaux) elTaux.textContent = tauxPresence !== '--' ? `${tauxPresence}%` : '--%';
+    }
 
-            <button type="button" onclick="changerStatut(${eleve.id}, 'R')" 
-              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'R' ? 'bg-amber-500 text-white shadow-md ring-2 ring-amber-500/30 scale-102' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700 opacity-70'}">
-              <i class="fa-solid fa-clock"></i> Retard
-            </button>
-          </div>
-        `;
-        elevesContainer.appendChild(row);
+    function obtenirDonneesFiltrees() {
+      const classeFiltre = filtreClasse ? filtreClasse.value : 'ALL';
+      const statutFiltre = filtreStatut ? filtreStatut.value : 'A_R';
+
+      return pointagesData.filter(p => {
+        if (classeFiltre !== 'ALL' && p.seances?.classe_id != classeFiltre) return false;
+        
+        const totalAbs = compteursAbsencesGlobal[p.eleves?.id] || 0;
+
+        if (statutFiltre === 'ALERTE_3') return totalAbs >= 3;
+        if (statutFiltre === 'A_R') return p.statut === 'A' || p.statut === 'R';
+        if (statutFiltre === 'A') return p.statut === 'A';
+        if (statutFiltre === 'R') return p.statut === 'R';
+        return true;
       });
     }
 
-    window.changerStatut = function(eleveId, nouveauStatut) {
-      currentStatuts[eleveId] = nouveauStatut;
-      afficherEleves();
-      mettreAJourCompteurs();
+    function renderTableau() {
+      const filtrer = obtenirDonneesFiltrees();
+
+      if (registreCount) registreCount.textContent = `${filtrer.length} enregistrement(s) affiché(s)`;
+
+      if (filtrer.length === 0) {
+        if (registreBody) {
+          registreBody.innerHTML = `
+            <tr>
+              <td colspan="8" class="py-12 text-center text-slate-400">
+                <i class="fa-solid fa-check-circle text-2xl text-emerald-400 mb-2"></i>
+                <p>Aucun enregistrement correspondant aux critères.</p>
+              </td>
+            </tr>`;
+        }
+        return;
+      }
+
+      if (registreBody) {
+        registreBody.innerHTML = '';
+        filtrer.forEach((item, index) => {
+          const eleve = item.eleves || {};
+          const seance = item.seances || {};
+          const classe = seance.classes || {};
+
+          const totalAbs = compteursAbsencesGlobal[eleve.id] || 0;
+          const estEnAlerte = totalAbs >= 3;
+
+          let badgeStatut = '';
+          if (item.statut === 'A') {
+            badgeStatut = '<span class="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-xmark"></i> Absent</span>';
+          } else if (item.statut === 'R') {
+            badgeStatut = '<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> Retard</span>';
+          } else {
+            badgeStatut = '<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-bold text-xs inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> Présent</span>';
+          }
+
+          const badgeJustifie = item.justifie 
+            ? `<span class="text-xs text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 font-bold">${item.motif_justification || 'Justifié'}</span>` 
+            : `<span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Non justifié</span>`;
+
+          const row = document.createElement('tr');
+          const delay = Math.min(index * 20, 350);
+
+          const bgLigne = estEnAlerte 
+            ? 'bg-rose-50/90 border-l-4 border-l-rose-600 hover:bg-rose-100/70' 
+            : (index % 2 === 0 ? 'bg-white hover:bg-slate-50' : 'bg-slate-50/60 hover:bg-slate-50');
+
+          row.className = `animate-table-row ${bgLigne} transition`;
+          row.style.animationDelay = `${delay}ms`;
+
+          const signalAlerteHtml = estEnAlerte ? `
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-sm shadow-rose-600/40 badge-alerte-rouge mt-0.5">
+              <i class="fa-solid fa-bell"></i> 🚨 ALERTE : ${totalAbs} ABSENCES
+            </span>
+          ` : '';
+
+          row.innerHTML = `
+            <td class="py-3 px-3 text-center font-bold text-slate-400 text-xs">${index + 1}</td>
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-2">
+                <div>
+                  <span class="font-bold text-slate-900 ${estEnAlerte ? 'text-rose-950 font-black' : ''}">
+                    ${eleve.nom || ''} ${eleve.prenom || ''}
+                  </span>
+                  <span class="text-xs text-slate-500 font-bold ml-1.5" dir="rtl">(${eleve.nom_ar || ''} ${eleve.prenom_ar || ''})</span>
+                  <div>${signalAlerteHtml}</div>
+                </div>
+              </div>
+            </td>
+            <td class="py-3 px-3">
+              <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg text-xs font-bold border border-indigo-100">
+                ${classe.nom_court || 'N/A'}
+              </span>
+            </td>
+            <td class="py-3 px-3 text-xs text-slate-600">
+              <div class="font-bold text-slate-800">${seance.matiere || 'Cours'}</div>
+              <div class="text-slate-400 font-mono mt-0.5">${seance.heure_debut?.substring(0,5)} - ${seance.heure_fin?.substring(0,5)}</div>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-black ${estEnAlerte ? 'bg-rose-200 text-rose-900 border border-rose-300' : 'bg-slate-100 text-slate-700'}">
+                ${totalAbs}
+              </span>
+            </td>
+            <td class="py-3 px-3 text-center">${badgeStatut}</td>
+            <td class="py-3 px-3 text-center">${badgeJustifie}</td>
+            <td class="py-3 px-3 text-center">
+              <div class="flex items-center justify-center gap-1.5">
+                <button onclick="ouvrirModalModifier(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold p-2 rounded-lg transition active:scale-95 cursor-pointer" title="Modifier le statut">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                
+                <button onclick="imprimerBillet('${eleve.nom || ''}', '${eleve.prenom || ''}', '${eleve.nom_ar || ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court || ''}', '${seance.date_cours || ''}', '${seance.heure_debut || ''}', '${item.statut}', '${item.motif_justification || ''}')" 
+                  class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition active:scale-95 cursor-pointer" title="Billet">
+                  <i class="fa-solid fa-print"></i> Billet
+                </button>
+
+                ${estEnAlerte ? `
+                  <button onclick="imprimerConvocationParent('${eleve.nom \vert{}\vert{} ''}', '${eleve.prenom || ''}', '${eleve.nom_ar \vert{}\vert{} ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court \vert{}\vert{} ''}',${totalAbs})" 
+                    class="text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold px-2.5 py-1.5 rounded-lg transition active:scale-95 shadow-sm cursor-pointer" title="Imprimer convocation tuteur">
+                    <i class="fa-solid fa-envelope-open-text"></i> Convocation
+                  </button>
+                ` : ''}
+
+                <button onclick="supprimerPointage(${item.id})" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold p-2 rounded-lg transition active:scale-95 cursor-pointer" title="Supprimer">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          registreBody.appendChild(row);
+        });
+      }
+    }
+
+    // Modal Modifier
+    window.ouvrirModalModifier = function(pointageId) {
+      const item = pointagesData.find(p => p.id === pointageId);
+      if (!item) return;
+
+      const eleve = item.eleves || {};
+      document.getElementById('edit-pointage-id').value = item.id;
+      document.getElementById('edit-eleve-nom').textContent = `${eleve.nom || ''} ${eleve.prenom || ''} (${eleve.nom_ar || ''} ${eleve.prenom_ar || ''})`;
+      document.getElementById('edit-statut').value = item.statut || 'A';
+      
+      if (item.justifie) {
+        document.getElementById('edit-justifie-oui').checked = true;
+      } else {
+        document.getElementById('edit-justifie-non').checked = true;
+      }
+
+      document.getElementById('edit-motif').value = item.motif_justification || '';
+
+      const modal = document.getElementById('modal-modifier');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     };
 
-    if (btnToutPresent) {
-      btnToutPresent.addEventListener('click', () => {
-        currentEleves.forEach(e => currentStatuts[e.id] = 'P');
-        afficherEleves();
-        mettreAJourCompteurs();
-        afficherToast('Succès', 'Tous les élèves sont marqués présents.');
-      });
-    }
+    window.fermerModalModifier = function() {
+      const modal = document.getElementById('modal-modifier');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    };
 
-    function mettreAJourCompteurs() {
-      let p = 0, a = 0, r = 0;
-      Object.values(currentStatuts).forEach(st => {
-        if (st === 'P') p++;
-        else if (st === 'A') a++;
-        else if (st === 'R') r++;
-      });
-      animerChiffre(document.getElementById('count-presents'), p);
-      animerChiffre(document.getElementById('count-absents'), a);
-      animerChiffre(document.getElementById('count-retards'), r);
-    }
+    window.enregistrerModificationPointage = async function() {
+      const pointageId = document.getElementById('edit-pointage-id').value;
+      const statut = document.getElementById('edit-statut').value;
+      const justifie = document.getElementById('edit-justifie-oui').checked;
+      const motif = document.getElementById('edit-motif').value.trim();
 
-    if (btnValider) {
-      btnValider.addEventListener('click', async () => {
-        const classeId = selectClasse.value;
-        if (!classeId || currentEleves.length === 0) {
-          afficherToast('Attention', 'Veuillez sélectionner une classe valide.');
+      if (!pointageId) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('pointages')
+          .update({
+            statut: statut,
+            justifie: justifie,
+            motif_justification: motif || null
+          })
+          .eq('id', pointageId);
+
+        if (error) throw error;
+
+        fermerModalModifier();
+        await fetchDonnees();
+      } catch (err) {
+        alert("Erreur lors de la modification : " + err.message);
+      }
+    };
+
+    window.supprimerPointage = async function(pointageId) {
+      const item = pointagesData.find(p => p.id === pointageId);
+      const nomEleve = item?.eleves ? `${item.eleves.nom} ${item.eleves.prenom}` : "cet enregistrement";
+
+      if (!confirm(`Supprimer le pointage de ${nomEleve} ?`)) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('pointages')
+          .delete()
+          .eq('id', pointageId);
+
+        if (error) throw error;
+        await fetchDonnees();
+      } catch (err) {
+        alert("Erreur: " + err.message);
+      }
+    };
+
+    // Impression Convocation Parent
+    window.imprimerConvocationParent = function(nom, prenom, nomAr, prenomAr, classe, totalAbs) {
+      const zone = document.getElementById('convocation-details');
+      zone.innerHTML = `
+        <div class="p-3 bg-slate-50 border border-slate-300 rounded-xl mb-4 text-xs">
+          <p><strong>Élève / التلميذ(ة) :</strong> ${nom} ${prenom} (${nomAr} ${prenomAr})</p>
+          <p><strong>Division / القسم :</strong> ${classe}</p>
+          <p class="text-rose-700 font-bold mt-1"><strong>Nombre total d'absences constatées / مجموع الغيابات المسجلة :</strong> ${totalAbs} حصص غياب</p>
+        </div>
+
+        <p class="text-justify text-xs leading-relaxed" dir="rtl">
+          إلى السيد(ة) ولي أمر التلميذ(ة) المحترم(ة) :<br>
+          نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجّل(ت) غيابات متكررة تجاوزت الحد القانوني المسموح به (<span class="font-bold text-rose-700">${totalAbs} غيابات</span>). 
+          وعليه، يُرجى منكم الحضور شخصياً إلى مقر ثانوية شعبان أعمر (مكتب مستشار التربية) في أقرب الآجال لتسوية وضعية التمدرس ولتبرير هذه الغيابات قبل اتخاذ الإجراءات التأديبية المنصوص عليها قانوناً.
+        </p>
+      `;
+
+      document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('fr-DZ', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      });
+
+      document.body.classList.remove('print-rapport', 'print-billet');
+      document.body.classList.add('print-convocation');
+      window.print();
+    };
+
+    // Export Excel
+    if (btnExportExcel) {
+      btnExportExcel.addEventListener('click', () => {
+        const donneesAExporter = obtenirDonneesFiltrees();
+        if (donneesAExporter.length === 0) {
+          alert('Aucune donnée à exporter.');
           return;
         }
 
-        btnValider.disabled = true;
-        btnValider.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Transmission en cours...`;
+        const rowsExcel = donneesAExporter.map((item, index) => {
+          const eleve = item.eleves || {};
+          const seance = item.seances || {};
+          const classe = seance.classes || {};
+          const totalAbs = compteursAbsencesGlobal[eleve.id] || 0;
 
-        try {
-          const horaire = selectHoraire.value.split('-');
-          const heureDebut = horaire[0] + ':00';
-          const heureFin = horaire[1] + ':00';
-          const today = new Date().toISOString().split('T')[0];
+          let statutTexte = item.statut === 'A' ? 'Absent' : (item.statut === 'R' ? 'Retard' : 'Présent');
 
-          const { data: seance, error: seanceErr } = await supabaseClient
-            .from('seances')
-            .insert({
-              classe_id: classeId,
-              matiere: selectMatiere.value,
-              date_cours: today,
-              heure_debut: heureDebut,
-              heure_fin: heureFin,
-              appel_valide: true
-            })
-            .select()
-            .single();
+          return {
+            "N°": index + 1,
+            "Date": seance.date_cours || '',
+            "Séance": `${seance.heure_debut?.substring(0,5)} - ${seance.heure_fin?.substring(0,5)}`,
+            "Classe": classe.nom_court || '',
+            "Nom": eleve.nom || '',
+            "Prénom": eleve.prenom || '',
+            "اللقب": eleve.nom_ar || '',
+            "الاسم": eleve.prenom_ar || '',
+            "Matière": seance.matiere || '',
+            "Statut": statutTexte,
+            "Cumul Absences": totalAbs,
+            "Alerte (≥ 3 Abs)": totalAbs >= 3 ? "OUI / تنبيه غياب" : "NON",
+            "Justifié": item.justifie ? "OUI" : "NON",
+            "Motif": item.motif_justification || ''
+          };
+        });
 
-          if (seanceErr) throw seanceErr;
-
-          const pointagesRows = currentEleves.map(e => ({
-            seance_id: seance.id,
-            eleve_id: e.id,
-            statut: currentStatuts[e.id] || 'P'
-          }));
-
-          const { error: ptError } = await supabaseClient
-            .from('pointages')
-            .insert(pointagesRows);
-
-          if (ptError) throw ptError;
-
-          afficherToast('Appel validé !', 'Transmis avec succès à la vie scolaire.');
-        } catch (err) {
-          console.error('Erreur validation :', err);
-          afficherToast('Erreur', err.message);
-        } finally {
-          btnValider.disabled = false;
-          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel à la vie scolaire`;
-        }
+        const feuille = XLSX.utils.json_to_sheet(rowsExcel);
+        const classeur = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(classeur, feuille, "Registre_Absences");
+        XLSX.writeFile(classeur, `Absences_Alerte_${filtreDate.value || 'export'}.xlsx`);
       });
     }
 
-    if (selectClasse) {
-      selectClasse.addEventListener('change', (e) => chargerEleves(e.target.value));
+    // Impression Rapport Censeur
+    if (btnImprimerRapport) {
+      btnImprimerRapport.addEventListener('click', () => {
+        const dateChoisie = filtreDate.value;
+        if (!dateChoisie) return;
+
+        const incidentsJour = pointagesData.filter(p => p.statut === 'A' || p.statut === 'R');
+
+        document.getElementById('rapport-date').textContent = new Date(dateChoisie).toLocaleDateString('fr-DZ', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        document.getElementById('rapport-kpi-seances').textContent = document.getElementById('kpi-seances').textContent;
+        document.getElementById('rapport-kpi-absents').textContent = document.getElementById('kpi-absents').textContent;
+        document.getElementById('rapport-kpi-retards').textContent = document.getElementById('kpi-retards').textContent;
+        document.getElementById('rapport-kpi-taux').textContent = document.getElementById('kpi-taux').textContent;
+
+        const tbody = document.getElementById('rapport-table-body');
+        tbody.innerHTML = '';
+
+        if (incidentsJour.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-500 font-bold">Néant / لا توجد أي غيابات مسجلة لهذا اليوم.</td></tr>`;
+        } else {
+          incidentsJour.forEach((item, idx) => {
+            const eleve = item.eleves || {};
+            const seance = item.seances || {};
+            const classe = seance.classes || {};
+            const statutLabel = item.statut === 'A' ? 'غائب / Absent' : 'متأخر / Retard';
+            const motifLabel = item.justifie ? (item.motif_justification || 'مبرر') : 'غير مبرر';
+
+            const tr = document.createElement('tr');
+            tr.className = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+            tr.innerHTML = `
+              <td class="py-1 px-2 text-center font-bold border-r border-slate-300">${idx + 1}</td>
+              <td class="py-1 px-2 border-r border-slate-300 font-semibold">
+                ${eleve.nom || ''} ${eleve.prenom || ''} <span class="text-slate-600 font-bold" dir="rtl">(${eleve.nom_ar || ''} ${eleve.prenom_ar || ''})</span>
+              </td>
+              <td class="py-1 px-2 border-r border-slate-300 font-bold">${classe.nom_court || ''}</td>
+              <td class="py-1 px-2 border-r border-slate-300">${seance.matiere || ''} (${seance.heure_debut?.substring(0,5)})</td>
+              <td class="py-1 px-2 text-center border-r border-slate-300 font-bold text-rose-700">${statutLabel}</td>
+              <td class="py-1 px-2 border-r border-slate-300 text-[11px]">${motifLabel}</td>
+              <td class="py-1 px-2 text-center border-slate-300"></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        document.body.classList.remove('print-billet', 'print-convocation');
+        document.body.classList.add('print-rapport');
+        window.print();
+      });
     }
+
+    // Impression Billet
+    window.imprimerBillet = function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, motif) {
+      const typeLabel = statut === 'A' ? 'غياب / Absence' : 'تأخر / Retard';
+      const zoneDetails = document.getElementById('billet-details');
+      
+      zoneDetails.innerHTML = `
+        <div class="grid grid-cols-2 gap-2 border-b pb-2">
+          <p><strong>Nom & Prénom :</strong> ${nom} ${prenom}</p>
+          <p class="text-right font-bold" dir="rtl"><strong>اللقب والاسم :</strong> ${nomAr} ${prenomAr}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 border-b pb-2">
+          <p><strong>Classe / القسم :</strong> <span class="font-bold">${classe}</span></p>
+          <p><strong>Nature / الطبيعة :</strong> <span class="font-bold text-rose-600">${typeLabel}</span></p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 border-b pb-2">
+          <p><strong>Date / التاريخ :</strong> ${date}</p>
+          <p><strong>Séance / الحصة :</strong> ${heure.substring(0,5)}</p>
+        </div>
+        <div class="pt-1">
+          <p><strong>Motif / المبرر :</strong> ${motif || 'مقبول(ة) بموجب هذا السند (Admis sous réserve)'}</p>
+        </div>
+        <p class="text-xs text-slate-500 italic mt-2">يُسلّم هذا السند للأستاذ قبل الدخول إلى قاعة التدريس.</p>
+      `;
+
+      document.getElementById('billet-date-emission').textContent = new Date().toLocaleDateString('fr-DZ', {
+        year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+
+      document.body.classList.remove('print-rapport', 'print-convocation');
+      document.body.classList.add('print-billet');
+      window.print();
+    };
+
+    if (filtreDate) filtreDate.addEventListener('change', fetchDonnees);
+    if (filtreClasse) filtreClasse.addEventListener('change', renderTableau);
+    if (filtreStatut) filtreStatut.addEventListener('change', renderTableau);
+    if (btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
   </script>
 </body>
 </html>
