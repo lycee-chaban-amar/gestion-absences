@@ -67,13 +67,13 @@
         </div>
       </div>
       <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
-        <button onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Annuler</button>
-        <button onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold">Enregistrer</button>
+        <button onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">Annuler</button>
+        <button onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer">Enregistrer</button>
       </div>
     </div>
   </div>
 
-  <!-- Écran PIN Sécurisé Superviseur -->
+  <!-- Écran PIN Sécurisé Superviseur (Base64) -->
   <div id="pin-screen" style="position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
     <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div>
@@ -84,7 +84,7 @@
           <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl outline-none focus:border-indigo-600" />
           <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p>
         </div>
-        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg transition">Déverrouiller</button>
+        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer">Déverrouiller</button>
       </div>
     </div>
   </div>
@@ -96,8 +96,8 @@
         <div><h1 class="text-lg font-bold">Espace Vie Scolaire <span class="text-indigo-400 mx-1">|</span> <span dir="rtl">فضاء الاستشارة</span></h1><p class="text-xs text-slate-400">ثانوية شعبان أعمر أوقاس</p></div>
       </div>
       <div class="flex items-center gap-3">
-        <a href="index.html" class="text-xs font-semibold text-slate-300 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700"><i class="fa-solid fa-chalkboard-user mr-1"></i>Vue Enseignant</a>
-        <button id="btn-lock" class="text-xs font-semibold text-rose-300 bg-slate-800 px-3 py-2 rounded-xl border border-slate-700"><i class="fa-solid fa-lock mr-1"></i>Verrouiller</button>
+        <a href="index.html" class="text-xs font-semibold text-slate-300 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 cursor-pointer"><i class="fa-solid fa-chalkboard-user mr-1"></i>Vue Enseignant</a>
+        <button id="btn-lock" class="text-xs font-semibold text-rose-300 bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 cursor-pointer"><i class="fa-solid fa-lock mr-1"></i>Verrouiller</button>
       </div>
     </div>
   </header>
@@ -121,8 +121,8 @@
         <div><label class="block text-xs font-bold mb-1">Statut</label><select id="filtre-statut" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"><option value="A_R">Absences & Retards</option><option value="ALERTE_3">🚨 En alerte (3+ abs)</option><option value="A">Absents</option><option value="R">Retards</option><option value="ALL">Tout</option></select></div>
       </div>
       <div class="flex gap-2 items-end">
-        <button id="btn-export-excel" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-700"><i class="fa-solid fa-file-excel mr-2"></i>Exporter</button>
-        <button id="btn-imprimer-rapport" class="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700"><i class="fa-solid fa-print mr-2"></i>Rapport</button>
+        <button id="btn-export-excel" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-700 cursor-pointer"><i class="fa-solid fa-file-excel mr-2"></i>Exporter</button>
+        <button id="btn-imprimer-rapport" class="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 cursor-pointer"><i class="fa-solid fa-print mr-2"></i>Rapport</button>
       </div>
     </div>
 
@@ -161,13 +161,8 @@
   </div>
 
   <script>
-    // 1. SÉCURITÉ INFAILLIBLE : Hachage Bitwise (Fonctionne SANS crypto.subtle ni HTTPS)
-    const EMPREINTE_OFFICIELLE = 2076043477; // Correspond à "2626"
-    function hashBitwise(str) {
-      let h = 2166136261 >>> 0;
-      for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-      return h;
-    }
+    // CODE PIN MASQUÉ ET FIABLE (Base64) - "2626"
+    const PIN_MASQUE = "MjYyNg==";
 
     function debloquerSuperviseur() {
       const p = document.getElementById('pin-screen'); if(p) p.remove();
@@ -177,16 +172,19 @@
 
     function validerPinDirect() {
       const input = document.getElementById('input-pin');
+      const err = document.getElementById('pin-error');
+      const card = document.getElementById('pin-card');
       const val = input ? input.value.trim() : '';
+      
       if(val.length < 4) return;
       
-      if(hashBitwise(val) === EMPREINTE_OFFICIELLE) {
+      if(val === atob(PIN_MASQUE)) {
+        if(err) err.classList.add('hidden');
         debloquerSuperviseur();
       } else {
-        document.getElementById('pin-error').classList.remove('hidden');
-        document.getElementById('pin-card').classList.add('shake-error');
-        setTimeout(() => document.getElementById('pin-card').classList.remove('shake-error'), 400);
-        input.value = ''; input.focus();
+        if(err) err.classList.remove('hidden');
+        if(card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
+        if(input) { input.value = ''; input.focus(); }
       }
     }
 
@@ -196,10 +194,11 @@
       inputPin.oninput = () => { if(inputPin.value.length === 4) validerPinDirect(); };
       inputPin.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } };
     }
-    if(sessionStorage.getItem('superviseur_auth') === 'true') { const p=document.getElementById('pin-screen'); if(p)p.remove(); setTimeout(initialiserApplication, 50); }
+    
+    if(sessionStorage.getItem('superviseur_auth') === 'true') { debloquerSuperviseur(); }
     if(document.getElementById('btn-lock')) document.getElementById('btn-lock').onclick = () => { sessionStorage.removeItem('superviseur_auth'); location.reload(); };
 
-    // 2. SUPABASE
+    // SUPABASE
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -267,15 +266,15 @@
         const bg = al ? 'bg-rose-50 border-l-4 border-rose-500' : (i%2===0?'bg-white':'bg-slate-50');
         
         registreBody.innerHTML += `<tr class="${bg}"><td class="py-2 px-3 text-center">${i+1}</td>
-          <td class="py-2 px-3"><div class="font-bold ${al?'text-rose-700':''}">${el.nom} ${el.prenom}</div>${al?`<span class="badge-alerte-rouge bg-rose-600 text-white text-[10px] px-2 rounded-full">🚨 ${tot} ABSENCES</span>`:''}</td>
+          <td class="py-2 px-3"><div class="font-bold ${al?'text-rose-700':''}">${el.nom} ${el.prenom}</div>${al?`<span class="badge-alerte-rouge bg-rose-600 text-white text-[10px] px-2 rounded-full mt-1 inline-block">🚨 ${tot} ABSENCES</span>`:''}</td>
           <td class="py-2 px-3 font-bold">${cl.nom_court}</td><td class="py-2 px-3 text-xs">${sc.matiere}<br>${sc.heure_debut?.substring(0,5)}</td>
           <td class="py-2 px-3 text-center font-bold">${tot}</td><td class="py-2 px-3 text-center">${stHtml}</td>
           <td class="py-2 px-3 text-center text-xs">${pt.justifie?'Justifié':'Non justifié'}</td>
           <td class="py-2 px-3 text-center flex justify-center gap-1">
-            <button onclick="ouvrirModalModifier('${pt.id}')" class="bg-indigo-100 text-indigo-700 p-1.5 rounded"><i class="fa-solid fa-pen"></i></button>
-            <button onclick="imprimerBillet('${el.nom}','${el.prenom}','${cl.nom_court}','${sc.date_cours}','${sc.heure_debut}','${pt.statut}')" class="bg-slate-200 p-1.5 rounded"><i class="fa-solid fa-print"></i></button>
-            ${al ? `<button onclick="imprimerConvocation('${el.nom}','${el.prenom}','${cl.nom_court}',${tot})" class="bg-rose-600 text-white p-1.5 rounded"><i class="fa-solid fa-envelope"></i></button>` : ''}
-            <button onclick="supprimerPointage('${pt.id}')" class="bg-rose-100 text-rose-700 p-1.5 rounded"><i class="fa-solid fa-trash"></i></button>
+            <button onclick="ouvrirModalModifier('${pt.id}')" class="bg-indigo-100 text-indigo-700 p-1.5 rounded cursor-pointer"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="imprimerBillet('${el.nom}','${el.prenom}','${cl.nom_court}','${sc.date_cours}','${sc.heure_debut}','${pt.statut}')" class="bg-slate-200 p-1.5 rounded cursor-pointer"><i class="fa-solid fa-print"></i></button>
+            ${al ? `<button onclick="imprimerConvocation('${el.nom}','${el.prenom}','${cl.nom_court}',${tot})" class="bg-rose-600 text-white p-1.5 rounded cursor-pointer"><i class="fa-solid fa-envelope"></i></button>` : ''}
+            <button onclick="supprimerPointage('${pt.id}')" class="bg-rose-100 text-rose-700 p-1.5 rounded cursor-pointer"><i class="fa-solid fa-trash"></i></button>
           </td></tr>`;
       });
     }
