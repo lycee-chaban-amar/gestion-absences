@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Superviseur - ثانوية شعبان أعمر أوقاس</title>
   
-  <!-- PWA & Métadonnées -->
-  <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135755.png">
 
@@ -20,7 +18,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <!-- Google Fonts pour l'Arabe (Cairo) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   
   <style>
@@ -34,14 +32,8 @@
     }
 
     @keyframes slideUpFade {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .animate-table-row {
       animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -85,6 +77,31 @@
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- ======================================================== -->
+  <!-- ÉCRAN DE VERROUILLAGE PIN SÉCURISÉ (2626) -->
+  <!-- ======================================================== -->
+  <div id="pin-screen" style="position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
+      <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
+      
+      <div class="space-y-4">
+        <div>
+          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus
+            class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
+          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
+        </div>
+        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
+          Déverrouiller / الدخول
+        </button>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au Conseiller d'Éducation et à l'Administration</p>
+    </div>
+  </div>
 
   <!-- Modal Modifier Pointage -->
   <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
@@ -140,29 +157,6 @@
           Enregistrer / حفظ
         </button>
       </div>
-    </div>
-  </div>
-
-  <!-- Écran de Verrouillage PIN Sécurisé (2626) -->
-  <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
-      <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-        <i class="fa-solid fa-shield-halved"></i>
-      </div>
-      <h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
-      
-      <div class="space-y-4">
-        <div>
-          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric"
-            class="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
-          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
-        </div>
-        <button id="btn-valider-pin" type="button" onclick="window.deverrouillerDirect()" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
-          Déverrouiller / الدخول
-        </button>
-      </div>
-      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au Conseiller d'Éducation et à l'Administration</p>
     </div>
   </div>
 
@@ -236,6 +230,7 @@
         <p class="text-[11px] text-slate-400 mt-1">En retard / متأخر</p>
       </div>
 
+      <!-- CARTE ALERTE (≥ 3 Absences) -->
       <div class="bg-rose-50/70 p-4 rounded-2xl shadow-sm border-2 border-rose-300">
         <div class="flex items-center justify-between text-rose-700 mb-1">
           <span class="text-xs font-extrabold uppercase tracking-wider">Alerte (≥ 3 Abs)</span>
@@ -456,10 +451,83 @@
     </div>
   </div>
 
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT PRINCIPAL : ROBUSTE & SÉCURISÉ -->
+  <!-- ======================================================== -->
   <script>
-    // ========================================================
-    // 1. SUPABASE CLIENT
-    // ========================================================
+    // 1. GESTION DU CODE PIN (2626) - AUCUN BLOCAGE POSSIBLE
+    const CODE_PIN_OFFICIEL = "2626";
+
+    function deverrouillerPage() {
+      const pinScreen = document.getElementById('pin-screen');
+      if (pinScreen) {
+        pinScreen.style.display = 'none';
+      }
+      sessionStorage.setItem('superviseur_auth', 'true');
+      initialiserApplication();
+    }
+
+    function verifierPinManuel() {
+      const input = document.getElementById('input-pin');
+      const err = document.getElementById('pin-error');
+      const card = document.getElementById('pin-card');
+      const val = input ? input.value.trim() : '';
+
+      if (val === CODE_PIN_OFFICIEL) {
+        if (err) err.classList.add('hidden');
+        deverrouillerPage();
+      } else {
+        if (err) err.classList.remove('hidden');
+        if (card) {
+          card.classList.remove('shake-error');
+          void card.offsetWidth;
+          card.classList.add('shake-error');
+        }
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+      }
+    }
+
+    // Écouteurs PIN directs
+    const inputPin = document.getElementById('input-pin');
+    const btnPin = document.getElementById('btn-valider-pin');
+
+    if (btnPin) {
+      btnPin.onclick = verifierPinManuel;
+    }
+
+    if (inputPin) {
+      inputPin.oninput = function() {
+        if (this.value.trim().length === 4) {
+          verifierPinManuel();
+        }
+      };
+      inputPin.onkeydown = function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          verifierPinManuel();
+        }
+      };
+    }
+
+    // Si déjà authentifié
+    if (sessionStorage.getItem('superviseur_auth') === 'true') {
+      const pinScreen = document.getElementById('pin-screen');
+      if (pinScreen) pinScreen.style.display = 'none';
+    }
+
+    // Verrouillage
+    const btnLock = document.getElementById('btn-lock');
+    if (btnLock) {
+      btnLock.onclick = function() {
+        sessionStorage.removeItem('superviseur_auth');
+        location.reload();
+      };
+    }
+
+    // 2. SUPABASE INITIALISATION
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -472,7 +540,7 @@
       if (!element) return;
       const depart = parseInt(element.textContent) || 0;
       if (depart === valeurCible) return;
-      const duree = 300;
+      const duree = 250;
       const debut = performance.now();
 
       function frame(temps) {
@@ -484,86 +552,7 @@
       requestAnimationFrame(frame);
     }
 
-    // ========================================================
-    // 2. DÉVERROUILLAGE SÉCURISÉ & IMMÉDIAT (2626)
-    // ========================================================
-    const CODE_PIN_CORRECT = "2626";
-
-    function cacherEcranPin() {
-      const pinScreen = document.getElementById('pin-screen');
-      if (pinScreen) {
-        pinScreen.remove(); // Suppression directe de l'élément pour supprimer tout blocage
-      }
-    }
-
-    function verifierSession() {
-      if (sessionStorage.getItem('superviseur_auth') === 'true') {
-        cacherEcranPin();
-        setTimeout(initialiserApplication, 50);
-      } else {
-        const input = document.getElementById('input-pin');
-        if (input) {
-          input.value = '';
-          setTimeout(() => input.focus(), 150);
-        }
-      }
-    }
-
-    window.deverrouillerDirect = function() {
-      const input = document.getElementById('input-pin');
-      const pinError = document.getElementById('pin-error');
-      const pinCard = document.getElementById('pin-card');
-      const pin = input ? input.value.trim() : '';
-
-      if (pin === CODE_PIN_CORRECT) {
-        sessionStorage.setItem('superviseur_auth', 'true');
-        cacherEcranPin();
-        setTimeout(initialiserApplication, 50);
-      } else {
-        if (pinError) pinError.classList.remove('hidden');
-        if (pinCard) {
-          pinCard.classList.remove('shake-error');
-          void pinCard.offsetWidth;
-          pinCard.classList.add('shake-error');
-        }
-        if (input) {
-          input.value = '';
-          input.focus();
-        }
-      }
-    };
-
-    document.addEventListener('DOMContentLoaded', () => {
-      verifierSession();
-
-      const input = document.getElementById('input-pin');
-      if (input) {
-        input.addEventListener('input', () => {
-          if (input.value.trim().length === 4) {
-            window.deverrouillerDirect();
-          }
-        });
-
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            window.deverrouillerDirect();
-          }
-        });
-      }
-
-      const btnLock = document.getElementById('btn-lock');
-      if (btnLock) {
-        btnLock.addEventListener('click', () => {
-          sessionStorage.removeItem('superviseur_auth');
-          location.reload();
-        });
-      }
-    });
-
-    // ========================================================
-    // 3. LOGIQUE MÉTIER & CHARGEMENT
-    // ========================================================
+    // 3. LOGIQUE MÉTIER
     const filtreDate = document.getElementById('filtre-date');
     const filtreClasse = document.getElementById('filtre-classe');
     const filtreStatut = document.getElementById('filtre-statut');
@@ -576,9 +565,12 @@
     if (filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
     async function initialiserApplication() {
-      await loadClasses();
-      await fetchDonnees();
-      setupRealtime();
+      try {
+        await loadClasses();
+        await fetchDonnees();
+      } catch (err) {
+        console.error("Initialisation error:", err);
+      }
     }
 
     async function chargerCumulToutesAbsences() {
@@ -694,7 +686,6 @@
     function calculerKPIs() {
       const seancesIds = new Set(pointagesData.map(p => p.seances?.id).filter(Boolean));
       let absents = 0, retards = 0, presents = 0, nbAlertes = 0;
-
       const elevesVusAujourdhui = new Set();
 
       pointagesData.forEach(p => {
@@ -1083,14 +1074,6 @@
       document.body.classList.add('print-billet');
       window.print();
     };
-
-    function setupRealtime() {
-      supabaseClient
-        .channel('superviseur-realtime')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pointages' }, () => fetchDonnees())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'seances' }, () => fetchDonnees())
-        .subscribe();
-    }
 
     if (filtreDate) filtreDate.addEventListener('change', fetchDonnees);
     if (filtreClasse) filtreClasse.addEventListener('change', renderTableau);
