@@ -1,31 +1,31 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<html lang="fr" dir="ltr" id="doc-root">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feuille d'Appel - ثانوية شعبان أعمر أوقاس</title>
+  <title>Superviseur - ثانوية شعبان أعمر أوقاس</title>
   
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#4338ca">
+  <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135755.png">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-
+  
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     button, select, input { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
     button:active { transform: scale(0.96); }
 
     @keyframes slideUpFade {
-      from { opacity: 0; transform: translateY(14px); }
+      from { opacity: 0; transform: translateY(12px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .animate-row { animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-table-row { animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
     @keyframes shakeBox {
       0%, 100% { transform: translateX(0); }
@@ -38,554 +38,111 @@
       box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important;
     }
 
-    #toast-notification {
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+    @keyframes alertPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.85; }
+    }
+    .badge-alerte-rouge { animation: alertPulse 1.4s infinite ease-in-out; }
+
+    @media print {
+      body * { visibility: hidden; }
+      body.print-billet #zone-impression-billet, 
+      body.print-billet #zone-impression-billet * { visibility: visible; }
+      body.print-billet #zone-impression-billet { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+
+      body.print-convocation #zone-impression-convocation, 
+      body.print-convocation #zone-impression-convocation * { visibility: visible; }
+      body.print-convocation #zone-impression-convocation { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+
+      body.print-rapport #zone-impression-rapport, 
+      body.print-rapport #zone-impression-rapport * { visibility: visible; }
+      body.print-rapport #zone-impression-rapport { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+
+      @page { size: A4 portrait; margin: 15mm; }
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- Toast Notification -->
-  <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
-    <div class="bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md">
-      <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base">
-        <i class="fa-solid fa-check"></i>
+  <!-- Modal Modifier Pointage -->
+  <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+          <span>Modifier l'enregistrement / تعديل الحالة</span>
+        </h3>
+        <button onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
       </div>
-      <div>
-        <h4 class="text-sm font-bold text-white" id="toast-titre">Opération réussie</h4>
-        <p class="text-xs text-slate-300" id="toast-message">Les données ont été envoyées.</p>
+
+      <input type="hidden" id="edit-pointage-id" />
+
+      <div class="space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Élève / التلميذ(ة)</label>
+          <div id="edit-eleve-nom" class="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Statut de présence / الحالة</label>
+          <select id="edit-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="P">✅ Présent / حاضر (Annuler l'absence)</option>
+            <option value="A">❌ Absent / غائب</option>
+            <option value="R">⏳ Retard / متأخر</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Justification / التبرير</label>
+          <div class="flex items-center gap-4 mb-2">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-700">
+              <input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600 focus:ring-indigo-500" />
+              <span>Non justifié / غير مبرر</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700">
+              <input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600 focus:ring-emerald-500" />
+              <span>Justifié / مبرر</span>
+            </label>
+          </div>
+          <input type="text" id="edit-motif" placeholder="Motif (ex: Certificat médical, Billet...)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
+        <button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
+          Annuler
+        </button>
+        <button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 cursor-pointer">
+          Enregistrer / حفظ
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Écran PIN Enseignant Sécurisé (SHA-256) -->
-  <div id="pin-screen-prof" style="position: fixed; inset: 0; z-index: 9999; background: rgba(30, 27, 75, 0.96); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
-    <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 transition-transform">
+  <!-- Écran PIN Sécurisé (Code non visible en clair, 100% autonome) -->
+  <div id="pin-screen" style="position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-        <i class="fa-solid fa-chalkboard-user"></i>
+        <i class="fa-solid fa-shield-halved"></i>
       </div>
-      <h2 class="text-xl font-extrabold text-slate-900">Espace Enseignant</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال رمز الأستاذ</p>
+      <h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
       
       <div class="space-y-4">
         <div>
-          <input type="password" id="input-pin-prof" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus
+          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus
             class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
-          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
+          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
         </div>
-        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
-          Ouvrir la feuille d'appel / دخول
+        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
+          Déverrouiller / الدخول
         </button>
       </div>
-      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au corps professoral du lycée</p>
+      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au Conseiller d'Éducation et à l'Administration</p>
     </div>
   </div>
 
   <!-- Header -->
-  <header class="bg-indigo-700 text-white shadow-md">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="flex items-center gap-3">
-        <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
-        <div>
-          <h1 class="text-xl font-bold tracking-tight">Feuille d'Appel Numérique</h1>
-          <p class="text-xs text-indigo-200">ثانوية شعبان أعمر أوقاس - تسجيل الحضور والغياب</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="btn-lock-prof" type="button" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-indigo-600 cursor-pointer">
-          <i class="fa-solid fa-lock text-amber-300"></i>
-          <span>Verrouiller</span>
-        </button>
-        <div id="conn-badge" class="flex items-center gap-2 bg-indigo-800/80 px-3 py-1.5 rounded-full text-xs font-medium">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="conn-text">Connecté à Supabase</span>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main Content -->
-  <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
-
-    <!-- Paramètres du cours -->
-    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-sliders text-indigo-600"></i> Paramètres du Cours
-      </h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Division -->
-        <div>
-          <label for="select-classe" class="block text-sm font-medium text-slate-700 mb-1">Classe / القسم</label>
-          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="">-- Choisir la division / اختر الفوج --</option>
-          </select>
-        </div>
-
-        <!-- Matière -->
-        <div>
-          <label for="select-matiere" class="block text-sm font-medium text-slate-700 mb-1">Matière / المادة</label>
-          <select id="select-matiere" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <optgroup label="📚 Matières Fondamentales & Scientifiques">
-              <option value="Mathématiques / رياضيات" selected>رياضيات / Mathématiques</option>
-              <option value="Sciences Naturelles / علوم الطبيعة والحياة">علوم الطبيعة والحياة / Sciences Naturelles</option>
-              <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
-              <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
-            </optgroup>
-            
-            <optgroup label="⚙️ Spécialités Techniques & Économie">
-              <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
-              <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
-              <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
-              <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
-              <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
-              <option value="Droit / قانون">قانون / Droit</option>
-            </optgroup>
-
-            <optgroup label="📖 Lettres, Sciences Humaines & Langues">
-              <option value="Langue Arabe / لغة عربية وآدابها">لغة عربية وآدابها / Langue Arabe</option>
-              <option value="Langue Française / لغة فرنسية">لغة فرنسية / Langue Française</option>
-              <option value="Langue Anglaise / لغة إنجليزية">لغة إنجليزية / Langue Anglaise</option>
-              <option value="Langue Allemande / لغة ألمانية">لغة ألمانية / Langue Allemande</option>
-              <option value="Langue Espagnole / لغة إسبانية">لغة إسبانية / Langue Espagnole</option>
-              <option value="Langue Amazighe / لغة أمازيغية">لغة أمازيغية / Tamazight</option>
-              <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
-              <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
-              <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
-            </optgroup>
-
-            <optgroup label="🏃 Éducation Physique">
-              <option value="EPS / تربية بدنية ورياضية">تربية بدنية ورياضية / Sport (EPS)</option>
-            </optgroup>
-          </select>
-        </div>
-
-        <!-- Séance (Matin & Après-midi 13:00 - 17:00) -->
-        <div>
-          <label for="select-horaire" class="block text-sm font-medium text-slate-700 mb-1">Séance / التوقيت</label>
-          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-            <optgroup label="☀️ Matin / الصباح">
-              <option value="08:00-09:00">08:00 - 09:00</option>
-              <option value="09:00-10:00">09:00 - 10:00</option>
-              <option value="10:00-11:00">10:00 - 11:00</option>
-              <option value="11:00-12:00">11:00 - 12:00</option>
-            </optgroup>
-            <optgroup label="🌤️ Après-midi / المساء">
-              <option value="13:00-14:00">13:00 - 14:00</option>
-              <option value="14:00-15:00">14:00 - 15:00</option>
-              <option value="15:00-16:00">15:00 - 16:00</option>
-              <option value="16:00-17:00">16:00 - 17:00</option>
-            </optgroup>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats Bar -->
-    <div id="stats-bar" class="hidden grid grid-cols-3 gap-3">
-      <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center shadow-sm">
-        <span class="block text-xs font-semibold text-emerald-700 uppercase tracking-wider">Présents (حاضر)</span>
-        <span id="count-presents" class="text-3xl font-extrabold text-emerald-600 mt-1 block">0</span>
-      </div>
-      <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center shadow-sm">
-        <span class="block text-xs font-semibold text-rose-700 uppercase tracking-wider">Absents (غائب)</span>
-        <span id="count-absents" class="text-3xl font-extrabold text-rose-600 mt-1 block">0</span>
-      </div>
-      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center shadow-sm">
-        <span class="block text-xs font-semibold text-amber-700 uppercase tracking-wider">Retards (متأخر)</span>
-        <span id="count-retards" class="text-3xl font-extrabold text-amber-600 mt-1 block">0</span>
-      </div>
-    </div>
-
-    <!-- Registre d'appel -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-50/70">
-        <div>
-          <h2 class="text-lg font-bold text-slate-800" id="classe-titre">Sélectionnez une classe</h2>
-          <p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p>
-        </div>
-        <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer active:scale-95">
-          <i class="fa-solid fa-check-double text-indigo-600"></i> Tout marquer présent
-        </button>
-      </div>
-
-      <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 min-h-[180px]">
-        <div class="py-12 text-center text-slate-400">
-          <i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i>
-          <p class="text-sm">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bouton valider -->
-    <div id="actions-footer" class="hidden pb-10">
-      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 text-base transition cursor-pointer active:scale-98">
-        <i class="fa-solid fa-paper-plane"></i>
-        <span>Valider et transmettre l'appel à la vie scolaire</span>
-      </button>
-    </div>
-
-  </main>
-
-  <script>
-    // ========================================================
-    // SÉCURITÉ : HACHAGE CRYPTOGRAPHIQUE SHA-256 DU CODE PIN
-    // ========================================================
-    const HASH_AUTH_OFFICIEL = "2982d9213bc5e905a5078a6dbfaee35a09e05a3e1a0b36873528b12e34bfbba6";
-
-    async function sha256(chaine) {
-      const buffer = new TextEncoder().encode(chaine);
-      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-      return Array.from(new Uint8Array(hashBuffer))
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-    }
-
-    function deverrouillerPageProf() {
-      const pinScreen = document.getElementById('pin-screen-prof');
-      if (pinScreen) pinScreen.style.display = 'none';
-      sessionStorage.setItem('prof_auth', 'true');
-      initClasses();
-    }
-
-    async function verifierPinProf() {
-      const input = document.getElementById('input-pin-prof');
-      const err = document.getElementById('pin-prof-error');
-      const card = document.getElementById('pin-card-prof');
-      const val = input ? input.value.trim() : '';
-
-      if (val.length < 4) return;
-
-      const hashSaisi = await sha256(val);
-
-      if (hashSaisi === HASH_AUTH_OFFICIEL) {
-        if (err) err.classList.add('hidden');
-        deverrouillerPageProf();
-      } else {
-        if (err) err.classList.remove('hidden');
-        if (card) {
-          card.classList.remove('shake-error');
-          void card.offsetWidth;
-          card.classList.add('shake-error');
-        }
-        if (input) {
-          input.value = '';
-          input.focus();
-        }
-      }
-    }
-
-    const inputPinProf = document.getElementById('input-pin-prof');
-    const btnPinProf = document.getElementById('btn-valider-pin-prof');
-
-    if (btnPinProf) btnPinProf.onclick = verifierPinProf;
-
-    if (inputPinProf) {
-      inputPinProf.oninput = function() {
-        if (this.value.trim().length === 4) verifierPinProf();
-      };
-      inputPinProf.onkeydown = function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          verifierPinProf();
-        }
-      };
-    }
-
-    if (sessionStorage.getItem('prof_auth') === 'true') {
-      const pinScreen = document.getElementById('pin-screen-prof');
-      if (pinScreen) pinScreen.style.display = 'none';
-      initClasses();
-    }
-
-    const btnLockProf = document.getElementById('btn-lock-prof');
-    if (btnLockProf) {
-      btnLockProf.onclick = function() {
-        sessionStorage.removeItem('prof_auth');
-        location.reload();
-      };
-    }
-
-    // ========================================================
-    // SUPABASE & LOGIQUE D'APPEL
-    // ========================================================
-    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let classesList = [];
-    let currentEleves = [];
-    let currentStatuts = {};
-
-    function animerChiffre(element, valeurCible) {
-      if (!element) return;
-      const depart = parseInt(element.textContent) || 0;
-      if (depart === valeurCible) return;
-      const duree = 250;
-      const debut = performance.now();
-
-      function frame(temps) {
-        const p = Math.min((temps - debut) / duree, 1);
-        element.textContent = Math.floor(depart + (valeurCible - depart) * p);
-        if (p < 1) requestAnimationFrame(frame);
-        else element.textContent = valeurCible;
-      }
-      requestAnimationFrame(frame);
-    }
-
-    function afficherToast(titre, message) {
-      const toast = document.getElementById('toast-notification');
-      document.getElementById('toast-titre').textContent = titre;
-      document.getElementById('toast-message').textContent = message;
-
-      toast.classList.remove('-translate-y-24', 'opacity-0');
-      toast.classList.add('translate-y-0', 'opacity-100');
-
-      setTimeout(() => {
-        toast.classList.add('-translate-y-24', 'opacity-0');
-        toast.classList.remove('translate-y-0', 'opacity-100');
-      }, 3500);
-    }
-
-    const selectClasse = document.getElementById('select-classe');
-    const selectMatiere = document.getElementById('select-matiere');
-    const selectHoraire = document.getElementById('select-horaire');
-    const elevesContainer = document.getElementById('eleves-container');
-    const classeTitre = document.getElementById('classe-titre');
-    const classeEffectif = document.getElementById('classe-effectif');
-    const statsBar = document.getElementById('stats-bar');
-    const actionsFooter = document.getElementById('actions-footer');
-    const btnToutPresent = document.getElementById('btn-tout-present');
-    const btnValider = document.getElementById('btn-valider-appel');
-
-    async function initClasses() {
-      try {
-        const { data, error } = await supabaseClient
-          .from('classes')
-          .select('id, nom_court, nom_complet')
-          .order('nom_court', { ascending: true });
-
-        if (error) throw error;
-        classesList = data || [];
-        if (!selectClasse) return;
-
-        selectClasse.innerHTML = '<option value="">-- Choisir la division / اختر الفوج --</option>';
-
-        const groupes = {
-          '1AS': { label: '🎓 1ère Année Secondaire (1AS / الأولى ثانوي)', el: document.createElement('optgroup') },
-          '2AS': { label: '🎓 2ème Année Secondaire (2AS / الثانية ثانوي)', el: document.createElement('optgroup') },
-          '3AS': { label: '🎓 3ème Année Secondaire - Bac (3AS / الثالثة ثانوي)', el: document.createElement('optgroup') },
-          'AUTRE': { label: 'Divisions Spécifiques', el: document.createElement('optgroup') }
-        };
-
-        Object.keys(groupes).forEach(k => groupes[k].el.label = groupes[k].label);
-
-        classesList.forEach(cls => {
-          const opt = document.createElement('option');
-          opt.value = cls.id;
-          opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
-
-          const code = (cls.nom_court || '').toUpperCase();
-          if (code.startsWith('1AS')) groupes['1AS'].el.appendChild(opt);
-          else if (code.startsWith('2AS')) groupes['2AS'].el.appendChild(opt);
-          else if (code.startsWith('3AS')) groupes['3AS'].el.appendChild(opt);
-          else groupes['AUTRE'].el.appendChild(opt);
-        });
-
-        ['1AS', '2AS', '3AS', 'AUTRE'].forEach(key => {
-          if (groupes[key].el.children.length > 0) selectClasse.appendChild(groupes[key].el);
-        });
-      } catch (err) {
-        console.error('Erreur chargement classes :', err);
-      }
-    }
-
-    async function chargerEleves(classeId) {
-      if (!classeId) {
-        elevesContainer.innerHTML = `
-          <div class="py-12 text-center text-slate-400">
-            <i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i>
-            <p class="text-sm">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p>
-          </div>`;
-        classeTitre.textContent = 'Sélectionnez une classe';
-        classeEffectif.textContent = '0 élève chargé';
-        statsBar.classList.add('hidden');
-        actionsFooter.classList.add('hidden');
-        btnToutPresent.classList.add('hidden');
-        return;
-      }
-
-      elevesContainer.innerHTML = `
-        <div class="py-12 text-center text-indigo-600">
-          <i class="fa-solid fa-circle-notch fa-spin text-3xl"></i>
-          <p class="text-xs text-slate-500 mt-2 font-medium">Chargement des élèves...</p>
-        </div>`;
-
-      const selectedCls = classesList.find(c => c.id == classeId);
-      classeTitre.textContent = selectedCls ? `${selectedCls.nom_court} (${selectedCls.nom_complet})` : 'Classe';
-
-      const { data, error } = await supabaseClient
-        .from('eleves')
-        .select('*')
-        .eq('classe_id', classeId)
-        .eq('actif', true)
-        .order('nom', { ascending: true });
-
-      if (error) {
-        elevesContainer.innerHTML = `<div class="p-6 text-rose-500 text-sm">Erreur: ${error.message}</div>`;
-        return;
-      }
-
-      currentEleves = data || [];
-      classeEffectif.textContent = `${currentEleves.length} élèves inscrits`;
-
-      currentStatuts = {};
-      currentEleves.forEach(e => currentStatuts[e.id] = 'P');
-
-      afficherEleves();
-      mettreAJourCompteurs();
-      statsBar.classList.remove('hidden');
-      actionsFooter.classList.remove('hidden');
-      btnToutPresent.classList.remove('hidden');
-    }
-
-    function afficherEleves() {
-      if (currentEleves.length === 0) {
-        elevesContainer.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm">Aucun élève trouvé dans cette classe.</div>';
-        return;
-      }
-
-      elevesContainer.innerHTML = '';
-      currentEleves.forEach((eleve, index) => {
-        const row = document.createElement('div');
-        const statut = currentStatuts[eleve.id] || 'P';
-        const delay = Math.min(index * 25, 400);
-
-        row.className = `animate-row w-full px-4 py-3 sm:px-6 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/60'} hover:bg-indigo-50/40`;
-        row.style.animationDelay = `${delay}ms`;
-
-        row.innerHTML = `
-          <div class="flex items-center gap-3.5 min-w-0">
-            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200/70 text-xs font-bold text-slate-600">
-              ${index + 1}
-            </span>
-            <div class="truncate">
-              <span class="font-bold text-slate-900 text-sm sm:text-base mr-2">${eleve.nom} ${eleve.prenom}</span>
-              <span class="text-xs sm:text-sm text-slate-500 font-bold" dir="rtl">(${eleve.nom_ar || ''} ${eleve.prenom_ar || ''})</span>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-1.5 self-end sm:self-auto flex-shrink-0">
-            <button type="button" onclick="changerStatut(${eleve.id}, 'P')" 
-              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'P' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-600/30' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 opacity-70'}">
-              <i class="fa-solid fa-check"></i> Présent
-            </button>
-
-            <button type="button" onclick="changerStatut(${eleve.id}, 'A')" 
-              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'A' ? 'bg-rose-600 text-white shadow-md ring-2 ring-rose-600/30' : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700 opacity-70'}">
-              <i class="fa-solid fa-xmark"></i> Absent
-            </button>
-
-            <button type="button" onclick="changerStatut(${eleve.id}, 'R')" 
-              class="px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer 
-              ${statut === 'R' ? 'bg-amber-500 text-white shadow-md ring-2 ring-amber-500/30' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700 opacity-70'}">
-              <i class="fa-solid fa-clock"></i> Retard
-            </button>
-          </div>
-        `;
-        elevesContainer.appendChild(row);
-      });
-    }
-
-    window.changerStatut = function(eleveId, nouveauStatut) {
-      currentStatuts[eleveId] = nouveauStatut;
-      afficherEleves();
-      mettreAJourCompteurs();
-    };
-
-    if (btnToutPresent) {
-      btnToutPresent.onclick = function() {
-        currentEleves.forEach(e => currentStatuts[e.id] = 'P');
-        afficherEleves();
-        mettreAJourCompteurs();
-        afficherToast('Succès', 'Tous les élèves sont marqués présents.');
-      };
-    }
-
-    function mettreAJourCompteurs() {
-      let p = 0, a = 0, r = 0;
-      Object.values(currentStatuts).forEach(st => {
-        if (st === 'P') p++;
-        else if (st === 'A') a++;
-        else if (st === 'R') r++;
-      });
-      animerChiffre(document.getElementById('count-presents'), p);
-      animerChiffre(document.getElementById('count-absents'), a);
-      animerChiffre(document.getElementById('count-retards'), r);
-    }
-
-    if (btnValider) {
-      btnValider.onclick = async function() {
-        const classeId = selectClasse.value;
-        if (!classeId || currentEleves.length === 0) {
-          afficherToast('Attention', 'Veuillez sélectionner une classe valide.');
-          return;
-        }
-
-        btnValider.disabled = true;
-        btnValider.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Transmission en cours...`;
-
-        try {
-          const horaire = selectHoraire.value.split('-');
-          const heureDebut = horaire[0] + ':00';
-          const heureFin = horaire[1] + ':00';
-          const today = new Date().toISOString().split('T')[0];
-
-          const { data: seance, error: seanceErr } = await supabaseClient
-            .from('seances')
-            .insert({
-              classe_id: classeId,
-              matiere: selectMatiere.value,
-              date_cours: today,
-              heure_debut: heureDebut,
-              heure_fin: heureFin,
-              appel_valide: true
-            })
-            .select()
-            .single();
-
-          if (seanceErr) throw seanceErr;
-
-          const pointagesRows = currentEleves.map(e => ({
-            seance_id: seance.id,
-            eleve_id: e.id,
-            statut: currentStatuts[e.id] || 'P'
-          }));
-
-          const { error: ptError } = await supabaseClient
-            .from('pointages')
-            .insert(pointagesRows);
-
-          if (ptError) throw ptError;
-
-          afficherToast('Appel validé !', 'Transmis avec succès à la vie scolaire.');
-        } catch (err) {
-          console.error('Erreur validation :', err);
-          afficherToast('Erreur', err.message);
-        } finally {
-          btnValider.disabled = false;
-          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel à la vie scolaire`;
-        }
-      };
-    }
-
-    if (selectClasse) {
-      selectClasse.onchange = function(e) {
-        chargerEleves(e.target.value);
-      };
-    }
-  </script>
-</body>
-</html>
+  <header class="bg-slate-
