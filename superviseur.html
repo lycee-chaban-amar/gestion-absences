@@ -78,6 +78,65 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
   <!-- ======================================================== -->
+  <!-- MODAL DE MODIFICATION DU POINTAGE (EN CAS D'ERREUR) -->
+  <!-- ======================================================== -->
+  <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+          <span>Modifier l'enregistrement / تعديل الحالة</span>
+        </h3>
+        <button onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="edit-pointage-id" />
+
+      <div class="space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Élève / التلميذ(ة)</label>
+          <div id="edit-eleve-nom" class="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Statut de présence / الحالة</label>
+          <select id="edit-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+            <option value="P">✅ Présent / حاضر (Annuler l'absence)</option>
+            <option value="A">❌ Absent / غائب</option>
+            <option value="R">⏳ Retard / متأخر</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Justification / التبرير</label>
+          <div class="flex items-center gap-4 mb-2">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-700">
+              <input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600 focus:ring-indigo-500" />
+              <span>Non justifié / غير مبرر</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700">
+              <input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600 focus:ring-emerald-500" />
+              <span>Justifié / مبرر</span>
+            </label>
+          </div>
+          <input type="text" id="edit-motif" placeholder="Motif (ex: Certificat médical, Billet...)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
+        <button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">
+          Annuler
+        </button>
+        <button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20">
+          Enregistrer / حفظ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
   <!-- ÉCRAN DE VERROUILLAGE SUPERVISEUR (CODE PIN MASQUÉ : 2626) -->
   <!-- ======================================================== -->
   <div id="pin-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -208,9 +267,7 @@
         </div>
       </div>
 
-      <!-- Boutons d'Action (Excel + Censeur + Actualiser) -->
       <div class="flex flex-wrap items-center gap-2 self-end md:self-auto pt-2 md:pt-0">
-        <!-- Bouton OPTION B : Export Excel -->
         <button id="btn-export-excel" type="button" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition flex items-center gap-2 cursor-pointer active:scale-95">
           <i class="fa-solid fa-file-excel text-emerald-200 text-base"></i>
           <span>Exporter Excel / تصدير إكسيل</span>
@@ -667,14 +724,20 @@
             <td class="py-3 px-4 text-center">${badgeJustifie}</td>
             <td class="py-3 px-4 text-center">
               <div class="flex items-center justify-center gap-1.5">
-                ${!item.justifie ? `
-                  <button onclick="justifierAbsence(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer active:scale-95" title="Justifier">
-                    <i class="fa-solid fa-file-pen mr-1"></i> Justifier
-                  </button>
-                ` : ''}
+                <!-- Bouton Modifier (Stylo) -->
+                <button onclick="ouvrirModalModifier(${item.id})" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold p-2 rounded-lg transition cursor-pointer active:scale-95" title="Modifier le statut">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                
+                <!-- Bouton Billet -->
                 <button onclick="imprimerBillet('${eleve.nom || ''}', '${eleve.prenom || ''}', '${eleve.nom_ar || ''}', '${eleve.prenom_ar || ''}', '${classe.nom_court || ''}', '${seance.date_cours || ''}', '${seance.heure_debut || ''}', '${item.statut}', '${item.motif_justification || ''}')" 
                   class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-2.5 py-1.5 rounded-lg transition cursor-pointer active:scale-95" title="Billet">
                   <i class="fa-solid fa-print"></i> Billet
+                </button>
+
+                <!-- Bouton Supprimer (Poubelle) -->
+                <button onclick="supprimerPointage(${item.id})" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold p-2 rounded-lg transition cursor-pointer active:scale-95" title="Supprimer en cas d'erreur">
+                  <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
             </td>
@@ -685,7 +748,86 @@
     }
 
     // ========================================================
-    // 4. OPTION B : FONCTION D'EXPORT EXCEL (.XLSX)
+    // 4. FONCTIONS DE GESTION : MODIFIER & SUPPRIMER
+    // ========================================================
+    window.ouvrirModalModifier = function(pointageId) {
+      const item = pointagesData.find(p => p.id === pointageId);
+      if (!item) return;
+
+      const eleve = item.eleves || {};
+      document.getElementById('edit-pointage-id').value = item.id;
+      document.getElementById('edit-eleve-nom').textContent = `${eleve.nom || ''} ${eleve.prenom || ''} (${eleve.nom_ar || ''} ${eleve.prenom_ar || ''})`;
+      document.getElementById('edit-statut').value = item.statut || 'A';
+      
+      if (item.justifie) {
+        document.getElementById('edit-justifie-oui').checked = true;
+      } else {
+        document.getElementById('edit-justifie-non').checked = true;
+      }
+
+      document.getElementById('edit-motif').value = item.motif_justification || '';
+
+      const modal = document.getElementById('modal-modifier');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    };
+
+    window.fermerModalModifier = function() {
+      const modal = document.getElementById('modal-modifier');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    };
+
+    window.enregistrerModificationPointage = async function() {
+      const pointageId = document.getElementById('edit-pointage-id').value;
+      const statut = document.getElementById('edit-statut').value;
+      const justifie = document.getElementById('edit-justifie-oui').checked;
+      const motif = document.getElementById('edit-motif').value.trim();
+
+      if (!pointageId) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('pointages')
+          .update({
+            statut: statut,
+            justifie: justifie,
+            motif_justification: motif || null
+          })
+          .eq('id', pointageId);
+
+        if (error) throw error;
+
+        fermerModalModifier();
+        await fetchDonnees();
+      } catch (err) {
+        alert("Erreur lors de la modification : " + err.message);
+      }
+    };
+
+    window.supprimerPointage = async function(pointageId) {
+      const item = pointagesData.find(p => p.id === pointageId);
+      const nomEleve = item?.eleves ? `${item.eleves.nom} ${item.eleves.prenom}` : "cet enregistrement";
+
+      const confirmation = confirm(`Voulez-vous vraiment supprimer le pointage pour ${nomEleve} ?\nCette action est irréversible en cas d'erreur de saisie.`);
+      if (!confirmation) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('pointages')
+          .delete()
+          .eq('id', pointageId);
+
+        if (error) throw error;
+
+        await fetchDonnees();
+      } catch (err) {
+        alert("Erreur lors de la suppression : " + err.message);
+      }
+    };
+
+    // ========================================================
+    // 5. EXPORT EXCEL (.XLSX)
     // ========================================================
     if (btnExportExcel) {
       btnExportExcel.addEventListener('click', () => {
@@ -696,7 +838,6 @@
           return;
         }
 
-        // Préparation des lignes pour la feuille Excel
         const rowsExcel = donneesAExporter.map((item, index) => {
           const eleve = item.eleves || {};
           const seance = item.seances || {};
@@ -722,35 +863,26 @@
           };
         });
 
-        // Création du classeur Excel
         const feuille = XLSX.utils.json_to_sheet(rowsExcel);
 
-        // Largeurs automatiques des colonnes
         feuille['!cols'] = [
-          { wch: 5 },  // N°
-          { wch: 12 }, // Date
-          { wch: 14 }, // Séance
-          { wch: 12 }, // Division
-          { wch: 16 }, // Nom
-          { wch: 16 }, // Prénom
-          { wch: 16 }, // Nom AR
-          { wch: 16 }, // Prénom AR
-          { wch: 18 }, // Matière
-          { wch: 16 }, // Statut
-          { wch: 14 }, // Justifié
-          { wch: 25 }  // Motif
+          { wch: 5 }, { wch: 12 }, { wch: 14 }, { wch: 12 },
+          { wch: 16 }, { wch: 16 }, { wch: 16 }, { wch: 16 },
+          { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 25 }
         ];
 
         const classeur = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(classeur, feuille, "Registre_Absences");
 
-        // Téléchargement du fichier .xlsx
         const dateNom = filtreDate.value || 'export';
         const nomFichier = `Absences_Chaabane_Aamar_${dateNom}.xlsx`;
         XLSX.writeFile(classeur, nomFichier);
       });
     }
 
+    // ========================================================
+    // 6. IMPRESSION RAPPORT & BILLET
+    // ========================================================
     if (btnImprimerRapport) {
       btnImprimerRapport.addEventListener('click', () => {
         const dateChoisie = filtreDate.value;
@@ -803,23 +935,6 @@
         window.print();
       });
     }
-
-    window.justifierAbsence = async function(pointageId) {
-      const motif = prompt('Entrez le motif de justification / سبب التبرير :');
-      if (motif === null || motif.trim() === '') return;
-
-      try {
-        const { error } = await supabaseClient
-          .from('pointages')
-          .update({ justifie: true, motif_justification: motif.trim() })
-          .eq('id', pointageId);
-
-        if (error) throw error;
-        await fetchDonnees();
-      } catch (err) {
-        alert('Erreur: ' + err.message);
-      }
-    };
 
     window.imprimerBillet = function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, motif) {
       const typeLabel = statut === 'A' ? 'غياب / Absence' : 'تأخر / Retard';
