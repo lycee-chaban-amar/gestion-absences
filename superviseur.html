@@ -58,7 +58,6 @@
       box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important;
     }
 
-    /* Signal d'alerte rouge clignotant */
     @keyframes alertPulse {
       0%, 100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(1.05); opacity: 0.85; }
@@ -95,7 +94,7 @@
           <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
           <span>Modifier l'enregistrement / تعديل الحالة</span>
         </h3>
-        <button onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 p-1">
+        <button onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
@@ -155,7 +154,7 @@
       
       <div class="space-y-4">
         <div>
-          <input type="password" id="input-pin" maxlength="6" placeholder="••••" autocomplete="off"
+          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric"
             class="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-200 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
           <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
         </div>
@@ -208,7 +207,7 @@
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- KPI Statistiques (incluant l'alerte 3+ absences) -->
+    <!-- KPI Statistiques -->
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
         <div class="flex items-center justify-between text-slate-500 mb-1">
@@ -237,7 +236,6 @@
         <p class="text-[11px] text-slate-400 mt-1">En retard / متأخر</p>
       </div>
 
-      <!-- CARTE ALERTE ROUGE CRITIQUE (3+ ABSENCES) -->
       <div class="bg-rose-50/70 p-4 rounded-2xl shadow-sm border-2 border-rose-300">
         <div class="flex items-center justify-between text-rose-700 mb-1">
           <span class="text-xs font-extrabold uppercase tracking-wider">Alerte (≥ 3 Abs)</span>
@@ -434,7 +432,7 @@
     </div>
   </div>
 
-  <!-- Zone Impression Convocation Parent (Alerte 3+ Absences) -->
+  <!-- Zone Impression Convocation Parent -->
   <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white text-slate-900 border-2 border-slate-900 max-w-xl mx-auto my-6 rounded-2xl">
     <div class="text-center border-b-2 border-slate-900 pb-4 mb-5">
       <p class="text-xs uppercase font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p>
@@ -460,7 +458,7 @@
 
   <script>
     // ========================================================
-    // 1. SUPABASE & CONFIGURATION
+    // 1. SUPABASE CLIENT
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
@@ -487,17 +485,22 @@
     }
 
     // ========================================================
-    // 2. GESTION DU CODE PIN INFAILLIBLE (2626)
+    // 2. DÉVERROUILLAGE SÉCURISÉ & IMMÉDIAT (2626)
     // ========================================================
     const CODE_PIN_CORRECT = "2626";
 
-    function verifierSession() {
+    function cacherEcranPin() {
       const pinScreen = document.getElementById('pin-screen');
+      if (pinScreen) {
+        pinScreen.remove(); // Suppression directe de l'élément pour supprimer tout blocage
+      }
+    }
+
+    function verifierSession() {
       if (sessionStorage.getItem('superviseur_auth') === 'true') {
-        if (pinScreen) pinScreen.style.setProperty('display', 'none', 'important');
-        initialiserApplication().catch(console.error);
+        cacherEcranPin();
+        setTimeout(initialiserApplication, 50);
       } else {
-        if (pinScreen) pinScreen.style.setProperty('display', 'flex', 'important');
         const input = document.getElementById('input-pin');
         if (input) {
           input.value = '';
@@ -509,23 +512,13 @@
     window.deverrouillerDirect = function() {
       const input = document.getElementById('input-pin');
       const pinError = document.getElementById('pin-error');
-      const pinScreen = document.getElementById('pin-screen');
       const pinCard = document.getElementById('pin-card');
-      
       const pin = input ? input.value.trim() : '';
 
       if (pin === CODE_PIN_CORRECT) {
-        // 1. Déverrouillage visuel IMMÉDIAT
         sessionStorage.setItem('superviseur_auth', 'true');
-        if (pinError) pinError.classList.add('hidden');
-        if (pinScreen) pinScreen.style.setProperty('display', 'none', 'important');
-
-        // 2. Chargement des données sans bloquer l'écran
-        try {
-          initialiserApplication().catch(err => console.error("Erreur chargement:", err));
-        } catch (e) {
-          console.error(e);
-        }
+        cacherEcranPin();
+        setTimeout(initialiserApplication, 50);
       } else {
         if (pinError) pinError.classList.remove('hidden');
         if (pinCard) {
@@ -545,7 +538,6 @@
 
       const input = document.getElementById('input-pin');
       if (input) {
-        // Déverrouillage automatique dès 4 chiffres tapés
         input.addEventListener('input', () => {
           if (input.value.trim().length === 4) {
             window.deverrouillerDirect();
@@ -564,13 +556,13 @@
       if (btnLock) {
         btnLock.addEventListener('click', () => {
           sessionStorage.removeItem('superviseur_auth');
-          verifierSession();
+          location.reload();
         });
       }
     });
 
     // ========================================================
-    // 3. LOGIQUE & CALCUL DES ALERTES
+    // 3. LOGIQUE MÉTIER & CHARGEMENT
     // ========================================================
     const filtreDate = document.getElementById('filtre-date');
     const filtreClasse = document.getElementById('filtre-classe');
@@ -585,7 +577,6 @@
 
     async function initialiserApplication() {
       await loadClasses();
-      await chargerCumulToutesAbsences();
       await fetchDonnees();
       setupRealtime();
     }
@@ -741,9 +732,7 @@
         
         const totalAbs = compteursAbsencesGlobal[p.eleves?.id] || 0;
 
-        if (statutFiltre === 'ALERTE_3') {
-          return totalAbs >= 3;
-        }
+        if (statutFiltre === 'ALERTE_3') return totalAbs >= 3;
         if (statutFiltre === 'A_R') return p.statut === 'A' || p.statut === 'R';
         if (statutFiltre === 'A') return p.statut === 'A';
         if (statutFiltre === 'R') return p.statut === 'R';
@@ -762,7 +751,7 @@
             <tr>
               <td colspan="8" class="py-12 text-center text-slate-400">
                 <i class="fa-solid fa-check-circle text-2xl text-emerald-400 mb-2"></i>
-                <p>Aucun enregistrement correspondant aux filtres.</p>
+                <p>Aucun enregistrement correspondant aux critères.</p>
               </td>
             </tr>`;
         }
