@@ -74,14 +74,14 @@
   </div>
 
   <!-- Écran PIN Sécurisé Superviseur (Base64) -->
-  <div id="pin-screen" style="position: fixed; inset: 0; z-index: 9999; background: rgba(15, 23, 42, 0.96); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem;">
-    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100">
+  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div>
       <h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2>
       <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
       <div class="space-y-4">
         <div>
-          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl outline-none focus:border-indigo-600" />
+          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl outline-none focus:border-indigo-600 transition" />
           <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p>
         </div>
         <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer">Déverrouiller</button>
@@ -161,48 +161,15 @@
   </div>
 
   <script>
-    // CODE PIN MASQUÉ ET FIABLE 
-    const PIN_MASQUE = "MjYyNg==";
-
-    function debloquerSuperviseur() {
-      const p = document.getElementById('pin-screen'); if(p) p.remove();
-      sessionStorage.setItem('superviseur_auth', 'true');
-      initialiserApplication();
-    }
-
-    function validerPinDirect() {
-      const input = document.getElementById('input-pin');
-      const err = document.getElementById('pin-error');
-      const card = document.getElementById('pin-card');
-      const val = input ? input.value.trim() : '';
-      
-      if(val.length < 4) return;
-      
-      if(val === atob(PIN_MASQUE)) {
-        if(err) err.classList.add('hidden');
-        debloquerSuperviseur();
-      } else {
-        if(err) err.classList.remove('hidden');
-        if(card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
-        if(input) { input.value = ''; input.focus(); }
-      }
-    }
-
-    const inputPin = document.getElementById('input-pin');
-    if(document.getElementById('btn-valider-pin')) document.getElementById('btn-valider-pin').onclick = validerPinDirect;
-    if(inputPin) {
-      inputPin.oninput = () => { if(inputPin.value.length === 4) validerPinDirect(); };
-      inputPin.onkeydown = (e) => { if(e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } };
-    }
-    
-    if(sessionStorage.getItem('superviseur_auth') === 'true') { debloquerSuperviseur(); }
-    if(document.getElementById('btn-lock')) document.getElementById('btn-lock').onclick = () => { sessionStorage.removeItem('superviseur_auth'); location.reload(); };
-
-    // SUPABASE
+    // ÉTAPE 1 : CHARGEMENT DE SUPABASE
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // ÉTAPE 2 : DOM & VARIABLES
     let classesCache = [], pointagesData = [], compteursAbsencesGlobal = {};
+    const filtreDate = document.getElementById('filtre-date'), filtreClasse = document.getElementById('filtre-classe'), filtreStatut = document.getElementById('filtre-statut'), registreBody = document.getElementById('registre-body');
+    if(filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
     function animerChiffre(el, cible) {
       if(!el) return; let dep = parseInt(el.textContent)||0; if(dep===cible) return;
@@ -210,9 +177,6 @@
       function f(t) { const p=Math.min((t-deb)/d,1); el.textContent=Math.floor(dep+(cible-dep)*p); if(p<1)requestAnimationFrame(f); else el.textContent=cible; }
       requestAnimationFrame(f);
     }
-
-    const filtreDate = document.getElementById('filtre-date'), filtreClasse = document.getElementById('filtre-classe'), filtreStatut = document.getElementById('filtre-statut'), registreBody = document.getElementById('registre-body');
-    if(filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
     async function initialiserApplication() { await loadClasses(); await fetchDonnees(); }
 
@@ -279,7 +243,6 @@
       });
     }
 
-    // Modal & Actions
     window.ouvrirModalModifier = (id) => { const pt = pointagesData.find(p=>p.id==id); if(!pt)return;
       document.getElementById('edit-pointage-id').value = id; document.getElementById('edit-eleve-nom').textContent = pt.eleves.nom+' '+pt.eleves.prenom;
       document.getElementById('edit-statut').value = pt.statut; document.getElementById('edit-justifie-'+(pt.justifie?'oui':'non')).checked=true;
@@ -295,13 +258,12 @@
     };
     window.supprimerPointage = async (id) => { if(confirm('Supprimer cet enregistrement ?')){ await supabaseClient.from('pointages').delete().eq('id',id); fetchDonnees(); } };
 
-    // Export Excel
+    const btnExportExcel = document.getElementById('btn-export-excel');
     if(btnExportExcel) btnExportExcel.onclick = () => {
       const d = obtenirDonneesFiltrees().map((p,i)=>({ "N°":i+1, "Date":p.seances?.date_cours, "Classe":p.seances?.classes?.nom_court, "Nom":p.eleves?.nom, "Prénom":p.eleves?.prenom, "Statut":p.statut==='A'?'Absent':p.statut==='R'?'Retard':'Présent', "Total Abs":compteursAbsencesGlobal[p.eleves?.id]||0 }));
       if(!d.length) return alert('Vide'); const ws = XLSX.utils.json_to_sheet(d), wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Absences"); XLSX.writeFile(wb, `Export_${filtreDate.value}.xlsx`);
     };
 
-    // Impression
     window.imprimerBillet = (nom, prenom, classe, date, heure, statut) => {
       document.getElementById('billet-details').innerHTML = `<p><b>Élève :</b> ${nom} ${prenom}</p><p><b>Classe :</b> ${classe}</p><p><b>Motif :</b> ${statut==='A'?'Absence':'Retard'}</p><p><b>Séance :</b> ${date} à ${heure.substring(0,5)}</p>`;
       document.getElementById('billet-date-emission').textContent = new Date().toLocaleString('fr-FR');
@@ -313,7 +275,46 @@
       document.body.className='print-convocation'; window.print(); document.body.className='';
     };
 
-    if(filtreDate) filtreDate.onchange=fetchDonnees; if(filtreClasse) filtreClasse.onchange=renderTableau; if(filtreStatut) filtreStatut.onchange=renderTableau; if(btnRefresh) btnRefresh.onclick=fetchDonnees;
+    if(filtreDate) filtreDate.onchange=fetchDonnees; if(filtreClasse) filtreClasse.onchange=renderTableau; if(filtreStatut) filtreStatut.onchange=renderTableau;
+    const btnRefresh = document.getElementById('btn-refresh'); if(btnRefresh) btnRefresh.onclick=fetchDonnees;
+
+    // ÉTAPE 3 : SÉCURITÉ PIN INFAILLIBLE (Base64) - "2626"
+    const PIN_MASQUE = "MjYyNg==";
+
+    function debloquerSuperviseur() {
+      const p = document.getElementById('pin-screen'); if(p) p.remove();
+      sessionStorage.setItem('superviseur_auth', 'true');
+      initialiserApplication(); // Appelé APRES Supabase
+    }
+
+    function validerPinDirect() {
+      const input = document.getElementById('input-pin');
+      const val = input ? input.value.trim() : '';
+      
+      if(val.length < 4) return;
+      
+      if(val === atob(PIN_MASQUE)) {
+        document.getElementById('pin-error').classList.add('hidden');
+        debloquerSuperviseur();
+      } else {
+        document.getElementById('pin-error').classList.remove('hidden');
+        document.getElementById('pin-card').classList.add('shake-error');
+        setTimeout(() => document.getElementById('pin-card').classList.remove('shake-error'), 400);
+        input.value = ''; input.focus();
+      }
+    }
+
+    const inputPin = document.getElementById('input-pin');
+    if(document.getElementById('btn-valider-pin')) document.getElementById('btn-valider-pin').onclick = validerPinDirect;
+    if(inputPin) {
+      inputPin.addEventListener('input', () => { if(inputPin.value.length === 4) validerPinDirect(); });
+      inputPin.addEventListener('keydown', (e) => { if(e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
+    }
+    
+    // ÉTAPE 4 : VÉRIFICATION DE LA SESSION (TOUT À LA FIN)
+    if(sessionStorage.getItem('superviseur_auth') === 'true') { debloquerSuperviseur(); }
+    if(document.getElementById('btn-lock')) document.getElementById('btn-lock').onclick = () => { sessionStorage.removeItem('superviseur_auth'); location.reload(); };
+
   </script>
 </body>
 </html>
