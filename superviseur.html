@@ -204,39 +204,39 @@
   <!-- ZONES D'IMPRESSION (INVISIBLES À L'ÉCRAN) -->
   <!-- ========================================== -->
 
-  <!-- RAPPORT CENSEUR (A4) -->
-  <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black">
+  <!-- RAPPORT CENSEUR (A4) - EN ARABE -->
+  <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black" dir="rtl">
     <div class="text-center border-b-2 border-black pb-3 mb-4">
-      <p class="font-bold text-xs uppercase">République Algérienne Démocratique et Populaire</p>
-      <p class="font-bold text-xs">Direction de l'Éducation - Lycée Chaabane Aamar Aokas</p>
-      <h2 class="font-black text-lg mt-3 uppercase border border-black inline-block px-4 py-1">Rapport Journalier des Absences</h2>
-      <p class="mt-2 font-bold text-sm">Date : <span id="rapport-date"></span></p>
+      <p class="font-bold text-xs">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+      <p class="font-bold text-xs">وزارة التربية الوطنية - مديرية التربية لولاية بجاية - ثانوية شعبان أعمر أوقاس</p>
+      <h2 class="font-black text-lg mt-3 border border-black inline-block px-6 py-1">التقرير اليومي للغيابات والتأخرات</h2>
+      <p class="mt-2 font-bold text-sm">تاريخ اليوم : <span id="rapport-date"></span></p>
     </div>
     
     <div class="flex gap-4 mb-4 text-xs font-bold text-center">
-      <div class="border border-black p-2 flex-1">Appels: <span id="rapport-kpi-seances"></span></div>
-      <div class="border border-black p-2 flex-1">Absents: <span id="rapport-kpi-absents" class="text-rose-700"></span></div>
-      <div class="border border-black p-2 flex-1">Retards: <span id="rapport-kpi-retards"></span></div>
-      <div class="border border-black p-2 flex-1">Présence: <span id="rapport-kpi-taux"></span></div>
+      <div class="border border-black p-2 flex-1">الحصص المنجزة : <span id="rapport-kpi-seances"></span></div>
+      <div class="border border-black p-2 flex-1">الغيابات : <span id="rapport-kpi-absents" class="text-rose-700"></span></div>
+      <div class="border border-black p-2 flex-1">التأخرات : <span id="rapport-kpi-retards" class="text-amber-700"></span></div>
+      <div class="border border-black p-2 flex-1">نسبة الحضور : <span id="rapport-kpi-taux" dir="ltr"></span></div>
     </div>
 
-    <table class="w-full text-left border-collapse text-xs border border-black mb-6">
+    <table class="w-full text-right border-collapse text-xs border border-black mb-6">
       <thead class="bg-gray-100">
         <tr class="border-b border-black">
-          <th class="border-r border-black p-1.5 w-8 text-center">N°</th>
-          <th class="border-r border-black p-1.5">Nom & Prénom / اللقب والاسم</th>
-          <th class="border-r border-black p-1.5">Classe</th>
-          <th class="border-r border-black p-1.5">Matière & Heure</th>
-          <th class="border-r border-black p-1.5 text-center">Statut</th>
-          <th class="p-1.5">Motif / Visa</th>
+          <th class="border-l border-black p-1.5 w-8 text-center">الرقم</th>
+          <th class="border-l border-black p-1.5">اللقب والاسم</th>
+          <th class="border-l border-black p-1.5 text-center">القسم</th>
+          <th class="border-l border-black p-1.5 text-center">المادة والتوقيت</th>
+          <th class="border-l border-black p-1.5 text-center">الحالة</th>
+          <th class="p-1.5 text-center">التبرير / التأشيرة</th>
         </tr>
       </thead>
       <tbody id="rapport-table-body" class="divide-y divide-black border-b border-black"></tbody>
     </table>
 
     <div class="flex justify-between text-xs font-bold px-10 pt-4">
-      <div class="text-center"><p>Le Conseiller d'Éducation</p></div>
-      <div class="text-center"><p>Le Censeur des Études</p></div>
+      <div class="text-center"><p>مستشار التربية</p></div>
+      <div class="text-center"><p>ناظر الدراسات</p></div>
     </div>
   </div>
 
@@ -490,7 +490,7 @@
       document.getElementById('registre-count').textContent = `${fData.length} ligne(s)`;
       
       if(fData.length === 0) {
-        registreBody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-400 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>Aucun enregistrement correspondant.</td></tr>`;
+        registreBody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-400 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>Aucun تسجيل correspondant.</td></tr>`;
         return;
       }
       
@@ -617,7 +617,6 @@
         }
         
         const ws = XLSX.utils.json_to_sheet(d);
-        // Ajustement automatique des largeurs de colonnes
         ws['!cols'] = [{wch:5}, {wch:12}, {wch:15}, {wch:15}, {wch:15}, {wch:15}, {wch:15}, {wch:20}, {wch:15}, {wch:10}, {wch:10}, {wch:20}];
         
         const wb = XLSX.utils.book_new(); 
@@ -626,7 +625,7 @@
       });
     }
 
-    // IMPRIMER RAPPORT CENSEUR
+    // IMPRIMER RAPPORT CENSEUR (EN ARABE)
     const btnImprimerRapport = document.getElementById('btn-imprimer-rapport');
     if(btnImprimerRapport) {
       btnImprimerRapport.addEventListener('click', () => {
@@ -634,7 +633,11 @@
         if(!dChoisie) return;
 
         const incidents = pointagesData.filter(p => p.statut === 'A' || p.statut === 'R');
-        document.getElementById('rapport-date').textContent = new Date(dChoisie).toLocaleDateString('fr-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        // Date formatée en arabe
+        document.getElementById('rapport-date').textContent = new Date(dChoisie).toLocaleDateString('ar-DZ', { 
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
         
         // Copie des KPIs
         document.getElementById('rapport-kpi-seances').textContent = document.getElementById('kpi-seances').textContent;
@@ -646,21 +649,27 @@
         tbody.innerHTML = '';
         
         if (incidents.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center font-bold">Aucune absence ni retard (Néant).</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center font-bold">لا توجد أي غيابات أو تأخرات مسجلة لهذا اليوم.</td></tr>`;
         } else {
           incidents.forEach((pt, i) => {
             const el = pt.eleves || {}, sc = pt.seances || {}, cl = sc.classes || {};
-            const statutL = pt.statut === 'A' ? 'Absent' : 'Retard';
-            const just = pt.justifie ? pt.motif_justification || 'Justifié' : 'Non justifié';
+            
+            // Traduction des statuts et motifs
+            const statutL = pt.statut === 'A' ? 'غياب' : 'تأخر';
+            const just = pt.justifie ? (pt.motif_justification || 'مبرر') : 'غير مبرر';
+            const colorStatut = pt.statut === 'A' ? 'text-rose-700' : 'text-amber-700';
+            
+            // Priorité au nom en arabe
+            const nomCompletArabe = (el.nom_ar || el.nom) + ' ' + (el.prenom_ar || el.prenom);
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td class="border-r border-black p-1.5 text-center">${i + 1}</td>
-              <td class="border-r border-black p-1.5 font-bold">${el.nom} ${el.prenom} <br><span dir="rtl" class="font-normal">${el.nom_ar} ${el.prenom_ar}</span></td>
-              <td class="border-r border-black p-1.5 text-center font-bold">${cl.nom_court}</td>
-              <td class="border-r border-black p-1.5 text-center">${sc.matiere}<br>${sc.heure_debut?.substring(0,5)}</td>
-              <td class="border-r border-black p-1.5 text-center font-bold ${pt.statut==='A'?'text-rose-700':'text-amber-700'}">${statutL}</td>
-              <td class="p-1.5 text-xs">${just}</td>
+              <td class="border-l border-black p-1.5 text-center">${i + 1}</td>
+              <td class="border-l border-black p-1.5 font-bold">${nomCompletArabe}</td>
+              <td class="border-l border-black p-1.5 text-center font-bold" dir="ltr">${cl.nom_court}</td>
+              <td class="border-l border-black p-1.5 text-center" dir="ltr">${sc.matiere}<br>${sc.heure_debut?.substring(0,5)}</td>
+              <td class="border-l border-black p-1.5 text-center font-bold ${colorStatut}">${statutL}</td>
+              <td class="p-1.5 text-xs text-center">${just}</td>
             `;
             tbody.appendChild(tr);
           });
@@ -697,10 +706,10 @@
           <p class="mt-2 text-rose-700 text-lg">مجموع الغيابات: ${tot} حصص</p>
         </div>
         <p>إلى السيد(ة) ولي أمر التلميذ(ة) المحترم(ة) :</p>
-        <p>نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجل غيابات متكررة تجاوزت الحد المسموح به (<span class="font-bold">${tot} غيابات</span>).</p>
+        <p>نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجل غيابات متكررة تجاوزت الحد المسموح به (<span class="font-bold text-rose-700">${tot} غيابات</span>).</p>
         <p>وعليه، يُرجى منكم الحضور شخصياً إلى مكتب مستشار التربية في أقرب الآجال لتسوية وضعية التمدرس ولتبرير هذه الغيابات قبل اتخاذ الإجراءات التأديبية المنصوص عليها قانوناً.</p>
       `;
-      document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('fr-DZ');
+      document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('ar-DZ');
       
       document.body.classList.remove('print-rapport', 'print-billet');
       document.body.classList.add('print-convocation');
