@@ -57,7 +57,7 @@
             class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
           <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
         </div>
-        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/25 transition cursor-pointer">
+        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer">
           Déverrouiller / الدخول
         </button>
       </div>
@@ -178,109 +178,20 @@
   </main>
 
   <script>
-    // ========================================================
-    // SÉCURITÉ : ENCODAGE BASE64 "MjYyNg==" 
-    // ========================================================
-    const PIN_MASQUE = "MjYyNg==";
-
-    // Fonction pour convertir les chiffres arabes (٠١٢٣...) en chiffres latins (0123...)
-    function normaliserChiffres(str) {
-      const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
-      return str.replace(/[٠-٩]/g, function(d) {
-        return arabicDigits.indexOf(d);
-      });
-    }
-
-    function debloquerPage() {
-      const pinScreen = document.getElementById('pin-screen-prof');
-      if (pinScreen) pinScreen.remove(); // Supprime totalement l'écran
-      try {
-        sessionStorage.setItem('prof_auth', 'true');
-      } catch(e) {
-        console.warn("sessionStorage inaccessible (mode navigation privée ou fichier local).");
-      }
-      initClasses();
-    }
-
-    function validerPinDirect() {
-      const input = document.getElementById('input-pin-prof');
-      const err = document.getElementById('pin-prof-error');
-      const card = document.getElementById('pin-card-prof');
-      
-      let val = input ? input.value.trim() : '';
-      val = normaliserChiffres(val); // Convertit ٢٦٢٦ en 2626
-      
-      if (val.length < 4) return;
-      
-      if (val === atob(PIN_MASQUE)) {
-        if (err) err.classList.add('hidden');
-        debloquerPage();
-      } else {
-        if (err) err.classList.remove('hidden');
-        if (card) { 
-          card.classList.remove('shake-error'); 
-          void card.offsetWidth; 
-          card.classList.add('shake-error'); 
-        }
-        if (input) { 
-          input.value = ''; 
-          input.focus(); 
-        }
-      }
-    }
-
-    // Écouteurs de clavier / clics
-    const inputPin = document.getElementById('input-pin-prof');
-    const btnPin = document.getElementById('btn-valider-pin-prof');
-    
-    if (btnPin) btnPin.onclick = validerPinDirect;
-    if (inputPin) {
-      inputPin.oninput = function() { 
-        let val = normaliserChiffres(this.value.trim());
-        if (val.length === 4) validerPinDirect(); 
-      };
-      inputPin.onkeydown = function(e) { 
-        if (e.key === 'Enter') { 
-          e.preventDefault(); 
-          validerPinDirect(); 
-        } 
-      };
-    }
-
-    // Garder la session active si déjà connecté
-    try {
-      if (sessionStorage.getItem('prof_auth') === 'true') { 
-        debloquerPage(); 
-      }
-    } catch(e) {
-      console.warn("sessionStorage bloqué par le navigateur.");
-    }
-
-    // Bouton de verrouillage en haut à droite
-    const btnLock = document.getElementById('btn-lock-prof');
-    if (btnLock) {
-      btnLock.onclick = function() { 
-        try { sessionStorage.removeItem('prof_auth'); } catch(e) {}
-        location.reload(); 
-      };
-    }
-
-    // ========================================================
-    // SUPABASE & LOGIQUE MÉTIER
-    // ========================================================
+    // ÉTAPE 1 : CHARGEMENT DE SUPABASE EN PREMIER
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
-    
-    let supabaseClient;
-    try {
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch(e) {
-      console.error("Erreur d'initialisation de Supabase. Vérifiez votre connexion internet.", e);
-    }
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // ÉTAPE 2 : DÉFINITION DES VARIABLES GLOBALES ET ÉLÉMENTS DOM
     let classesList = [], currentEleves = [], currentStatuts = {};
-    const selectClasse = document.getElementById('select-classe'), selectMatiere = document.getElementById('select-matiere'), selectHoraire = document.getElementById('select-horaire'), elevesContainer = document.getElementById('eleves-container');
+    const selectClasse = document.getElementById('select-classe');
+    const selectMatiere = document.getElementById('select-matiere');
+    const selectHoraire = document.getElementById('select-horaire');
+    const elevesContainer = document.getElementById('eleves-container');
+    const btnValider = document.getElementById('btn-valider-appel');
 
+    // ÉTAPE 3 : FONCTIONS DE LOGIQUE MÉTIER
     function afficherToast(titre, msg) {
       const t = document.getElementById('toast-notification');
       document.getElementById('toast-titre').textContent = titre; 
@@ -294,14 +205,25 @@
     }
 
     async function initClasses() {
-      if (!supabaseClient) return; // Sécurité si Supabase n'est pas chargé
       try {
-        const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
+        const { data, error } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
+        if(error) throw error;
         classesList = data || [];
+        
         if(!selectClasse) return;
         selectClasse.innerHTML = '<option value="">-- Choisir la division / اختر الفوج --</option>';
-        const groupes = { '1AS': document.createElement('optgroup'), '2AS': document.createElement('optgroup'), '3AS': document.createElement('optgroup'), 'AUTRE': document.createElement('optgroup') };
-        groupes['1AS'].label = "1ère Année"; groupes['2AS'].label = "2ème Année"; groupes['3AS'].label = "3ème Année (Bac)"; groupes['AUTRE'].label = "Autres";
+        
+        const groupes = { 
+          '1AS': document.createElement('optgroup'), 
+          '2AS': document.createElement('optgroup'), 
+          '3AS': document.createElement('optgroup'), 
+          'AUTRE': document.createElement('optgroup') 
+        };
+        groupes['1AS'].label = "1ère Année"; 
+        groupes['2AS'].label = "2ème Année"; 
+        groupes['3AS'].label = "3ème Année (Bac)"; 
+        groupes['AUTRE'].label = "Autres";
+        
         classesList.forEach(cls => {
           const o = document.createElement('option'); o.value = cls.id; o.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
           if(cls.nom_court.startsWith('1AS')) groupes['1AS'].appendChild(o);
@@ -309,14 +231,16 @@
           else if(cls.nom_court.startsWith('3AS')) groupes['3AS'].appendChild(o);
           else groupes['AUTRE'].appendChild(o);
         });
-        ['1AS','2AS','3AS','AUTRE'].forEach(k => { if(groupes[k].children.length) selectClasse.appendChild(groupes[k]); });
-      } catch (err) { console.log(err); }
+        
+        ['1AS','2AS','3AS','AUTRE'].forEach(k => { 
+          if(groupes[k].children.length) selectClasse.appendChild(groupes[k]); 
+        });
+      } catch (err) { console.error("Erreur InitClasses :", err); }
     }
 
     async function chargerEleves(cid) {
-      if(!supabaseClient) return;
       if(!cid) {
-        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><p>Veuillez choisir une division</p></div>`;
+        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p>Veuillez choisir une division</p></div>`;
         document.getElementById('stats-bar').classList.add('hidden'); document.getElementById('actions-footer').classList.add('hidden'); document.getElementById('btn-tout-present').classList.add('hidden');
         return;
       }
@@ -369,9 +293,8 @@
       document.getElementById('count-retards').textContent=r;
     }
 
-    if(document.getElementById('btn-valider-appel')) {
-      document.getElementById('btn-valider-appel').onclick = async function() {
-        if(!supabaseClient) return afficherToast('Erreur', 'Connexion à la base de données impossible');
+    if(btnValider) {
+      btnValider.onclick = async function() {
         if(!selectClasse.value || currentEleves.length===0) return afficherToast('Erreur', 'Sélectionnez une classe');
         this.disabled=true; this.innerHTML=`<i class="fa-solid fa-spinner fa-spin"></i> Transmission...`;
         try {
@@ -386,22 +309,65 @@
           }).select().single();
           
           if(e1) throw e1;
-          
           const pts = currentEleves.map(e=>({ seance_id:s.id, eleve_id:e.id, statut:currentStatuts[e.id]||'P' }));
           const { error:e2 } = await supabaseClient.from('pointages').insert(pts);
           if(e2) throw e2;
           
           afficherToast('Succès', 'Appel transmis avec succès !');
-        } catch(e) { 
-          afficherToast('Erreur', e.message); 
-        } finally { 
-          this.disabled=false; 
-          this.innerHTML=`<i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel`; 
-        }
+        } catch(e) { afficherToast('Erreur', e.message); } 
+        finally { this.disabled=false; this.innerHTML=`<i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel`; }
       };
     }
     
-    if(selectClasse) selectClasse.onchange = (e) => chargerEleves(e.target.value);
+    if(selectClasse) selectClasse.addEventListener('change', (e) => chargerEleves(e.target.value));
+
+    // ÉTAPE 4 : SÉCURITÉ PIN INFAILLIBLE (Base64)
+    const PIN_MASQUE = "MjYyNg==";
+
+    function debloquerPage() {
+      const pinScreen = document.getElementById('pin-screen-prof');
+      if (pinScreen) pinScreen.remove(); // Supprime totalement l'écran pour libérer la page
+      sessionStorage.setItem('prof_auth', 'true');
+      initClasses(); // Appelé uniquement APRES l'initialisation de la session et Supabase
+    }
+
+    function validerPinDirect() {
+      const input = document.getElementById('input-pin-prof');
+      const err = document.getElementById('pin-prof-error');
+      const card = document.getElementById('pin-card-prof');
+      const val = input ? input.value.trim() : '';
+      
+      if (val.length < 4) return;
+      
+      if (val === atob(PIN_MASQUE)) {
+        if (err) err.classList.add('hidden');
+        debloquerPage();
+      } else {
+        if (err) err.classList.remove('hidden');
+        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
+        if (input) { input.value = ''; input.focus(); }
+      }
+    }
+
+    // ÉTAPE 5 : LIEN DES ÉCOUTEURS
+    const inputPin = document.getElementById('input-pin-prof');
+    const btnPin = document.getElementById('btn-valider-pin-prof');
+    
+    if (btnPin) btnPin.onclick = validerPinDirect;
+    if (inputPin) {
+      inputPin.addEventListener('input', function() { if (this.value.trim().length === 4) validerPinDirect(); });
+      inputPin.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
+    }
+
+    const btnLock = document.getElementById('btn-lock-prof');
+    if (btnLock) {
+      btnLock.onclick = function() { sessionStorage.removeItem('prof_auth'); location.reload(); };
+    }
+
+    // ÉTAPE 6 : VÉRIFICATION IMMÉDIATE AU CHARGEMENT (DOIT ÊTRE À LA FIN DU SCRIPT)
+    if (sessionStorage.getItem('prof_auth') === 'true') { 
+      debloquerPage(); 
+    }
   </script>
 </body>
 </html>
