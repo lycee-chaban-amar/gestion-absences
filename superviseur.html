@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr" id="doc-root">
+<html lang="ar" dir="ltr" id="doc-root">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -149,7 +149,6 @@
           <label class="block text-xs font-bold mb-1">Classe</label>
           <select id="filtre-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="ALL">Toutes les classes / كل الأقسام</option>
-            <!-- Les groupes (1AS, 2AS...) seront générés ici -->
           </select>
         </div>
         <div>
@@ -204,39 +203,45 @@
   <!-- ZONES D'IMPRESSION (INVISIBLES À L'ÉCRAN) -->
   <!-- ========================================== -->
 
-  <!-- RAPPORT CENSEUR (A4) - EN ARABE -->
-  <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black" dir="rtl">
+  <!-- RAPPORT CENSEUR (A4) - ENTIÈREMENT EN ARABE -->
+  <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black font-sans" dir="rtl">
     <div class="text-center border-b-2 border-black pb-3 mb-4">
-      <p class="font-bold text-xs">الجمهورية الجزائرية الديمقراطية الشعبية</p>
-      <p class="font-bold text-xs">وزارة التربية الوطنية - مديرية التربية لولاية بجاية - ثانوية شعبان أعمر أوقاس</p>
-      <h2 class="font-black text-lg mt-3 border border-black inline-block px-6 py-1">التقرير اليومي للغيابات والتأخرات</h2>
-      <p class="mt-2 font-bold text-sm">تاريخ اليوم : <span id="rapport-date"></span></p>
+      <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+      <p class="font-bold text-sm mt-1">وزارة التربية الوطنية - مديرية التربية لولاية بجاية - ثانوية شعبان أعمر أوقاس</p>
+      <h2 class="font-black text-xl mt-4 border-2 border-black inline-block px-8 py-2">التقرير اليومي للغيابات والتأخرات</h2>
+      <p class="mt-3 font-bold text-base">تاريخ اليوم : <span id="rapport-date"></span></p>
     </div>
     
-    <div class="flex gap-4 mb-4 text-xs font-bold text-center">
-      <div class="border border-black p-2 flex-1">الحصص المنجزة : <span id="rapport-kpi-seances"></span></div>
-      <div class="border border-black p-2 flex-1">الغيابات : <span id="rapport-kpi-absents" class="text-rose-700"></span></div>
-      <div class="border border-black p-2 flex-1">التأخرات : <span id="rapport-kpi-retards" class="text-amber-700"></span></div>
-      <div class="border border-black p-2 flex-1">نسبة الحضور : <span id="rapport-kpi-taux" dir="ltr"></span></div>
+    <div class="flex gap-4 mb-6 text-sm font-bold text-center">
+      <div class="border border-black p-2 flex-1 bg-slate-50">الحصص المنجزة : <span id="rapport-kpi-seances"></span></div>
+      <div class="border border-black p-2 flex-1 bg-slate-50">الغيابات : <span id="rapport-kpi-absents" class="text-rose-700"></span></div>
+      <div class="border border-black p-2 flex-1 bg-slate-50">التأخرات : <span id="rapport-kpi-retards" class="text-amber-700"></span></div>
+      <div class="border border-black p-2 flex-1 bg-slate-50">نسبة الحضور : <span id="rapport-kpi-taux" dir="ltr"></span></div>
     </div>
 
-    <table class="w-full text-right border-collapse text-xs border border-black mb-6">
-      <thead class="bg-gray-100">
-        <tr class="border-b border-black">
-          <th class="border-l border-black p-1.5 w-8 text-center">الرقم</th>
-          <th class="border-l border-black p-1.5">اللقب والاسم</th>
-          <th class="border-l border-black p-1.5 text-center">القسم</th>
-          <th class="border-l border-black p-1.5 text-center">المادة والتوقيت</th>
-          <th class="border-l border-black p-1.5 text-center">الحالة</th>
-          <th class="p-1.5 text-center">التبرير / التأشيرة</th>
+    <table class="w-full text-right border-collapse text-sm border border-black mb-6">
+      <thead class="bg-gray-100 font-bold">
+        <tr class="border-b-2 border-black">
+          <th class="border-l border-black p-2 w-10 text-center">الرقم</th>
+          <th class="border-l border-black p-2">اللقب والاسم</th>
+          <th class="border-l border-black p-2 text-center w-24">القسم</th>
+          <th class="border-l border-black p-2 text-center w-36">المادة والتوقيت</th>
+          <th class="border-l border-black p-2 text-center w-24">الحالة</th>
+          <th class="p-2 text-center w-36">التبرير / التأشيرة</th>
         </tr>
       </thead>
       <tbody id="rapport-table-body" class="divide-y divide-black border-b border-black"></tbody>
     </table>
 
-    <div class="flex justify-between text-xs font-bold px-10 pt-4">
-      <div class="text-center"><p>مستشار التربية</p></div>
-      <div class="text-center"><p>ناظر الدراسات</p></div>
+    <div class="flex justify-between text-sm font-bold px-12 pt-8">
+      <div class="text-center w-40">
+        <p>مستشار التربية</p>
+        <div class="h-24 border-b border-dashed border-black mt-2"></div>
+      </div>
+      <div class="text-center w-40">
+        <p>ناظر الدراسات</p>
+        <div class="h-24 border-b border-dashed border-black mt-2"></div>
+      </div>
     </div>
   </div>
 
@@ -256,8 +261,8 @@
   <!-- CONVOCATION PARENT (3+ ABSENCES) -->
   <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10">
     <div class="text-center border-b border-black pb-4 mb-5">
-      <p class="text-xs font-bold">République Algérienne Démocratique et Populaire</p>
-      <p class="text-xs font-bold">Lycée Chaabane Aamar - Aokas</p>
+      <p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+      <p class="text-xs font-bold">ثانوية شعبان أعمر - أوقاس</p>
       <h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2>
       <h3 class="text-base font-bold mt-1">(إشعار بتكرار الغياب)</h3>
     </div>
@@ -279,9 +284,9 @@
 
     function debloquerSuperviseur() {
       const pinScreen = document.getElementById('pin-screen'); 
-      if(pinScreen) pinScreen.remove(); // Supprime l'écran de verrouillage
+      if(pinScreen) pinScreen.remove();
       sessionStorage.setItem('superviseur_auth', 'true');
-      initialiserApplication(); // Charge la BDD après succès
+      initialiserApplication();
     }
 
     function validerPinDirect() {
@@ -302,7 +307,6 @@
       }
     }
 
-    // Écouteurs pour le PIN
     const inputPin = document.getElementById('input-pin');
     const btnValiderPin = document.getElementById('btn-valider-pin');
     
@@ -313,7 +317,6 @@
       inputPin.addEventListener('keydown', (e) => { if(e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
     }
 
-    // Verrouillage de la session
     const btnLock = document.getElementById('btn-lock');
     if(btnLock) {
       btnLock.addEventListener('click', () => {
@@ -322,7 +325,6 @@
       });
     }
 
-    // Auto-déblocage si déjà authentifié
     if(sessionStorage.getItem('superviseur_auth') === 'true') { 
       debloquerSuperviseur(); 
     }
@@ -339,7 +341,6 @@
     let pointagesData = [];
     let compteursAbsencesGlobal = {};
 
-    // Animation des chiffres
     function animerChiffre(el, cible) {
       if(!el) return; 
       let dep = parseInt(el.textContent)||0; 
@@ -371,7 +372,6 @@
       await fetchDonnees(); 
     }
 
-    // *** RÉTABLISSEMENT DE LA LISTE DES CLASSES GROUPÉE & BILINGUE ***
     async function loadClassesBilingues() {
       try {
         const { data, error } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
@@ -381,7 +381,6 @@
         if(!filtreClasse) return;
         filtreClasse.innerHTML = '<option value="ALL">-- Toutes les classes / كل الأقسام --</option>';
         
-        // Création des OptGroups
         const groupes = { 
           '1AS': document.createElement('optgroup'), 
           '2AS': document.createElement('optgroup'), 
@@ -393,7 +392,6 @@
         groupes['3AS'].label = "🎓 3ème Année Secondaire - Bac (3AS / الثالثة ثانوي)"; 
         groupes['AUTRE'].label = "Autres divisions";
 
-        // Ajout des options avec le libellé Bilingue (nom_court — nom_complet)
         classesCache.forEach(cls => {
           const opt = document.createElement('option'); 
           opt.value = cls.id; 
@@ -405,7 +403,6 @@
           else groupes['AUTRE'].appendChild(opt);
         });
 
-        // Insertion dans le DOM
         ['1AS','2AS','3AS','AUTRE'].forEach(key => { 
           if(groupes[key].children.length > 0) filtreClasse.appendChild(groupes[key]); 
         });
@@ -419,7 +416,6 @@
       registreBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-indigo-500"><i class="fa-solid fa-spin fa-circle-notch text-2xl"></i><p class="mt-2 text-xs">Synchronisation en cours...</p></td></tr>`;
       
       try {
-        // 1. Calcul du cumul global pour l'alerte
         const { data: absData, error: absErr } = await supabaseClient.from('pointages').select('eleve_id').eq('statut', 'A');
         if(absErr) throw absErr;
         
@@ -428,7 +424,6 @@
           compteursAbsencesGlobal[pt.eleve_id] = (compteursAbsencesGlobal[pt.eleve_id] || 0) + 1;
         });
 
-        // 2. Récupération des données du jour
         const { data, error } = await supabaseClient
           .from('pointages')
           .select(`id, statut, justifie, motif_justification, cree_a, eleves (id, nom, prenom, nom_ar, prenom_ar), seances!inner (date_cours, heure_debut, heure_fin, matiere, classe_id, classes (nom_court))`)
@@ -438,7 +433,6 @@
         if(error) throw error;
         pointagesData = data || [];
         
-        // 3. Calcul des KPIs
         let p=0, a=0, r=0, alertes=0; 
         const vusAujourdhui = new Set();
         
@@ -460,7 +454,6 @@
         
         document.getElementById('kpi-taux').textContent = pointagesData.length > 0 ? Math.round((p / pointagesData.length) * 100) + '%' : '--%';
         
-        // 4. Affichage du tableau
         renderTableau();
         
       } catch(err) {
@@ -490,7 +483,7 @@
       document.getElementById('registre-count').textContent = `${fData.length} ligne(s)`;
       
       if(fData.length === 0) {
-        registreBody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-400 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>Aucun تسجيل correspondant.</td></tr>`;
+        registreBody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-400 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>Aucun enregistrement correspondant.</td></tr>`;
         return;
       }
       
@@ -625,7 +618,7 @@
       });
     }
 
-    // IMPRIMER RAPPORT CENSEUR (EN ARABE)
+    // IMPRIMER RAPPORT CENSEUR (100% ARABE)
     const btnImprimerRapport = document.getElementById('btn-imprimer-rapport');
     if(btnImprimerRapport) {
       btnImprimerRapport.addEventListener('click', () => {
@@ -634,12 +627,12 @@
 
         const incidents = pointagesData.filter(p => p.statut === 'A' || p.statut === 'R');
         
-        // Date formatée en arabe
+        // Date en arabe
         document.getElementById('rapport-date').textContent = new Date(dChoisie).toLocaleDateString('ar-DZ', { 
           weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
         });
         
-        // Copie des KPIs
+        // Copie KPIs
         document.getElementById('rapport-kpi-seances').textContent = document.getElementById('kpi-seances').textContent;
         document.getElementById('rapport-kpi-absents').textContent = document.getElementById('kpi-absents').textContent;
         document.getElementById('rapport-kpi-retards').textContent = document.getElementById('kpi-retards').textContent;
@@ -653,23 +646,21 @@
         } else {
           incidents.forEach((pt, i) => {
             const el = pt.eleves || {}, sc = pt.seances || {}, cl = sc.classes || {};
-            
-            // Traduction des statuts et motifs
             const statutL = pt.statut === 'A' ? 'غياب' : 'تأخر';
-            const just = pt.justifie ? (pt.motif_justification || 'مبرر') : 'غير مبرر';
             const colorStatut = pt.statut === 'A' ? 'text-rose-700' : 'text-amber-700';
+            const just = pt.justifie ? (pt.motif_justification || 'مبرر') : 'غير مبرر';
             
             // Priorité au nom en arabe
             const nomCompletArabe = (el.nom_ar || el.nom) + ' ' + (el.prenom_ar || el.prenom);
             
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td class="border-l border-black p-1.5 text-center">${i + 1}</td>
-              <td class="border-l border-black p-1.5 font-bold">${nomCompletArabe}</td>
-              <td class="border-l border-black p-1.5 text-center font-bold" dir="ltr">${cl.nom_court}</td>
-              <td class="border-l border-black p-1.5 text-center" dir="ltr">${sc.matiere}<br>${sc.heure_debut?.substring(0,5)}</td>
-              <td class="border-l border-black p-1.5 text-center font-bold ${colorStatut}">${statutL}</td>
-              <td class="p-1.5 text-xs text-center">${just}</td>
+              <td class="border-l border-black p-2 text-center font-bold">${i + 1}</td>
+              <td class="border-l border-black p-2 font-bold">${nomCompletArabe}</td>
+              <td class="border-l border-black p-2 text-center font-bold" dir="ltr">${cl.nom_court}</td>
+              <td class="border-l border-black p-2 text-center" dir="ltr">${sc.matiere}<br>${sc.heure_debut?.substring(0,5)}</td>
+              <td class="border-l border-black p-2 text-center font-bold ${colorStatut}">${statutL}</td>
+              <td class="p-2 text-center">${just}</td>
             `;
             tbody.appendChild(tr);
           });
