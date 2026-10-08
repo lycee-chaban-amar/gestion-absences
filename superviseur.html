@@ -8,40 +8,52 @@
   <meta name="theme-color" content="#0f172a">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135755.png">
 
+  <!-- Tailwind & Supabase & SheetJS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     button, select, input { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
     button:active { transform: scale(0.96); }
+    
     @keyframes slideUpFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .animate-table-row { animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    
     @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
     .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
+    
     @keyframes alertPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }
     .badge-alerte-rouge { animation: alertPulse 1.4s infinite ease-in-out; }
 
+    /* CSS pour l'impression ciblée */
     @media print {
       body * { visibility: hidden; }
       body.print-billet #zone-impression-billet, body.print-billet #zone-impression-billet * { visibility: visible; }
       body.print-billet #zone-impression-billet { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+      
       body.print-convocation #zone-impression-convocation, body.print-convocation #zone-impression-convocation * { visibility: visible; }
       body.print-convocation #zone-impression-convocation { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+      
       body.print-rapport #zone-impression-rapport, body.print-rapport #zone-impression-rapport * { visibility: visible; }
       body.print-rapport #zone-impression-rapport { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+      
       @page { size: A4 portrait; margin: 15mm; }
     }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- Modal Modifier Pointage -->
+  <!-- ========================================== -->
+  <!-- MODAL: MODIFIER UN POINTAGE D'ERREUR -->
+  <!-- ========================================== -->
   <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
@@ -50,11 +62,16 @@
       </div>
       <input type="hidden" id="edit-pointage-id" />
       <div class="space-y-4 text-sm">
-        <div><label class="block text-xs font-bold text-slate-500 mb-1">Élève</label><div id="edit-eleve-nom" class="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200"></div></div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 mb-1">Élève</label>
+          <div id="edit-eleve-nom" class="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200"></div>
+        </div>
         <div>
           <label class="block text-xs font-bold text-slate-500 mb-1">Statut</label>
           <select id="edit-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 outline-none">
-            <option value="P">✅ Présent</option><option value="A">❌ Absent</option><option value="R">⏳ Retard</option>
+            <option value="P">✅ Présent</option>
+            <option value="A">❌ Absent</option>
+            <option value="R">⏳ Retard</option>
           </select>
         </div>
         <div>
@@ -63,7 +80,7 @@
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold"><input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600" /> Non justifié</label>
             <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700"><input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600" /> Justifié</label>
           </div>
-          <input type="text" id="edit-motif" placeholder="Motif (ex: Billet...)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs outline-none" />
+          <input type="text" id="edit-motif" placeholder="Motif (ex: Certificat médical...)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs outline-none" />
         </div>
       </div>
       <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
@@ -73,7 +90,9 @@
     </div>
   </div>
 
-  <!-- Écran PIN Sécurisé Superviseur (Base64) -->
+  <!-- ========================================== -->
+  <!-- ÉCRAN PIN SÉCURISÉ SUPERVISEUR (BASE64) -->
+  <!-- ========================================== -->
   <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div>
@@ -84,11 +103,14 @@
           <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl outline-none focus:border-indigo-600 transition" />
           <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p>
         </div>
-        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer">Déverrouiller</button>
+        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer">Déverrouiller / الدخول</button>
       </div>
     </div>
   </div>
 
+  <!-- ========================================== -->
+  <!-- HEADER -->
+  <!-- ========================================== -->
   <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
@@ -96,15 +118,18 @@
         <div><h1 class="text-lg font-bold">Espace Vie Scolaire <span class="text-indigo-400 mx-1">|</span> <span dir="rtl">فضاء الاستشارة</span></h1><p class="text-xs text-slate-400">ثانوية شعبان أعمر أوقاس</p></div>
       </div>
       <div class="flex items-center gap-3">
-        <a href="index.html" class="text-xs font-semibold text-slate-300 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 cursor-pointer"><i class="fa-solid fa-chalkboard-user mr-1"></i>Vue Enseignant</a>
-        <button id="btn-lock" class="text-xs font-semibold text-rose-300 bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 cursor-pointer"><i class="fa-solid fa-lock mr-1"></i>Verrouiller</button>
+        <a href="index.html" class="text-xs font-semibold text-slate-300 bg-slate-800 px-3.5 py-2 rounded-xl border border-slate-700 hover:bg-slate-700 transition"><i class="fa-solid fa-chalkboard-user mr-1"></i>Vue Enseignant</a>
+        <button id="btn-lock" class="text-xs font-semibold text-rose-300 bg-slate-800 px-3 py-2 rounded-xl border border-slate-700 hover:bg-rose-900 transition"><i class="fa-solid fa-lock mr-1"></i>Verrouiller</button>
       </div>
     </div>
   </header>
 
+  <!-- ========================================== -->
+  <!-- CONTENU PRINCIPAL -->
+  <!-- ========================================== -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- KPI -->
+    <!-- KPI (Statistiques) -->
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
       <div class="bg-white p-4 rounded-2xl border border-slate-200"><div class="flex justify-between text-slate-500 mb-1"><span class="text-xs font-bold uppercase">Appels faits</span><i class="fa-solid fa-clipboard-check text-indigo-500"></i></div><div class="text-2xl font-extrabold text-slate-800" id="kpi-seances">0</div></div>
       <div class="bg-white p-4 rounded-2xl border border-slate-200"><div class="flex justify-between text-rose-500 mb-1"><span class="text-xs font-bold uppercase">Absences</span><i class="fa-solid fa-user-xmark"></i></div><div class="text-2xl font-extrabold text-rose-600" id="kpi-absents">0</div></div>
@@ -116,23 +141,57 @@
     <!-- Filtres & Actions -->
     <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col md:flex-row justify-between gap-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-        <div><label class="block text-xs font-bold mb-1">Date</label><input type="date" id="filtre-date" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none" /></div>
-        <div><label class="block text-xs font-bold mb-1">Classe</label><select id="filtre-classe" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"><option value="ALL">Toutes les classes</option></select></div>
-        <div><label class="block text-xs font-bold mb-1">Statut</label><select id="filtre-statut" class="w-full bg-slate-50 border rounded-xl px-3 py-2 text-sm outline-none"><option value="A_R">Absences & Retards</option><option value="ALERTE_3">🚨 En alerte (3+ abs)</option><option value="A">Absents</option><option value="R">Retards</option><option value="ALL">Tout</option></select></div>
+        <div>
+          <label class="block text-xs font-bold mb-1">Date</label>
+          <input type="date" id="filtre-date" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold mb-1">Classe</label>
+          <select id="filtre-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL">Toutes les classes / كل الأقسام</option>
+            <!-- Les groupes (1AS, 2AS...) seront générés ici -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold mb-1">Statut</label>
+          <select id="filtre-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="A_R">Absences & Retards</option>
+            <option value="ALERTE_3">🚨 En alerte (3+ abs)</option>
+            <option value="A">Absents uniquement</option>
+            <option value="R">Retards uniquement</option>
+            <option value="ALL">Tout afficher</option>
+          </select>
+        </div>
       </div>
       <div class="flex gap-2 items-end">
-        <button id="btn-export-excel" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-700 cursor-pointer"><i class="fa-solid fa-file-excel mr-2"></i>Exporter</button>
-        <button id="btn-imprimer-rapport" class="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 cursor-pointer"><i class="fa-solid fa-print mr-2"></i>Rapport</button>
+        <button id="btn-export-excel" class="bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-700 transition cursor-pointer flex items-center">
+          <i class="fa-solid fa-file-excel mr-2"></i>Exporter
+        </button>
+        <button id="btn-imprimer-rapport" class="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-indigo-700 transition cursor-pointer flex items-center">
+          <i class="fa-solid fa-print mr-2"></i>Rapport
+        </button>
       </div>
     </div>
 
     <!-- Table Registre -->
     <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-      <div class="p-4 border-b bg-slate-50"><h2 class="font-bold">Registre des Absences</h2><p class="text-xs text-slate-500" id="registre-count">Chargement...</p></div>
+      <div class="p-4 border-b bg-slate-50 flex justify-between items-center">
+        <h2 class="font-bold">Registre Quotidien des Absences</h2>
+        <p class="text-xs text-slate-500 font-bold bg-slate-200 px-3 py-1 rounded-full" id="registre-count">0 ligne(s)</p>
+      </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead class="bg-slate-100 text-xs font-bold uppercase text-slate-700">
-            <tr><th class="py-3 px-3">N°</th><th class="py-3 px-4">Élève & Alerte</th><th class="py-3 px-3">Classe</th><th class="py-3 px-3">Séance</th><th class="py-3 px-3 text-center">Cumul Abs.</th><th class="py-3 px-3 text-center">Statut</th><th class="py-3 px-3 text-center">Justification</th><th class="py-3 px-3 text-center">Actions</th></tr>
+            <tr>
+              <th class="py-3 px-3 w-10 text-center">N°</th>
+              <th class="py-3 px-4">Élève & Alerte</th>
+              <th class="py-3 px-3">Classe</th>
+              <th class="py-3 px-3">Séance & Matière</th>
+              <th class="py-3 px-3 text-center">Cumul Abs.</th>
+              <th class="py-3 px-3 text-center">Statut</th>
+              <th class="py-3 px-3 text-center">Justification</th>
+              <th class="py-3 px-3 text-center">Actions</th>
+            </tr>
           </thead>
           <tbody id="registre-body" class="divide-y text-sm"></tbody>
         </table>
@@ -141,179 +200,523 @@
 
   </main>
 
-  <!-- Impressions Invisibles (A4) -->
-  <div id="zone-impression-rapport" class="hidden p-6 bg-white">
-    <div class="text-center border-b-2 border-black pb-3 mb-4"><p class="font-bold">RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE</p><h2 class="font-bold text-lg mt-2">Rapport Journalier des Absences</h2><p>Date : <span id="rapport-date"></span></p></div>
-    <table class="w-full text-left border-collapse text-xs border border-black mb-4">
-      <thead class="bg-gray-100"><tr class="border-b border-black"><th class="border-r border-black p-1">Nom Prénom</th><th class="border-r border-black p-1">Classe</th><th class="border-r border-black p-1">Matière & Heure</th><th class="border-r border-black p-1">Statut</th><th class="p-1">Motif</th></tr></thead>
+  <!-- ========================================== -->
+  <!-- ZONES D'IMPRESSION (INVISIBLES À L'ÉCRAN) -->
+  <!-- ========================================== -->
+
+  <!-- RAPPORT CENSEUR (A4) -->
+  <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black">
+    <div class="text-center border-b-2 border-black pb-3 mb-4">
+      <p class="font-bold text-xs uppercase">République Algérienne Démocratique et Populaire</p>
+      <p class="font-bold text-xs">Direction de l'Éducation - Lycée Chaabane Aamar Aokas</p>
+      <h2 class="font-black text-lg mt-3 uppercase border border-black inline-block px-4 py-1">Rapport Journalier des Absences</h2>
+      <p class="mt-2 font-bold text-sm">Date : <span id="rapport-date"></span></p>
+    </div>
+    
+    <div class="flex gap-4 mb-4 text-xs font-bold text-center">
+      <div class="border border-black p-2 flex-1">Appels: <span id="rapport-kpi-seances"></span></div>
+      <div class="border border-black p-2 flex-1">Absents: <span id="rapport-kpi-absents" class="text-rose-700"></span></div>
+      <div class="border border-black p-2 flex-1">Retards: <span id="rapport-kpi-retards"></span></div>
+      <div class="border border-black p-2 flex-1">Présence: <span id="rapport-kpi-taux"></span></div>
+    </div>
+
+    <table class="w-full text-left border-collapse text-xs border border-black mb-6">
+      <thead class="bg-gray-100">
+        <tr class="border-b border-black">
+          <th class="border-r border-black p-1.5 w-8 text-center">N°</th>
+          <th class="border-r border-black p-1.5">Nom & Prénom / اللقب والاسم</th>
+          <th class="border-r border-black p-1.5">Classe</th>
+          <th class="border-r border-black p-1.5">Matière & Heure</th>
+          <th class="border-r border-black p-1.5 text-center">Statut</th>
+          <th class="p-1.5">Motif / Visa</th>
+        </tr>
+      </thead>
       <tbody id="rapport-table-body" class="divide-y divide-black border-b border-black"></tbody>
     </table>
-  </div>
-  <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto">
-    <div class="text-center border-b pb-3 mb-4"><h3 class="font-bold">ثانوية شعبان أعمر أوقاس</h3><h2 class="font-bold uppercase mt-2">Billet d'Entrée / رخصة الدخول</h2></div>
-    <div id="billet-details" class="space-y-2 text-sm"></div>
-    <div class="mt-6 pt-4 border-t flex justify-between text-xs"><p>Le : <span id="billet-date-emission"></span></p><p class="font-bold">Visa Administration</p></div>
-  </div>
-  <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl">
-    <div class="text-center border-b pb-4 mb-4"><h2 class="text-xl font-black mt-2">استدعاء ولي أمر تلميذ (غياب متكرر)</h2></div>
-    <div id="convocation-details" class="space-y-3 text-sm"></div>
-    <div class="mt-8 pt-4 border-t flex justify-between text-xs"><p>Date: <span id="convoc-date-emission"></span></p><p class="font-bold">Cachet & Signature</p></div>
+
+    <div class="flex justify-between text-xs font-bold px-10 pt-4">
+      <div class="text-center"><p>Le Conseiller d'Éducation</p></div>
+      <div class="text-center"><p>Le Censeur des Études</p></div>
+    </div>
   </div>
 
+  <!-- BILLET D'ENTRÉE -->
+  <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10">
+    <div class="text-center border-b pb-3 mb-4">
+      <h3 class="font-bold">ثانوية شعبان أعمر أوقاس</h3>
+      <h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée / رخصة الدخول</h2>
+    </div>
+    <div id="billet-details" class="space-y-3 text-sm"></div>
+    <div class="mt-6 pt-4 border-t flex justify-between text-xs">
+      <p>Édité le : <span id="billet-date-emission"></span></p>
+      <p class="font-bold">Visa Administration</p>
+    </div>
+  </div>
+
+  <!-- CONVOCATION PARENT (3+ ABSENCES) -->
+  <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10">
+    <div class="text-center border-b border-black pb-4 mb-5">
+      <p class="text-xs font-bold">République Algérienne Démocratique et Populaire</p>
+      <p class="text-xs font-bold">Lycée Chaabane Aamar - Aokas</p>
+      <h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2>
+      <h3 class="text-base font-bold mt-1">(إشعار بتكرار الغياب)</h3>
+    </div>
+    <div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div>
+    <div class="mt-10 pt-4 border-t flex justify-between text-xs">
+      <p>أوقاس في : <span id="convoc-date-emission" class="font-bold"></span></p>
+      <p class="font-bold text-center">ختم وإمضاء مستشار التربية</p>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT COMPLET ET STRUCTURÉ -->
+  <!-- ========================================== -->
   <script>
-    // ÉTAPE 1 : CHARGEMENT DE SUPABASE
-    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // ÉTAPE 2 : DOM & VARIABLES
-    let classesCache = [], pointagesData = [], compteursAbsencesGlobal = {};
-    const filtreDate = document.getElementById('filtre-date'), filtreClasse = document.getElementById('filtre-classe'), filtreStatut = document.getElementById('filtre-statut'), registreBody = document.getElementById('registre-body');
-    if(filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
-
-    function animerChiffre(el, cible) {
-      if(!el) return; let dep = parseInt(el.textContent)||0; if(dep===cible) return;
-      const d = 250, deb = performance.now();
-      function f(t) { const p=Math.min((t-deb)/d,1); el.textContent=Math.floor(dep+(cible-dep)*p); if(p<1)requestAnimationFrame(f); else el.textContent=cible; }
-      requestAnimationFrame(f);
-    }
-
-    async function initialiserApplication() { await loadClasses(); await fetchDonnees(); }
-
-    async function loadClasses() {
-      const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
-      classesCache = data || [];
-      if(!filtreClasse) return;
-      filtreClasse.innerHTML = '<option value="ALL">Toutes les classes</option>';
-      classesCache.forEach(c => { const o = document.createElement('option'); o.value = c.id; o.textContent = c.nom_court; filtreClasse.appendChild(o); });
-    }
-
-    async function fetchDonnees() {
-      if(!filtreDate.value) return;
-      registreBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-indigo-500"><i class="fa-solid fa-spin fa-circle-notch text-2xl"></i></td></tr>`;
-      
-      const { data: absData } = await supabaseClient.from('pointages').select('eleve_id').eq('statut', 'A');
-      compteursAbsencesGlobal = {};
-      (absData||[]).forEach(pt => compteursAbsencesGlobal[pt.eleve_id] = (compteursAbsencesGlobal[pt.eleve_id]||0)+1);
-
-      const { data } = await supabaseClient.from('pointages').select(`id, statut, justifie, motif_justification, cree_a, eleves (id, nom, prenom, nom_ar, prenom_ar), seances!inner (date_cours, heure_debut, heure_fin, matiere, classe_id, classes (nom_court))`).eq('seances.date_cours', filtreDate.value).order('cree_a', {ascending:false});
-      pointagesData = data || [];
-      
-      let p=0, a=0, r=0, alertes=0; const vus=new Set();
-      pointagesData.forEach(pt => {
-        if(pt.statut==='P')p++; else if(pt.statut==='A')a++; else r++;
-        if(pt.eleves?.id && !vus.has(pt.eleves.id)) { vus.add(pt.eleves.id); if((compteursAbsencesGlobal[pt.eleves.id]||0)>=3) alertes++; }
-      });
-      animerChiffre(document.getElementById('kpi-seances'), new Set(pointagesData.map(pt=>pt.seances?.id)).size);
-      animerChiffre(document.getElementById('kpi-absents'), a); animerChiffre(document.getElementById('kpi-retards'), r); animerChiffre(document.getElementById('kpi-alertes'), alertes);
-      document.getElementById('kpi-taux').textContent = pointagesData.length ? Math.round((p/pointagesData.length)*100)+'%' : '--%';
-      
-      renderTableau();
-    }
-
-    function renderTableau() {
-      const fData = pointagesData.filter(pt => {
-        if(filtreClasse.value!=='ALL' && pt.seances?.classe_id!=filtreClasse.value) return false;
-        const tot = compteursAbsencesGlobal[pt.eleves?.id]||0;
-        if(filtreStatut.value==='ALERTE_3') return tot>=3;
-        if(filtreStatut.value==='A_R') return pt.statut==='A'||pt.statut==='R';
-        if(filtreStatut.value!=='ALL') return pt.statut===filtreStatut.value;
-        return true;
-      });
-      document.getElementById('registre-count').textContent = `${fData.length} ligne(s)`;
-      if(fData.length===0) return registreBody.innerHTML = `<tr><td colspan="8" class="text-center py-8">Aucun résultat</td></tr>`;
-      
-      registreBody.innerHTML = '';
-      fData.forEach((pt,i) => {
-        const el = pt.eleves||{}, sc = pt.seances||{}, cl = sc.classes||{}, tot = compteursAbsencesGlobal[el.id]||0, al = tot>=3;
-        const stHtml = pt.statut==='A'?'<span class="bg-rose-100 text-rose-700 px-2 rounded-full font-bold">Absent</span>':(pt.statut==='R'?'<span class="bg-amber-100 text-amber-700 px-2 rounded-full font-bold">Retard</span>':'<span class="bg-emerald-100 text-emerald-700 px-2 rounded-full font-bold">Présent</span>');
-        const bg = al ? 'bg-rose-50 border-l-4 border-rose-500' : (i%2===0?'bg-white':'bg-slate-50');
-        
-        registreBody.innerHTML += `<tr class="${bg}"><td class="py-2 px-3 text-center">${i+1}</td>
-          <td class="py-2 px-3"><div class="font-bold ${al?'text-rose-700':''}">${el.nom} ${el.prenom}</div>${al?`<span class="badge-alerte-rouge bg-rose-600 text-white text-[10px] px-2 rounded-full mt-1 inline-block">🚨 ${tot} ABSENCES</span>`:''}</td>
-          <td class="py-2 px-3 font-bold">${cl.nom_court}</td><td class="py-2 px-3 text-xs">${sc.matiere}<br>${sc.heure_debut?.substring(0,5)}</td>
-          <td class="py-2 px-3 text-center font-bold">${tot}</td><td class="py-2 px-3 text-center">${stHtml}</td>
-          <td class="py-2 px-3 text-center text-xs">${pt.justifie?'Justifié':'Non justifié'}</td>
-          <td class="py-2 px-3 text-center flex justify-center gap-1">
-            <button onclick="ouvrirModalModifier('${pt.id}')" class="bg-indigo-100 text-indigo-700 p-1.5 rounded cursor-pointer"><i class="fa-solid fa-pen"></i></button>
-            <button onclick="imprimerBillet('${el.nom}','${el.prenom}','${cl.nom_court}','${sc.date_cours}','${sc.heure_debut}','${pt.statut}')" class="bg-slate-200 p-1.5 rounded cursor-pointer"><i class="fa-solid fa-print"></i></button>
-            ${al ? `<button onclick="imprimerConvocation('${el.nom}','${el.prenom}','${cl.nom_court}',${tot})" class="bg-rose-600 text-white p-1.5 rounded cursor-pointer"><i class="fa-solid fa-envelope"></i></button>` : ''}
-            <button onclick="supprimerPointage('${pt.id}')" class="bg-rose-100 text-rose-700 p-1.5 rounded cursor-pointer"><i class="fa-solid fa-trash"></i></button>
-          </td></tr>`;
-      });
-    }
-
-    window.ouvrirModalModifier = (id) => { const pt = pointagesData.find(p=>p.id==id); if(!pt)return;
-      document.getElementById('edit-pointage-id').value = id; document.getElementById('edit-eleve-nom').textContent = pt.eleves.nom+' '+pt.eleves.prenom;
-      document.getElementById('edit-statut').value = pt.statut; document.getElementById('edit-justifie-'+(pt.justifie?'oui':'non')).checked=true;
-      document.getElementById('edit-motif').value = pt.motif_justification||'';
-      document.getElementById('modal-modifier').classList.replace('hidden', 'flex');
-    };
-    window.fermerModalModifier = () => document.getElementById('modal-modifier').classList.replace('flex', 'hidden');
-    window.enregistrerModificationPointage = async () => {
-      try {
-        await supabaseClient.from('pointages').update({ statut: document.getElementById('edit-statut').value, justifie: document.getElementById('edit-justifie-oui').checked, motif_justification: document.getElementById('edit-motif').value }).eq('id', document.getElementById('edit-pointage-id').value);
-        fermerModalModifier(); fetchDonnees();
-      } catch(e){ alert(e); }
-    };
-    window.supprimerPointage = async (id) => { if(confirm('Supprimer cet enregistrement ?')){ await supabaseClient.from('pointages').delete().eq('id',id); fetchDonnees(); } };
-
-    const btnExportExcel = document.getElementById('btn-export-excel');
-    if(btnExportExcel) btnExportExcel.onclick = () => {
-      const d = obtenirDonneesFiltrees().map((p,i)=>({ "N°":i+1, "Date":p.seances?.date_cours, "Classe":p.seances?.classes?.nom_court, "Nom":p.eleves?.nom, "Prénom":p.eleves?.prenom, "Statut":p.statut==='A'?'Absent':p.statut==='R'?'Retard':'Présent', "Total Abs":compteursAbsencesGlobal[p.eleves?.id]||0 }));
-      if(!d.length) return alert('Vide'); const ws = XLSX.utils.json_to_sheet(d), wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Absences"); XLSX.writeFile(wb, `Export_${filtreDate.value}.xlsx`);
-    };
-
-    window.imprimerBillet = (nom, prenom, classe, date, heure, statut) => {
-      document.getElementById('billet-details').innerHTML = `<p><b>Élève :</b> ${nom} ${prenom}</p><p><b>Classe :</b> ${classe}</p><p><b>Motif :</b> ${statut==='A'?'Absence':'Retard'}</p><p><b>Séance :</b> ${date} à ${heure.substring(0,5)}</p>`;
-      document.getElementById('billet-date-emission').textContent = new Date().toLocaleString('fr-FR');
-      document.body.className='print-billet'; window.print(); document.body.className='';
-    };
-    window.imprimerConvocation = (nom, prenom, classe, tot) => {
-      document.getElementById('convocation-details').innerHTML = `<p>L'élève <b>${nom} ${prenom}</b> (${classe}) a cumulé <b>${tot} absences</b>. La présence du tuteur légal est exigée au bureau du conseiller.</p>`;
-      document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('fr-FR');
-      document.body.className='print-convocation'; window.print(); document.body.className='';
-    };
-
-    if(filtreDate) filtreDate.onchange=fetchDonnees; if(filtreClasse) filtreClasse.onchange=renderTableau; if(filtreStatut) filtreStatut.onchange=renderTableau;
-    const btnRefresh = document.getElementById('btn-refresh'); if(btnRefresh) btnRefresh.onclick=fetchDonnees;
-
-    // ÉTAPE 3 : SÉCURITÉ PIN INFAILLIBLE (Base64) - "2626"
+    // ---------------------------------------------------------
+    // 1. DÉVERROUILLAGE SÉCURISÉ (PIN : "MjYyNg==" -> 2626)
+    // ---------------------------------------------------------
     const PIN_MASQUE = "MjYyNg==";
 
     function debloquerSuperviseur() {
-      const p = document.getElementById('pin-screen'); if(p) p.remove();
+      const pinScreen = document.getElementById('pin-screen'); 
+      if(pinScreen) pinScreen.remove(); // Supprime l'écran de verrouillage
       sessionStorage.setItem('superviseur_auth', 'true');
-      initialiserApplication(); // Appelé APRES Supabase
+      initialiserApplication(); // Charge la BDD après succès
     }
 
     function validerPinDirect() {
       const input = document.getElementById('input-pin');
+      const err = document.getElementById('pin-error');
+      const card = document.getElementById('pin-card');
       const val = input ? input.value.trim() : '';
       
       if(val.length < 4) return;
       
       if(val === atob(PIN_MASQUE)) {
-        document.getElementById('pin-error').classList.add('hidden');
+        if(err) err.classList.add('hidden');
         debloquerSuperviseur();
       } else {
-        document.getElementById('pin-error').classList.remove('hidden');
-        document.getElementById('pin-card').classList.add('shake-error');
-        setTimeout(() => document.getElementById('pin-card').classList.remove('shake-error'), 400);
-        input.value = ''; input.focus();
+        if(err) err.classList.remove('hidden');
+        if(card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
+        if(input) { input.value = ''; input.focus(); }
       }
     }
 
+    // Écouteurs pour le PIN
     const inputPin = document.getElementById('input-pin');
-    if(document.getElementById('btn-valider-pin')) document.getElementById('btn-valider-pin').onclick = validerPinDirect;
+    const btnValiderPin = document.getElementById('btn-valider-pin');
+    
+    if(btnValiderPin) btnValiderPin.addEventListener('click', validerPinDirect);
+    
     if(inputPin) {
       inputPin.addEventListener('input', () => { if(inputPin.value.length === 4) validerPinDirect(); });
       inputPin.addEventListener('keydown', (e) => { if(e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
     }
+
+    // Verrouillage de la session
+    const btnLock = document.getElementById('btn-lock');
+    if(btnLock) {
+      btnLock.addEventListener('click', () => {
+        sessionStorage.removeItem('superviseur_auth'); 
+        location.reload(); 
+      });
+    }
+
+    // Auto-déblocage si déjà authentifié
+    if(sessionStorage.getItem('superviseur_auth') === 'true') { 
+      debloquerSuperviseur(); 
+    }
+
+
+    // ---------------------------------------------------------
+    // 2. SUPABASE INITIALISATION
+    // ---------------------------------------------------------
+    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
-    // ÉTAPE 4 : VÉRIFICATION DE LA SESSION (TOUT À LA FIN)
-    if(sessionStorage.getItem('superviseur_auth') === 'true') { debloquerSuperviseur(); }
-    if(document.getElementById('btn-lock')) document.getElementById('btn-lock').onclick = () => { sessionStorage.removeItem('superviseur_auth'); location.reload(); };
+    let classesCache = [];
+    let pointagesData = [];
+    let compteursAbsencesGlobal = {};
+
+    // Animation des chiffres
+    function animerChiffre(el, cible) {
+      if(!el) return; 
+      let dep = parseInt(el.textContent)||0; 
+      if(dep === cible) return;
+      
+      const duree = 250, deb = performance.now();
+      function frame(t) { 
+        const p = Math.min((t - deb) / duree, 1); 
+        el.textContent = Math.floor(dep + (cible - dep) * p); 
+        if(p < 1) requestAnimationFrame(frame); 
+        else el.textContent = cible; 
+      }
+      requestAnimationFrame(frame);
+    }
+
+
+    // ---------------------------------------------------------
+    // 3. LOGIQUE MÉTIER PRINCIPALE
+    // ---------------------------------------------------------
+    const filtreDate = document.getElementById('filtre-date');
+    const filtreClasse = document.getElementById('filtre-classe');
+    const filtreStatut = document.getElementById('filtre-statut');
+    const registreBody = document.getElementById('registre-body');
+
+    if(filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
+
+    async function initialiserApplication() { 
+      await loadClassesBilingues(); 
+      await fetchDonnees(); 
+    }
+
+    // *** RÉTABLISSEMENT DE LA LISTE DES CLASSES GROUPÉE & BILINGUE ***
+    async function loadClassesBilingues() {
+      try {
+        const { data, error } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
+        if (error) throw error;
+        classesCache = data || [];
+        
+        if(!filtreClasse) return;
+        filtreClasse.innerHTML = '<option value="ALL">-- Toutes les classes / كل الأقسام --</option>';
+        
+        // Création des OptGroups
+        const groupes = { 
+          '1AS': document.createElement('optgroup'), 
+          '2AS': document.createElement('optgroup'), 
+          '3AS': document.createElement('optgroup'), 
+          'AUTRE': document.createElement('optgroup') 
+        };
+        groupes['1AS'].label = "🎓 1ère Année Secondaire (1AS / الأولى ثانوي)"; 
+        groupes['2AS'].label = "🎓 2ème Année Secondaire (2AS / الثانية ثانوي)"; 
+        groupes['3AS'].label = "🎓 3ème Année Secondaire - Bac (3AS / الثالثة ثانوي)"; 
+        groupes['AUTRE'].label = "Autres divisions";
+
+        // Ajout des options avec le libellé Bilingue (nom_court — nom_complet)
+        classesCache.forEach(cls => {
+          const opt = document.createElement('option'); 
+          opt.value = cls.id; 
+          opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+          
+          if(cls.nom_court.startsWith('1AS')) groupes['1AS'].appendChild(opt);
+          else if(cls.nom_court.startsWith('2AS')) groupes['2AS'].appendChild(opt);
+          else if(cls.nom_court.startsWith('3AS')) groupes['3AS'].appendChild(opt);
+          else groupes['AUTRE'].appendChild(opt);
+        });
+
+        // Insertion dans le DOM
+        ['1AS','2AS','3AS','AUTRE'].forEach(key => { 
+          if(groupes[key].children.length > 0) filtreClasse.appendChild(groupes[key]); 
+        });
+      } catch (err) {
+        console.error("Erreur de chargement des classes :", err);
+      }
+    }
+
+    async function fetchDonnees() {
+      if(!filtreDate.value) return;
+      registreBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-indigo-500"><i class="fa-solid fa-spin fa-circle-notch text-2xl"></i><p class="mt-2 text-xs">Synchronisation en cours...</p></td></tr>`;
+      
+      try {
+        // 1. Calcul du cumul global pour l'alerte
+        const { data: absData, error: absErr } = await supabaseClient.from('pointages').select('eleve_id').eq('statut', 'A');
+        if(absErr) throw absErr;
+        
+        compteursAbsencesGlobal = {};
+        (absData || []).forEach(pt => {
+          compteursAbsencesGlobal[pt.eleve_id] = (compteursAbsencesGlobal[pt.eleve_id] || 0) + 1;
+        });
+
+        // 2. Récupération des données du jour
+        const { data, error } = await supabaseClient
+          .from('pointages')
+          .select(`id, statut, justifie, motif_justification, cree_a, eleves (id, nom, prenom, nom_ar, prenom_ar), seances!inner (date_cours, heure_debut, heure_fin, matiere, classe_id, classes (nom_court))`)
+          .eq('seances.date_cours', filtreDate.value)
+          .order('cree_a', {ascending: false});
+          
+        if(error) throw error;
+        pointagesData = data || [];
+        
+        // 3. Calcul des KPIs
+        let p=0, a=0, r=0, alertes=0; 
+        const vusAujourdhui = new Set();
+        
+        pointagesData.forEach(pt => {
+          if(pt.statut === 'P') p++; 
+          else if(pt.statut === 'A') a++; 
+          else r++;
+          
+          if(pt.eleves?.id && !vusAujourdhui.has(pt.eleves.id)) { 
+            vusAujourdhui.add(pt.eleves.id); 
+            if((compteursAbsencesGlobal[pt.eleves.id] || 0) >= 3) alertes++; 
+          }
+        });
+        
+        animerChiffre(document.getElementById('kpi-seances'), new Set(pointagesData.map(pt => pt.seances?.id)).size);
+        animerChiffre(document.getElementById('kpi-absents'), a); 
+        animerChiffre(document.getElementById('kpi-retards'), r); 
+        animerChiffre(document.getElementById('kpi-alertes'), alertes);
+        
+        document.getElementById('kpi-taux').textContent = pointagesData.length > 0 ? Math.round((p / pointagesData.length) * 100) + '%' : '--%';
+        
+        // 4. Affichage du tableau
+        renderTableau();
+        
+      } catch(err) {
+        console.error("Fetch Data Error:", err);
+        registreBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-rose-500 font-bold">Erreur de connexion à la base de données.</td></tr>`;
+      }
+    }
+
+    function obtenirDonneesFiltrees() {
+      const cl = filtreClasse ? filtreClasse.value : 'ALL';
+      const st = filtreStatut ? filtreStatut.value : 'A_R';
+
+      return pointagesData.filter(pt => {
+        if (cl !== 'ALL' && pt.seances?.classe_id != cl) return false;
+        
+        const tot = compteursAbsencesGlobal[pt.eleves?.id] || 0;
+        
+        if (st === 'ALERTE_3') return tot >= 3;
+        if (st === 'A_R') return pt.statut === 'A' || pt.statut === 'R';
+        if (st !== 'ALL') return pt.statut === st;
+        return true;
+      });
+    }
+
+    function renderTableau() {
+      const fData = obtenirDonneesFiltrees();
+      document.getElementById('registre-count').textContent = `${fData.length} ligne(s)`;
+      
+      if(fData.length === 0) {
+        registreBody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-400 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>Aucun enregistrement correspondant.</td></tr>`;
+        return;
+      }
+      
+      registreBody.innerHTML = '';
+      fData.forEach((pt, i) => {
+        const el = pt.eleves || {}, sc = pt.seances || {}, cl = sc.classes || {};
+        const tot = compteursAbsencesGlobal[el.id] || 0;
+        const al = tot >= 3;
+        
+        const stHtml = pt.statut === 'A' 
+          ? '<span class="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full font-bold"><i class="fa-solid fa-xmark mr-1"></i> Absent</span>'
+          : (pt.statut === 'R' 
+            ? '<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-bold"><i class="fa-solid fa-clock mr-1"></i> Retard</span>'
+            : '<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-bold"><i class="fa-solid fa-check mr-1"></i> Présent</span>');
+            
+        const bg = al ? 'bg-rose-50 border-l-4 border-l-rose-500' : (i % 2 === 0 ? 'bg-white' : 'bg-slate-50/70');
+        const delay = Math.min(i * 15, 300);
+        
+        const tr = document.createElement('tr');
+        tr.className = `animate-table-row ${bg} hover:bg-slate-100 transition`;
+        tr.style.animationDelay = `${delay}ms`;
+        
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-center text-xs font-bold text-slate-400">${i + 1}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-slate-900 ${al ? 'text-rose-800' : ''}">${el.nom} ${el.prenom}</div>
+            <div class="text-xs font-bold text-slate-500" dir="rtl">${el.nom_ar || ''} ${el.prenom_ar || ''}</div>
+            ${al ? `<span class="badge-alerte-rouge bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full mt-1 inline-block"><i class="fa-solid fa-bell mr-1"></i> ${tot} ABSENCES</span>` : ''}
+          </td>
+          <td class="py-3 px-3"><span class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded-lg font-bold text-xs">${cl.nom_court}</span></td>
+          <td class="py-3 px-3 text-xs"><div class="font-bold text-slate-700">${sc.matiere}</div><div class="text-slate-500">${sc.heure_debut?.substring(0,5)}</div></td>
+          <td class="py-3 px-3 text-center"><span class="px-2 py-1 rounded-lg font-black text-xs ${al ? 'bg-rose-200 text-rose-900' : 'bg-slate-100'}">${tot}</span></td>
+          <td class="py-3 px-3 text-center">${stHtml}</td>
+          <td class="py-3 px-3 text-center text-xs">${pt.justifie ? `<span class="text-emerald-700 bg-emerald-50 px-2 py-1 border border-emerald-200 rounded-lg font-bold">${pt.motif_justification || 'Justifié'}</span>` : `<span class="text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Non justifié</span>`}</td>
+          <td class="py-3 px-3 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="ouvrirModalModifier('${pt.id}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg cursor-pointer transition" title="Modifier"><i class="fa-solid fa-pen"></i></button>
+              <button onclick="imprimerBillet('${el.nom}','${el.prenom}','${el.nom_ar}','${el.prenom_ar}','${cl.nom_court}','${sc.date_cours}','${sc.heure_debut}','${pt.statut}')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 p-2 rounded-lg cursor-pointer transition" title="Billet"><i class="fa-solid fa-print"></i></button>
+              ${al ? `<button onclick="imprimerConvocation('${el.nom}','${el.prenom}','${el.nom_ar}','${el.prenom_ar}','${cl.nom_court}',${tot})" class="bg-rose-600 text-white hover:bg-rose-700 px-2.5 py-1.5 rounded-lg font-bold text-xs cursor-pointer shadow-sm transition"><i class="fa-solid fa-envelope mr-1"></i> Convoc.</button>` : ''}
+              <button onclick="supprimerPointage('${pt.id}')" class="bg-rose-50 text-rose-600 hover:bg-rose-100 p-2 rounded-lg cursor-pointer transition" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
+        `;
+        registreBody.appendChild(tr);
+      });
+    }
+
+    // ---------------------------------------------------------
+    // 4. ACTIONS (MODIFICATION & SUPPRESSION)
+    // ---------------------------------------------------------
+    window.ouvrirModalModifier = (id) => { 
+      const pt = pointagesData.find(p => p.id == id); 
+      if(!pt) return;
+      document.getElementById('edit-pointage-id').value = id; 
+      document.getElementById('edit-eleve-nom').textContent = `${pt.eleves.nom} ${pt.eleves.prenom} (${pt.eleves.nom_ar || ''})`;
+      document.getElementById('edit-statut').value = pt.statut; 
+      document.getElementById('edit-justifie-'+(pt.justifie?'oui':'non')).checked = true;
+      document.getElementById('edit-motif').value = pt.motif_justification || '';
+      document.getElementById('modal-modifier').classList.replace('hidden', 'flex');
+    };
+    
+    window.fermerModalModifier = () => {
+      document.getElementById('modal-modifier').classList.replace('flex', 'hidden');
+    };
+    
+    window.enregistrerModificationPointage = async () => {
+      const id = document.getElementById('edit-pointage-id').value;
+      const statut = document.getElementById('edit-statut').value;
+      const justifie = document.getElementById('edit-justifie-oui').checked;
+      const motif = document.getElementById('edit-motif').value.trim();
+      
+      try {
+        const { error } = await supabaseClient.from('pointages').update({ 
+          statut: statut, 
+          justifie: justifie, 
+          motif_justification: motif || null 
+        }).eq('id', id);
+        if(error) throw error;
+        fermerModalModifier(); 
+        await fetchDonnees();
+      } catch(e) { 
+        alert("Erreur lors de la modification : " + e.message); 
+      }
+    };
+    
+    window.supprimerPointage = async (id) => { 
+      if(confirm('Êtes-vous sûr de vouloir supprimer définitivement cet enregistrement ?')) { 
+        try {
+          const { error } = await supabaseClient.from('pointages').delete().eq('id', id);
+          if(error) throw error;
+          await fetchDonnees(); 
+        } catch(e) {
+          alert("Erreur : " + e.message);
+        }
+      } 
+    };
+
+    // ---------------------------------------------------------
+    // 5. BOUTONS D'ACTION GLOBALE (EXPORTER EXCEL & RAPPORT)
+    // ---------------------------------------------------------
+    
+    // EXPORT EXCEL (SheetJS)
+    const btnExportExcel = document.getElementById('btn-export-excel');
+    if(btnExportExcel) {
+      btnExportExcel.addEventListener('click', () => {
+        const d = obtenirDonneesFiltrees().map((p, i) => ({ 
+          "N°": i + 1, 
+          "Date": p.seances?.date_cours, 
+          "Division / القسم": p.seances?.classes?.nom_court, 
+          "Nom FR": p.eleves?.nom, 
+          "Prénom FR": p.eleves?.prenom, 
+          "اللقب AR": p.eleves?.nom_ar, 
+          "الاسم AR": p.eleves?.prenom_ar, 
+          "Matière / المادة": p.seances?.matiere,
+          "Statut / الحالة": p.statut === 'A' ? 'Absent/غائب' : (p.statut === 'R' ? 'Retard/تأخر' : 'Présent/حاضر'), 
+          "Cumul Abs": compteursAbsencesGlobal[p.eleves?.id] || 0,
+          "Justifié / مبرر": p.justifie ? "OUI" : "NON",
+          "Motif / السبب": p.motif_justification || ''
+        }));
+        
+        if(d.length === 0) {
+          alert("Le tableau est vide, rien à exporter !");
+          return;
+        }
+        
+        const ws = XLSX.utils.json_to_sheet(d);
+        // Ajustement automatique des largeurs de colonnes
+        ws['!cols'] = [{wch:5}, {wch:12}, {wch:15}, {wch:15}, {wch:15}, {wch:15}, {wch:15}, {wch:20}, {wch:15}, {wch:10}, {wch:10}, {wch:20}];
+        
+        const wb = XLSX.utils.book_new(); 
+        XLSX.utils.book_append_sheet(wb, ws, "Registre_Absences"); 
+        XLSX.writeFile(wb, `Absences_Chaabane_Aamar_${filtreDate.value}.xlsx`);
+      });
+    }
+
+    // IMPRIMER RAPPORT CENSEUR
+    const btnImprimerRapport = document.getElementById('btn-imprimer-rapport');
+    if(btnImprimerRapport) {
+      btnImprimerRapport.addEventListener('click', () => {
+        const dChoisie = filtreDate.value;
+        if(!dChoisie) return;
+
+        const incidents = pointagesData.filter(p => p.statut === 'A' || p.statut === 'R');
+        document.getElementById('rapport-date').textContent = new Date(dChoisie).toLocaleDateString('fr-DZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        
+        // Copie des KPIs
+        document.getElementById('rapport-kpi-seances').textContent = document.getElementById('kpi-seances').textContent;
+        document.getElementById('rapport-kpi-absents').textContent = document.getElementById('kpi-absents').textContent;
+        document.getElementById('rapport-kpi-retards').textContent = document.getElementById('kpi-retards').textContent;
+        document.getElementById('rapport-kpi-taux').textContent = document.getElementById('kpi-taux').textContent;
+
+        const tbody = document.getElementById('rapport-table-body');
+        tbody.innerHTML = '';
+        
+        if (incidents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center font-bold">Aucune absence ni retard (Néant).</td></tr>`;
+        } else {
+          incidents.forEach((pt, i) => {
+            const el = pt.eleves || {}, sc = pt.seances || {}, cl = sc.classes || {};
+            const statutL = pt.statut === 'A' ? 'Absent' : 'Retard';
+            const just = pt.justifie ? pt.motif_justification || 'Justifié' : 'Non justifié';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="border-r border-black p-1.5 text-center">${i + 1}</td>
+              <td class="border-r border-black p-1.5 font-bold">${el.nom} ${el.prenom} <br><span dir="rtl" class="font-normal">${el.nom_ar} ${el.prenom_ar}</span></td>
+              <td class="border-r border-black p-1.5 text-center font-bold">${cl.nom_court}</td>
+              <td class="border-r border-black p-1.5 text-center">${sc.matiere}<br>${sc.heure_debut?.substring(0,5)}</td>
+              <td class="border-r border-black p-1.5 text-center font-bold ${pt.statut==='A'?'text-rose-700':'text-amber-700'}">${statutL}</td>
+              <td class="p-1.5 text-xs">${just}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        document.body.classList.remove('print-billet', 'print-convocation');
+        document.body.classList.add('print-rapport');
+        window.print();
+        setTimeout(() => document.body.classList.remove('print-rapport'), 1000);
+      });
+    }
+
+    // ---------------------------------------------------------
+    // 6. IMPRESSION INDIVIDUELLE (Billet & Convocation)
+    // ---------------------------------------------------------
+    window.imprimerBillet = (nom, prenom, nomAr, prenomAr, classe, date, heure, statut) => {
+      document.getElementById('billet-details').innerHTML = `
+        <div class="flex justify-between border-b border-black pb-2"><p><b>Élève:</b> ${nom} ${prenom}</p><p dir="rtl"><b>التلميذ:</b> ${nomAr} ${prenomAr}</p></div>
+        <div class="flex justify-between border-b border-black py-2"><p><b>Classe:</b> ${classe}</p><p><b>Motif:</b> ${statut === 'A' ? 'Absence/غياب' : 'Retard/تأخر'}</p></div>
+        <div class="py-2"><p><b>Séance:</b> ${date} à ${heure.substring(0,5)}</p></div>
+      `;
+      document.getElementById('billet-date-emission').textContent = new Date().toLocaleString('fr-FR');
+      
+      document.body.classList.remove('print-rapport', 'print-convocation');
+      document.body.classList.add('print-billet');
+      window.print();
+      setTimeout(() => document.body.classList.remove('print-billet'), 1000);
+    };
+
+    window.imprimerConvocation = (nom, prenom, nomAr, prenomAr, classe, tot) => {
+      document.getElementById('convocation-details').innerHTML = `
+        <div class="mb-4 bg-gray-100 p-3 border border-black text-center font-bold">
+          <p>${nom} ${prenom} — ${nomAr} ${prenomAr} — القسم: ${classe}</p>
+          <p class="mt-2 text-rose-700 text-lg">مجموع الغيابات: ${tot} حصص</p>
+        </div>
+        <p>إلى السيد(ة) ولي أمر التلميذ(ة) المحترم(ة) :</p>
+        <p>نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجل غيابات متكررة تجاوزت الحد المسموح به (<span class="font-bold">${tot} غيابات</span>).</p>
+        <p>وعليه، يُرجى منكم الحضور شخصياً إلى مكتب مستشار التربية في أقرب الآجال لتسوية وضعية التمدرس ولتبرير هذه الغيابات قبل اتخاذ الإجراءات التأديبية المنصوص عليها قانوناً.</p>
+      `;
+      document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('fr-DZ');
+      
+      document.body.classList.remove('print-rapport', 'print-billet');
+      document.body.classList.add('print-convocation');
+      window.print();
+      setTimeout(() => document.body.classList.remove('print-convocation'), 1000);
+    };
+
+    // ---------------------------------------------------------
+    // 7. ÉCOUTEURS D'ÉVÉNEMENTS (FILTRES ET ACTUALISATION)
+    // ---------------------------------------------------------
+    if(filtreDate) filtreDate.addEventListener('change', fetchDonnees);
+    if(filtreClasse) filtreClasse.addEventListener('change', renderTableau);
+    if(filtreStatut) filtreStatut.addEventListener('change', renderTableau);
+    
+    const btnRefresh = document.getElementById('btn-refresh');
+    if(btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
 
   </script>
 </body>
