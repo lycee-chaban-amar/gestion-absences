@@ -42,6 +42,67 @@
     </div>
   </div>
 
+  <!-- MODAL : SIGNALER / AJOUTER UN ÉLÈVE MANQUANT -->
+  <div id="modal-nouvel-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-row">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <div class="flex items-center gap-2 text-indigo-700">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 leading-tight">Élève manquant</h3>
+            <p class="text-xs text-slate-500" dir="rtl">إضافة تلميذ غير مسجل في الفوج</p>
+          </div>
+        </div>
+        <button onclick="fermerModalNouvelEleve()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3.5 text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Nom (FR) *</label>
+            <input type="text" id="add-eleve-nom" placeholder="Ex: BENALI" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 uppercase" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Prénom (FR) *</label>
+            <input type="text" id="add-eleve-prenom" placeholder="Ex: Yanis" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 capitalize" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3" dir="rtl">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1 text-right">اللقب (بالعربية)</label>
+            <input type="text" id="add-eleve-nom-ar" placeholder="مثال: بن علي" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 text-right" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1 text-right">الاسم (بالعربية)</label>
+            <input type="text" id="add-eleve-prenom-ar" placeholder="مثال: يانيس" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 text-right" />
+          </div>
+        </div>
+
+        <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800">
+          <p class="flex items-center gap-1.5 font-bold mb-0.5">
+            <i class="fa-solid fa-circle-info"></i> Inscription directe
+          </p>
+          <p class="text-[11px] text-indigo-600">L'élève sera automatiquement affecté à la division sélectionnée et marqué <strong>Présent</strong> pour ce cours.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100">
+        <button type="button" onclick="fermerModalNouvelEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
+          Annuler
+        </button>
+        <button type="button" id="btn-confirmer-ajout-eleve" onclick="confirmerAjoutEleve()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 cursor-pointer flex items-center gap-1.5">
+          <i class="fa-solid fa-plus"></i>
+          <span>Ajouter à l'appel / تسجيل</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Écran PIN Enseignant (2626) -->
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-indigo-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 transition-transform">
@@ -81,7 +142,7 @@
           <i class="fa-solid fa-lock text-amber-300"></i><span>Verrouiller</span>
         </button>
 
-        <!-- Badge de connexion et synchronisation Offline -->
+        <!-- Badge connectivité -->
         <button id="btn-sync-offline" type="button" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition cursor-pointer">
           <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="conn-text">En ligne</span>
@@ -92,7 +153,7 @@
 
   <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- Paramètres du Cours -->
+    <!-- Paramètres du cours -->
     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
         <i class="fa-solid fa-sliders text-indigo-600"></i> Paramètres du Cours
@@ -168,17 +229,34 @@
     <!-- Registre des élèves -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/70">
-        <div><h2 class="text-lg font-bold text-slate-800" id="classe-titre">Sélectionnez une classe</h2><p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p></div>
-        <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-indigo-100 transition"><i class="fa-solid fa-check-double text-indigo-600"></i> Tout marquer présent</button>
+        <div>
+          <h2 class="text-lg font-bold text-slate-800" id="classe-titre">Sélectionnez une classe</h2>
+          <p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-indigo-100 transition">
+            <i class="fa-solid fa-check-double text-indigo-600"></i> Tout marquer présent
+          </button>
+          <!-- BOUTON D'AJOUT RAPIDE D'ÉLÈVE MANQUANT -->
+          <button id="btn-ouvrir-modal-eleve" type="button" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-emerald-100 transition active:scale-95">
+            <i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> Élève manquant ?
+          </button>
+        </div>
       </div>
+
       <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 min-h-[180px]">
-        <div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p></div>
+        <div class="py-12 text-center text-slate-400">
+          <i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i>
+          <p class="text-sm">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p>
+        </div>
       </div>
     </div>
 
     <!-- Bouton Valider -->
     <div id="actions-footer" class="hidden pb-10">
-      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer active:scale-95"><i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel</button>
+      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer active:scale-95">
+        <i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel
+      </button>
     </div>
 
   </main>
@@ -197,8 +275,8 @@
     const selectHoraire = document.getElementById('select-horaire');
     const elevesContainer = document.getElementById('eleves-container');
     const btnValider = document.getElementById('btn-valider-appel');
+    const btnOuvrirModalEleve = document.getElementById('btn-ouvrir-modal-eleve');
 
-    // Enregistrement du Service Worker PWA
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration error:', err));
@@ -206,7 +284,7 @@
     }
 
     // ========================================================
-    // 2. GESTION DU MODE HORS-LIGNE & SYNCHRONISATION
+    // 2. GESTION HORS-LIGNE
     // ========================================================
     function getQueueHorsLigne() {
       try {
@@ -239,10 +317,9 @@
       }
     }
 
-    // Tentative de synchronisation des appels en attente vers Supabase
     async function synchroniserAppelsEnAttente() {
       if (!navigator.onLine) {
-        afficherToast('Information', 'Connexion internet absente. La synchronisation attendra.');
+        afficherToast('Information', 'Connexion internet absente.');
         return;
       }
 
@@ -260,7 +337,6 @@
 
       for (const item of queue) {
         try {
-          // 1. Insertion de la séance
           const { data: seance, error: errS } = await supabaseClient
             .from('seances')
             .insert({
@@ -276,7 +352,6 @@
 
           if (errS) throw errS;
 
-          // 2. Insertion des pointages
           const pointages = item.pointages.map(pt => ({
             seance_id: seance.id,
             eleve_id: pt.eleve_id,
@@ -288,8 +363,8 @@
 
           reussis++;
         } catch (e) {
-          console.error("Échec synchronisation de l'appel :", e);
-          nouvelleQueue.push(item); // Garder pour réessayer plus tard
+          console.error("Échec synchronisation :", e);
+          nouvelleQueue.push(item);
         }
       }
 
@@ -301,7 +376,6 @@
       }
     }
 
-    // Écouteurs de connectivité
     window.addEventListener('online', () => {
       mettreAJourBadgeReseau();
       afficherToast('Réseau rétabli', 'Synchronisation en cours...');
@@ -310,13 +384,13 @@
 
     window.addEventListener('offline', () => {
       mettreAJourBadgeReseau();
-      afficherToast('Hors-ligne', 'Mode local activé. Vos appels seront enregistrés.');
+      afficherToast('Hors-ligne', 'Mode local activé.');
     });
 
     document.getElementById('btn-sync-offline').addEventListener('click', synchroniserAppelsEnAttente);
 
     // ========================================================
-    // 3. CHARGEMENT AVEC CACHE LOCAL DES CLASSES & ÉLÈVES
+    // 3. CHARGEMENT DES CLASSES ET DES ÉLÈVES
     // ========================================================
     function afficherToast(titre, msg) {
       const t = document.getElementById('toast-notification');
@@ -331,7 +405,6 @@
     }
 
     async function initClasses() {
-      // 1. Essayer le cache local
       const cacheClasses = localStorage.getItem('cache_classes');
       if (cacheClasses) {
         try {
@@ -340,7 +413,6 @@
         } catch (e) {}
       }
 
-      // 2. Si en ligne, rafraîchir depuis Supabase
       if (navigator.onLine) {
         try {
           const { data, error } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
@@ -387,7 +459,10 @@
     async function chargerEleves(cid) {
       if(!cid) {
         elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">Veuillez choisir une division</p></div>`;
-        document.getElementById('stats-bar').classList.add('hidden'); document.getElementById('actions-footer').classList.add('hidden'); document.getElementById('btn-tout-present').classList.add('hidden');
+        document.getElementById('stats-bar').classList.add('hidden'); 
+        document.getElementById('actions-footer').classList.add('hidden'); 
+        document.getElementById('btn-tout-present').classList.add('hidden');
+        btnOuvrirModalEleve.classList.add('hidden');
         return;
       }
       elevesContainer.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
@@ -395,7 +470,6 @@
       const sc = classesList.find(c => c.id == cid);
       document.getElementById('classe-titre').textContent = sc ? `${sc.nom_court}` : 'Classe';
 
-      // 1. Lire le cache des élèves pour cette classe
       const cacheEleves = localStorage.getItem(`cache_eleves_${cid}`);
       if (cacheEleves) {
         try {
@@ -403,7 +477,6 @@
         } catch (e) {}
       }
 
-      // 2. Si connecté, synchroniser depuis Supabase
       if (navigator.onLine) {
         try {
           const { data, error } = await supabaseClient.from('eleves').select('*').eq('classe_id', cid).eq('actif', true).order('nom');
@@ -425,6 +498,7 @@
       document.getElementById('stats-bar').classList.remove('hidden'); 
       document.getElementById('actions-footer').classList.remove('hidden'); 
       document.getElementById('btn-tout-present').classList.remove('hidden');
+      btnOuvrirModalEleve.classList.remove('hidden');
     }
 
     function afficherEleves() {
@@ -436,7 +510,11 @@
         row.style.animationDelay = `${Math.min(i*25,400)}ms`;
         row.innerHTML = `
           <div class="flex items-center gap-3.5 w-full sm:w-auto"><span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-xs font-bold">${i+1}</span>
-          <div class="truncate"><span class="font-bold text-slate-900">${e.nom} ${e.prenom}</span> <span class="text-xs text-slate-500 font-bold" dir="rtl">(${e.nom_ar||''} ${e.prenom_ar||''})</span></div></div>
+          <div class="truncate">
+            <span class="font-bold text-slate-900">${e.nom} ${e.prenom}</span> 
+            <span class="text-xs text-slate-500 font-bold" dir="rtl">(${e.nom_ar||''} ${e.prenom_ar||''})</span>
+            ${e.est_nouveau ? '<span class="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Ajouté en séance</span>' : ''}
+          </div></div>
           <div class="flex items-center gap-1.5 w-full sm:w-auto justify-end">
             <button onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${st==='P'?'bg-emerald-600 text-white shadow-md':'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}"><i class="fa-solid fa-check"></i></button>
             <button onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${st==='A'?'bg-rose-600 text-white shadow-md':'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700'}"><i class="fa-solid fa-xmark"></i></button>
@@ -466,7 +544,106 @@
     }
 
     // ========================================================
-    // 4. VALIDATION (EN LIGNE OU MISE EN FILE HORS-LIGNE)
+    // 4. GESTION DE L'AJOUT D'UN ÉLÈVE MANQUANT
+    // ========================================================
+    window.ouvrirModalNouvelEleve = function() {
+      const cid = selectClasse.value;
+      if (!cid) {
+        afficherToast('Attention', 'Veuillez d\'abord choisir une division.');
+        return;
+      }
+      document.getElementById('add-eleve-nom').value = '';
+      document.getElementById('add-eleve-prenom').value = '';
+      document.getElementById('add-eleve-nom-ar').value = '';
+      document.getElementById('add-eleve-prenom-ar').value = '';
+      const modal = document.getElementById('modal-nouvel-eleve');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('add-eleve-nom').focus();
+    };
+
+    window.fermerModalNouvelEleve = function() {
+      const modal = document.getElementById('modal-nouvel-eleve');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    };
+
+    window.confirmerAjoutEleve = async function() {
+      const cid = selectClasse.value;
+      const nom = document.getElementById('add-eleve-nom').value.trim().toUpperCase();
+      const prenom = document.getElementById('add-eleve-prenom').value.trim();
+      const nomAr = document.getElementById('add-eleve-nom-ar').value.trim();
+      const prenomAr = document.getElementById('add-eleve-prenom-ar').value.trim();
+
+      if (!nom || !prenom) {
+        alert('Le Nom et le Prénom (FR) sont obligatoires.');
+        return;
+      }
+
+      const btnConfirmer = document.getElementById('btn-confirmer-ajout-eleve');
+      btnConfirmer.disabled = true;
+      btnConfirmer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement...`;
+
+      const matriculeAuto = 'TEMP-' + Date.now().toString().slice(-6);
+
+      const nouvelEleveData = {
+        classe_id: parseInt(cid, 10),
+        nom: nom,
+        prenom: prenom,
+        nom_ar: nomAr || null,
+        prenom_ar: prenomAr || null,
+        matricule: matriculeAuto,
+        actif: true
+      };
+
+      try {
+        let insertedEleve = null;
+
+        if (navigator.onLine) {
+          // Insertion directe dans Supabase
+          const { data, error } = await supabaseClient
+            .from('eleves')
+            .insert(nouvelEleveData)
+            .select()
+            .single();
+
+          if (error) throw error;
+          insertedEleve = data;
+        } else {
+          // Secours Hors-Ligne
+          insertedEleve = {
+            id: Date.now(), // ID temporaire négatif/timestamp
+            ...nouvelEleveData,
+            est_nouveau: true
+          };
+        }
+
+        // Ajouter l'élève dans la liste active en mémoire
+        insertedEleve.est_nouveau = true;
+        currentEleves.push(insertedEleve);
+        currentStatuts[insertedEleve.id] = 'P'; // Marqué Présent d'office
+
+        // Mettre à jour le cache local de la classe
+        localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(currentEleves));
+
+        // Actualiser l'interface
+        document.getElementById('classe-effectif').textContent = `${currentEleves.length} inscrits`;
+        afficherEleves();
+        mettreAJourCompteurs();
+        fermerModalNouvelEleve();
+
+        afficherToast('Élève ajouté', `${nom} ${prenom} a été intégré au cours avec succès.`);
+      } catch (err) {
+        console.error("Erreur lors de l'ajout de l'élève :", err);
+        alert("Impossible d'ajouter l'élève : " + err.message);
+      } finally {
+        btnConfirmer.disabled = false;
+        btnConfirmer.innerHTML = `<i class="fa-solid fa-plus"></i> <span>Ajouter à l'appel / تسجيل</span>`;
+      }
+    };
+
+    // ========================================================
+    // 5. VALIDATION DE L'APPEL
     // ========================================================
     if(btnValider) {
       btnValider.onclick = async function() {
@@ -488,7 +665,6 @@
           pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' }))
         };
 
-        // Si hors-ligne : sauvegarde directe dans la file d'attente
         if (!navigator.onLine) {
           const queue = getQueueHorsLigne();
           queue.push(donneesAppel);
@@ -499,7 +675,6 @@
           return;
         }
 
-        // Si en ligne : envoi direct à Supabase
         try {
           const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ 
             classe_id: donneesAppel.classe_id, 
@@ -523,7 +698,6 @@
           
           afficherToast('Succès', 'Appel transmis avec succès à la vie scolaire !');
         } catch(e) { 
-          // En cas de micro-coupure réseau pendant l'envoi : mise en secours hors-ligne
           console.warn("Échec réseau lors de l'envoi, mise en attente locale :", e);
           const queue = getQueueHorsLigne();
           queue.push(donneesAppel);
@@ -539,7 +713,7 @@
     if(selectClasse) selectClasse.addEventListener('change', (e) => chargerEleves(e.target.value));
 
     // ========================================================
-    // 5. PIN DE SÉCURITÉ
+    // 6. PIN DE SÉCURITÉ
     // ========================================================
     const PIN_MASQUE = "MjYyNg==";
 
