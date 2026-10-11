@@ -1,4 +1,6 @@
-const CACHE_NAME = 'lycee-absences-v1';
+// Service Worker - Lycée Chaabane Aamar (Cache PWA & Offline)
+const CACHE_NAME = 'appel-lycee-cache-v1';
+
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -6,7 +8,8 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap'
 ];
 
 self.addEventListener('install', (event) => {
@@ -32,8 +35,20 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Stratégie : Réseau d'abord, secours sur le cache si hors-ligne
+  // Les requêtes vers Supabase API ne sont pas mises en cache HTTP par le SW
+  // (elles sont gérées par notre queue locale dans l'application)
+  if (event.request.url.includes('supabase.co')) {
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    caches.match(event.request).then((cachedResponse) => {
+      return cachedResponse || fetch(event.request).catch(() => {
+        // En cas de coupure totale, renvoyer la page d'accueil si c'est une navigation
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+      });
+    })
   );
 });
