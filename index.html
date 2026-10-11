@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<html lang="fr" dir="ltr" id="html-root">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,7 +27,7 @@
     #toast-notification { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans transition-all">
 
   <!-- Toast Notification -->
   <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
@@ -51,8 +51,8 @@
             <i class="fa-solid fa-user-plus"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-slate-900 leading-tight">Élève manquant</h3>
-            <p class="text-xs text-slate-500" dir="rtl">إضافة تلميذ غير مسجل في الفوج</p>
+            <h3 class="text-base font-bold text-slate-900 leading-tight" data-i18n="modal_add_title">Élève manquant</h3>
+            <p class="text-xs text-slate-500" data-i18n="modal_add_sub">إضافة تلميذ غير مسجل في الفوج</p>
           </div>
         </div>
         <button onclick="fermerModalNouvelEleve()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
@@ -63,41 +63,41 @@
       <div class="space-y-3.5 text-sm">
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Nom (FR) *</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_nom_fr">Nom (FR) *</label>
             <input type="text" id="add-eleve-nom" placeholder="Ex: BENALI" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 uppercase" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">Prénom (FR) *</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_prenom_fr">Prénom (FR) *</label>
             <input type="text" id="add-eleve-prenom" placeholder="Ex: Yanis" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 capitalize" />
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3" dir="rtl">
+        <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1 text-right">اللقب (بالعربية)</label>
-            <input type="text" id="add-eleve-nom-ar" placeholder="مثال: بن علي" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 text-right" />
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_nom_ar">اللقب (بالعربية)</label>
+            <input type="text" id="add-eleve-nom-ar" placeholder="مثال: بن علي" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1 text-right">الاسم (بالعربية)</label>
-            <input type="text" id="add-eleve-prenom-ar" placeholder="مثال: يانيس" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 text-right" />
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_prenom_ar">الاسم (بالعربية)</label>
+            <input type="text" id="add-eleve-prenom-ar" placeholder="مثال: يانيس" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
         </div>
 
         <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800">
-          <p class="flex items-center gap-1.5 font-bold mb-0.5">
+          <p class="flex items-center gap-1.5 font-bold mb-0.5" data-i18n="modal_note_title">
             <i class="fa-solid fa-circle-info"></i> Inscription directe
           </p>
-          <p class="text-[11px] text-indigo-600">L'élève sera automatiquement affecté à la division sélectionnée et marqué <strong>Présent</strong> pour ce cours.</p>
+          <p class="text-[11px] text-indigo-600" data-i18n="modal_note_desc">L'élève sera automatiquement affecté à la division sélectionnée et marqué Présent pour ce cours.</p>
         </div>
       </div>
 
       <div class="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100">
-        <button type="button" onclick="fermerModalNouvelEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer">
+        <button type="button" onclick="fermerModalNouvelEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer" data-i18n="btn_cancel">
           Annuler
         </button>
         <button type="button" id="btn-confirmer-ajout-eleve" onclick="confirmerAjoutEleve()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 cursor-pointer flex items-center gap-1.5">
           <i class="fa-solid fa-plus"></i>
-          <span>Ajouter à l'appel / تسجيل</span>
+          <span data-i18n="btn_confirm_add">Ajouter à l'appel</span>
         </button>
       </div>
     </div>
@@ -109,43 +109,49 @@
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
         <i class="fa-solid fa-chalkboard-user"></i>
       </div>
-      <h2 class="text-xl font-extrabold text-slate-900">Espace Enseignant</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال رمز الأستاذ</p>
+      <h2 class="text-xl font-extrabold text-slate-900" data-i18n="pin_title">Espace Enseignant</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-6" data-i18n="pin_sub">ثانوية شعبان أعمر - يرجى إدخال رمز الأستاذ</p>
       
       <div class="space-y-4">
         <div>
           <input type="password" id="input-pin-prof" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus
             class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
-          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
+          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2" data-i18n="pin_error">Code incorrect / رمز غير صحيح</p>
         </div>
-        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer">
+        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer" data-i18n="pin_btn">
           Déverrouiller / الدخول
         </button>
       </div>
-      <p class="text-[11px] text-slate-400 mt-5">Accès réservé au corps professoral du lycée</p>
+      <p class="text-[11px] text-slate-400 mt-5" data-i18n="pin_footer">Accès réservé au corps professoral du lycée</p>
     </div>
   </div>
 
-  <!-- Header -->
+  <!-- Header avec sélecteur de langue -->
   <header class="bg-indigo-700 text-white shadow-md">
     <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
         <div>
-          <h1 class="text-xl font-bold tracking-tight">Feuille d'Appel Numérique</h1>
-          <p class="text-xs text-indigo-200">ثانوية شعبان أعمر أوقاس - تسجيل الحضور والغياب</p>
+          <h1 class="text-xl font-bold tracking-tight" data-i18n="header_title">Feuille d'Appel Numérique</h1>
+          <p class="text-xs text-indigo-200" data-i18n="header_sub">ثانوية شعبان أعمر أوقاس - تسجيل الحضور والغياب</p>
         </div>
       </div>
       
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap justify-end">
+        <!-- Bouton Changement de Langue -->
+        <button id="btn-lang-toggle" type="button" onclick="toggleLangue()" class="text-xs font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-white/20 cursor-pointer shadow-sm">
+          <i class="fa-solid fa-globe text-amber-300"></i>
+          <span id="lang-label">العربية</span>
+        </button>
+
         <button id="btn-lock-prof" type="button" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-indigo-600 cursor-pointer">
-          <i class="fa-solid fa-lock text-amber-300"></i><span>Verrouiller</span>
+          <i class="fa-solid fa-lock text-amber-300"></i><span data-i18n="btn_lock">Verrouiller</span>
         </button>
 
         <!-- Badge connectivité -->
         <button id="btn-sync-offline" type="button" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition cursor-pointer">
           <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span id="conn-text">En ligne</span>
+          <span id="conn-text" data-i18n="conn_online">En ligne</span>
         </button>
       </div>
     </div>
@@ -156,26 +162,26 @@
     <!-- Paramètres du cours -->
     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-sliders text-indigo-600"></i> Paramètres du Cours
+        <i class="fa-solid fa-sliders text-indigo-600"></i> <span data-i18n="sec_params">Paramètres du Cours</span>
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Classe / القسم</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_classe">Classe / القسم</label>
           <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-            <option value="">-- Choisir la division / اختر الفوج --</option>
+            <option value="" data-i18n="opt_classe_default">-- Choisir la division / اختر الفوج --</option>
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Matière / المادة</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_matiere">Matière / المادة</label>
           <select id="select-matiere" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-            <optgroup label="📚 Fondamentales & Scientifiques">
+            <optgroup label="📚 Fondamentales & Scientifiques / علمية وأساسية">
               <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
               <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
               <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
               <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
             </optgroup>
-            <optgroup label="⚙️ Techniques & Économie">
+            <optgroup label="⚙️ Techniques & Économie / تقنية واقتصاد">
               <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
               <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
               <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
@@ -183,7 +189,7 @@
               <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
               <option value="Droit / قانون">قانون / Droit</option>
             </optgroup>
-            <optgroup label="📖 Lettres & Langues">
+            <optgroup label="📖 Lettres & Langues / آداب ولغات">
               <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
               <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
               <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
@@ -194,13 +200,13 @@
               <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
               <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
             </optgroup>
-            <optgroup label="🏃 Sport">
+            <optgroup label="🏃 Sport / رياضة">
               <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
             </optgroup>
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Séance / التوقيت</label>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_horaire">Séance / التوقيت</label>
           <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
             <optgroup label="☀️ Matin / الصباح">
               <option value="08:00-09:00">08:00 - 09:00</option>
@@ -221,24 +227,33 @@
 
     <!-- Barre de statistiques temps réel -->
     <div id="stats-bar" class="hidden grid grid-cols-3 gap-3">
-      <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-emerald-700 uppercase">Présents</span><span id="count-presents" class="text-3xl font-extrabold text-emerald-600 mt-1 block">0</span></div>
-      <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-rose-700 uppercase">Absents</span><span id="count-absents" class="text-3xl font-extrabold text-rose-600 mt-1 block">0</span></div>
-      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-amber-700 uppercase">Retards</span><span id="count-retards" class="text-3xl font-extrabold text-amber-600 mt-1 block">0</span></div>
+      <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center">
+        <span class="block text-xs font-semibold text-emerald-700 uppercase" data-i18n="kpi_presents">Présents</span>
+        <span id="count-presents" class="text-3xl font-extrabold text-emerald-600 mt-1 block">0</span>
+      </div>
+      <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center">
+        <span class="block text-xs font-semibold text-rose-700 uppercase" data-i18n="kpi_absents">Absents</span>
+        <span id="count-absents" class="text-3xl font-extrabold text-rose-600 mt-1 block">0</span>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center">
+        <span class="block text-xs font-semibold text-amber-700 uppercase" data-i18n="kpi_retards">Retards</span>
+        <span id="count-retards" class="text-3xl font-extrabold text-amber-600 mt-1 block">0</span>
+      </div>
     </div>
 
     <!-- Registre des élèves -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/70">
         <div>
-          <h2 class="text-lg font-bold text-slate-800" id="classe-titre">Sélectionnez une classe</h2>
+          <h2 class="text-lg font-bold text-slate-800" id="classe-titre" data-i18n="default_classe_title">Sélectionnez une classe</h2>
           <p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-indigo-100 transition">
-            <i class="fa-solid fa-check-double text-indigo-600"></i> Tout marquer présent
+            <i class="fa-solid fa-check-double text-indigo-600"></i> <span data-i18n="btn_mark_all">Tout marquer présent</span>
           </button>
           <button id="btn-ouvrir-modal-eleve" type="button" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-emerald-100 transition active:scale-95">
-            <i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> Élève manquant ?
+            <i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> <span data-i18n="btn_add_missing">Élève manquant ?</span>
           </button>
         </div>
       </div>
@@ -246,7 +261,7 @@
       <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 min-h-[180px]">
         <div class="py-12 text-center text-slate-400">
           <i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i>
-          <p class="text-sm">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p>
+          <p class="text-sm" data-i18n="prompt_select_classe">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p>
         </div>
       </div>
     </div>
@@ -254,7 +269,7 @@
     <!-- Bouton Valider -->
     <div id="actions-footer" class="hidden pb-10">
       <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer active:scale-95">
-        <i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel
+        <i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_call">Valider et transmettre l'appel</span>
       </button>
     </div>
 
@@ -262,7 +277,130 @@
 
   <script>
     // ========================================================
-    // 1. SUPABASE & CONFIGURATION
+    // GESTION DU MULTILINGUISME (FRANÇAIS / ARABE)
+    // ========================================================
+    const TRADUCTIONS = {
+      fr: {
+        lang_btn: "العربية",
+        header_title: "Feuille d'Appel Numérique",
+        header_sub: "ثانوية شعبان أعمر أوقاس - تسجيل الحضور والغياب",
+        btn_lock: "Verrouiller",
+        conn_online: "En ligne",
+        conn_offline: "Hors-ligne",
+        sec_params: "Paramètres du Cours",
+        lbl_classe: "Classe / القسم",
+        lbl_matiere: "Matière / المادة",
+        lbl_horaire: "Séance / التوقيت",
+        opt_classe_default: "-- Choisir la division / اختر الفوج --",
+        kpi_presents: "Présents",
+        kpi_absents: "Absents",
+        kpi_retards: "Retards",
+        default_classe_title: "Sélectionnez une classe",
+        btn_mark_all: "Tout marquer présent",
+        btn_add_missing: "Élève manquant ?",
+        prompt_select_classe: "Veuillez choisir une division ci-dessus pour afficher la liste des élèves.",
+        btn_submit_call: "Valider et transmettre l'appel",
+        btn_present: "Présent",
+        btn_absent: "Absent",
+        btn_retard: "Retard",
+        tag_added_session: "Ajouté en séance",
+        pin_title: "Espace Enseignant",
+        pin_sub: "ثانوية شعبان أعمر - يرجى إدخال رمز الأستاذ",
+        pin_error: "Code incorrect",
+        pin_btn: "Déverrouiller",
+        pin_footer: "Accès réservé au corps professoral du lycée",
+        modal_add_title: "Élève manquant",
+        modal_add_sub: "إضافة تلميذ غير مسجل في الفوج",
+        label_nom_fr: "Nom (FR) *",
+        label_prenom_fr: "Prénom (FR) *",
+        label_nom_ar: "اللقب (بالعربية)",
+        label_prenom_ar: "الاسم (بالعربية)",
+        modal_note_title: "Inscription directe",
+        modal_note_desc: "L'élève sera automatiquement affecté à la division sélectionnée et marqué Présent pour ce cours.",
+        btn_cancel: "Annuler",
+        btn_confirm_add: "Ajouter à l'appel",
+        registered_count: "inscrits"
+      },
+      ar: {
+        lang_btn: "Français",
+        header_title: "ورقة الحضور والغياب الرقمية",
+        header_sub: "ثانوية شعبان أعمر أوقاس - تسجيل غيابات وحضور التلاميذ",
+        btn_lock: "قفل الشاشة",
+        conn_online: "متصل بالإنترنت",
+        conn_offline: "غير متصل (محلي)",
+        sec_params: "بيانات ومعلومات الحصة",
+        lbl_classe: "القسم / الفوج التربوي",
+        lbl_matiere: "المادة التعليمية",
+        lbl_horaire: "توقيت الحصة",
+        opt_classe_default: "-- اختر الفوج التربوي --",
+        kpi_presents: "الحاضرون",
+        kpi_absents: "الغائبون",
+        kpi_retards: "المتأخرون",
+        default_classe_title: "يرجى اختيار القسم أولاً",
+        btn_mark_all: "تعليم الجميع كحاضرين",
+        btn_add_missing: "تلميذ غير مسجل ؟",
+        prompt_select_classe: "يرجى اختيار الفوج التربوي من القائمة أعلاه لعرض قائمة التلاميذ.",
+        btn_submit_call: "تأكيد وإرسال ورقة الغياب إلى الاستشارة التربوية",
+        btn_present: "حاضر",
+        btn_absent: "غائب",
+        btn_retard: "متأخر",
+        tag_added_session: "أضيف خلال الحصة",
+        pin_title: "فضاء الأستاذ",
+        pin_sub: "ثانوية شعبان أعمر - يرجى إدخال الرمز السري للأستاذ",
+        pin_error: "الرمز السري غير صحيح",
+        pin_btn: "الدخول إلى ورقة الحضور",
+        pin_footer: "فضاء مخصص لهيئة التدريس بالثانوية فقط",
+        modal_add_title: "تسجيل تلميذ غير مسجل",
+        modal_add_sub: "إضافة التلميذ مباشرة إلى الفوج الحاضر",
+        label_nom_fr: "اللقب بالحروف اللاتينية *",
+        label_prenom_fr: "الاسم بالحروف اللاتينية *",
+        label_nom_ar: "اللقب بالعربية",
+        label_prenom_ar: "الاسم بالعربية",
+        modal_note_title: "تسجيل مباشر وفوري",
+        modal_note_desc: "سيتم تسجيل التلميذ رسمياً في هذا القسم واحتسابه كحاضر في هذه الحصة.",
+        btn_cancel: "إلغاء",
+        btn_confirm_add: "تسجيل التلميذ في الحصة",
+        registered_count: "تلميذ مسجل"
+      }
+    };
+
+    let langueCourante = localStorage.getItem('pref_langue_prof') || 'fr';
+
+    function appliquerLangue(lang) {
+      langueCourante = lang;
+      localStorage.setItem('pref_langue_prof', lang);
+
+      const htmlRoot = document.getElementById('html-root');
+      htmlRoot.setAttribute('lang', lang);
+      htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+
+      // Mettre à jour tous les éléments traduisibles
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const cle = el.getAttribute('data-i18n');
+        if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) {
+          el.textContent = TRADUCTIONS[lang][cle];
+        }
+      });
+
+      // Mettre à jour l'intitulé du bouton de langue
+      const lblLang = document.getElementById('lang-label');
+      if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
+
+      // Ré-afficher la liste si déjà chargée
+      if (currentEleves.length > 0) {
+        afficherEleves();
+        mettreAJourCompteurs();
+      }
+      mettreAJourBadgeReseau();
+    }
+
+    function toggleLangue() {
+      const nouvelleLangue = (langueCourante === 'fr') ? 'ar' : 'fr';
+      appliquerLangue(nouvelleLangue);
+    }
+
+    // ========================================================
+    // 1. CONFIGURATION SUPABASE
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
@@ -278,7 +416,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration error:', err));
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
       });
     }
 
@@ -306,25 +444,27 @@
 
       if (!isOnline) {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-        text.textContent = queue.length > 0 ? `Hors-ligne (${queue.length} en attente)` : 'Hors-ligne';
+        text.textContent = queue.length > 0 
+          ? (langueCourante === 'ar' ? `غير متصل (${queue.length} معلق)` : `Hors-ligne (${queue.length} en attente)`) 
+          : TRADUCTIONS[langueCourante].conn_offline;
       } else if (queue.length > 0) {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce';
-        text.textContent = `Synchroniser (${queue.length})`;
+        text.textContent = (langueCourante === 'ar' ? `مزامنة (${queue.length})` : `Synchroniser (${queue.length})`);
       } else {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-        text.textContent = 'En ligne';
+        text.textContent = TRADUCTIONS[langueCourante].conn_online;
       }
     }
 
     async function synchroniserAppelsEnAttente() {
       if (!navigator.onLine) {
-        afficherToast('Information', 'Connexion internet absente.');
+        afficherToast(langueCourante === 'ar' ? 'تنبيه' : 'Information', langueCourante === 'ar' ? 'لا يوجد اتصال بالإنترنت حالياً.' : 'Connexion internet absente.');
         return;
       }
 
       const queue = getQueueHorsLigne();
       if (queue.length === 0) {
-        afficherToast('Synchronisé', 'Tous les appels sont déjà enregistrés en ligne.');
+        afficherToast(langueCourante === 'ar' ? 'تم التحديث' : 'Synchronisé', langueCourante === 'ar' ? 'جميع الأوراق مسجلة بالكامل.' : 'Tous les appels sont déjà enregistrés en ligne.');
         return;
       }
 
@@ -362,7 +502,7 @@
 
           reussis++;
         } catch (e) {
-          console.error("Échec synchronisation :", e);
+          console.error("Échec sync :", e);
           nouvelleQueue.push(item);
         }
       }
@@ -371,25 +511,25 @@
       btnSync.disabled = false;
 
       if (reussis > 0) {
-        afficherToast('Synchronisation réussie', `${reussis} appel(s) transmis à la base.`);
+        afficherToast(langueCourante === 'ar' ? 'تمت المزامنة بنجاح' : 'Synchronisation réussie', langueCourante === 'ar' ? `تم إرسال ${reussis} أوراق حضور.` : `${reussis} appel(s) transmis à la base.`);
       }
     }
 
     window.addEventListener('online', () => {
       mettreAJourBadgeReseau();
-      afficherToast('Réseau rétabli', 'Synchronisation en cours...');
+      afficherToast(langueCourante === 'ar' ? 'عاد الاتصال' : 'Réseau rétabli', langueCourante === 'ar' ? 'جاري مزامنة البيانات...' : 'Synchronisation en cours...');
       synchroniserAppelsEnAttente();
     });
 
     window.addEventListener('offline', () => {
       mettreAJourBadgeReseau();
-      afficherToast('Hors-ligne', 'Mode local activé.');
+      afficherToast(langueCourante === 'ar' ? 'انقطع الاتصال' : 'Hors-ligne', langueCourante === 'ar' ? 'العمل بالنمط المحلي.' : 'Mode local activé.');
     });
 
     document.getElementById('btn-sync-offline').addEventListener('click', synchroniserAppelsEnAttente);
 
     // ========================================================
-    // 3. CHARGEMENT DES CLASSES ET DES ÉLÈVES
+    // 3. CHARGEMENT DES CLASSES & ÉLÈVES
     // ========================================================
     function afficherToast(titre, msg) {
       const t = document.getElementById('toast-notification');
@@ -421,7 +561,7 @@
             remplirSelectClasses(classesList);
           }
         } catch (err) {
-          console.warn("Utilisation des classes en cache local.");
+          console.warn("Classes chargées depuis le cache local.");
         }
       }
       mettreAJourBadgeReseau();
@@ -429,7 +569,7 @@
 
     function remplirSelectClasses(liste) {
       if (!selectClasse) return;
-      selectClasse.innerHTML = '<option value="">-- Choisir la division / اختر الفوج --</option>';
+      selectClasse.innerHTML = `<option value="">${TRADUCTIONS[langueCourante].opt_classe_default}</option>`;
       
       const groupes = { 
         '1AS': document.createElement('optgroup'), 
@@ -437,13 +577,15 @@
         '3AS': document.createElement('optgroup'), 
         'AUTRE': document.createElement('optgroup') 
       };
-      groupes['1AS'].label = "1ère Année"; 
-      groupes['2AS'].label = "2ème Année"; 
-      groupes['3AS'].label = "3ème Année (Bac)"; 
-      groupes['AUTRE'].label = "Autres";
+      groupes['1AS'].label = (langueCourante === 'ar') ? "السنة الأولى ثانوي (1AS)" : "1ère Année Secondaire"; 
+      groupes['2AS'].label = (langueCourante === 'ar') ? "السنة الثانية ثانوي (2AS)" : "2ème Année Secondaire"; 
+      groupes['3AS'].label = (langueCourante === 'ar') ? "السنة الثالثة ثانوي - بكالوريا (3AS)" : "3ème Année (Bac)"; 
+      groupes['AUTRE'].label = (langueCourante === 'ar') ? "أفواج أخرى" : "Autres divisions";
       
       liste.forEach(cls => {
-        const o = document.createElement('option'); o.value = cls.id; o.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+        const o = document.createElement('option'); 
+        o.value = cls.id; 
+        o.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
         if(cls.nom_court.startsWith('1AS')) groupes['1AS'].appendChild(o);
         else if(cls.nom_court.startsWith('2AS')) groupes['2AS'].appendChild(o);
         else if(cls.nom_court.startsWith('3AS')) groupes['3AS'].appendChild(o);
@@ -457,7 +599,7 @@
 
     async function chargerEleves(cid) {
       if(!cid) {
-        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">Veuillez choisir une division</p></div>`;
+        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
         document.getElementById('stats-bar').classList.add('hidden'); 
         document.getElementById('actions-footer').classList.add('hidden'); 
         document.getElementById('btn-tout-present').classList.add('hidden');
@@ -467,7 +609,7 @@
       elevesContainer.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
       
       const sc = classesList.find(c => c.id == cid);
-      document.getElementById('classe-titre').textContent = sc ? `${sc.nom_court}` : 'Classe';
+      document.getElementById('classe-titre').textContent = sc ? `${sc.nom_court} (${sc.nom_complet})` : 'Classe';
 
       const cacheEleves = localStorage.getItem(`cache_eleves_${cid}`);
       if (cacheEleves) {
@@ -484,11 +626,11 @@
             localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(data));
           }
         } catch (err) {
-          console.warn("Utilisation de la liste d'élèves en cache.");
+          console.warn("Élèves chargés depuis le cache local.");
         }
       }
 
-      document.getElementById('classe-effectif').textContent = `${currentEleves.length} inscrits`;
+      document.getElementById('classe-effectif').textContent = `${currentEleves.length} ${TRADUCTIONS[langueCourante].registered_count}`;
       currentStatuts = {}; 
       currentEleves.forEach(e => currentStatuts[e.id] = 'P');
       
@@ -500,7 +642,6 @@
       btnOuvrirModalEleve.classList.remove('hidden');
     }
 
-    // BOUTONS AVEC TEXTE VISIBLE (PRÉSENT / ABSENT / RETARD)
     function afficherEleves() {
       elevesContainer.innerHTML = '';
       currentEleves.forEach((e, i) => {
@@ -508,27 +649,32 @@
         const st = currentStatuts[e.id] || 'P';
         row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 ${i%2===0?'bg-white':'bg-slate-50'}`;
         row.style.animationDelay = `${Math.min(i*25,400)}ms`;
+
+        // Affichage dynamique du nom selon la langue
+        const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
+        const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
+
         row.innerHTML = `
           <div class="flex items-center gap-3.5 w-full sm:w-auto">
             <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-xs font-bold">${i+1}</span>
             <div class="truncate">
-              <span class="font-bold text-slate-900">${e.nom} ${e.prenom}</span> 
-              <span class="text-xs text-slate-500 font-bold" dir="rtl">(${e.nom_ar||''} ${e.prenom_ar||''})</span>
-              ${e.est_nouveau ? '<span class="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Ajouté en séance</span>' : ''}
+              <span class="font-bold text-slate-900">${nomPrincipal}</span> 
+              <span class="text-xs text-slate-500 font-bold mx-1">${nomSecondaire}</span>
+              ${e.est_nouveau ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">${TRADUCTIONS[langueCourante].tag_added_session}</span>` : ''}
             </div>
           </div>
           <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
             <button type="button" onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='P' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}">
               <i class="fa-solid fa-check"></i>
-              <span>Présent</span>
+              <span>${TRADUCTIONS[langueCourante].btn_present}</span>
             </button>
             <button type="button" onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='A' ? 'bg-rose-600 text-white shadow-md ring-2 ring-rose-500/30' : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700'}">
               <i class="fa-solid fa-xmark"></i>
-              <span>Absent</span>
+              <span>${TRADUCTIONS[langueCourante].btn_absent}</span>
             </button>
             <button type="button" onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='R' ? 'bg-amber-500 text-white shadow-md ring-2 ring-amber-500/30' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700'}">
               <i class="fa-solid fa-clock"></i>
-              <span>Retard</span>
+              <span>${TRADUCTIONS[langueCourante].btn_retard}</span>
             </button>
           </div>
         `;
@@ -555,12 +701,12 @@
     }
 
     // ========================================================
-    // 4. GESTION DE L'AJOUT D'UN ÉLÈVE MANQUANT
+    // 4. MODAL AJOUT D'ÉLÈVE
     // ========================================================
     window.ouvrirModalNouvelEleve = function() {
       const cid = selectClasse.value;
       if (!cid) {
-        afficherToast('Attention', 'Veuillez d\'abord choisir une division.');
+        afficherToast(langueCourante === 'ar' ? 'تنبيه' : 'Attention', TRADUCTIONS[langueCourante].prompt_select_classe);
         return;
       }
       document.getElementById('add-eleve-nom').value = '';
@@ -587,13 +733,13 @@
       const prenomAr = document.getElementById('add-eleve-prenom-ar').value.trim();
 
       if (!nom || !prenom) {
-        alert('Le Nom et le Prénom (FR) sont obligatoires.');
+        alert(langueCourante === 'ar' ? 'يرجى إدخال اللقب والاسم بالحروف اللاتينية.' : 'Le Nom et le Prénom (FR) sont obligatoires.');
         return;
       }
 
       const btnConfirmer = document.getElementById('btn-confirmer-ajout-eleve');
       btnConfirmer.disabled = true;
-      btnConfirmer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement...`;
+      btnConfirmer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`;
 
       const matriculeAuto = 'TEMP-' + Date.now().toString().slice(-6);
 
@@ -633,18 +779,18 @@
 
         localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(currentEleves));
 
-        document.getElementById('classe-effectif').textContent = `${currentEleves.length} inscrits`;
+        document.getElementById('classe-effectif').textContent = `${currentEleves.length} ${TRADUCTIONS[langueCourante].registered_count}`;
         afficherEleves();
         mettreAJourCompteurs();
         fermerModalNouvelEleve();
 
-        afficherToast('Élève ajouté', `${nom} ${prenom} a été intégré au cours avec succès.`);
+        afficherToast(langueCourante === 'ar' ? 'تمت إضافة التلميذ' : 'Élève ajouté', `${nom} ${prenom}`);
       } catch (err) {
         console.error("Erreur ajout élève :", err);
-        alert("Impossible d'ajouter l'élève : " + err.message);
+        alert(err.message);
       } finally {
         btnConfirmer.disabled = false;
-        btnConfirmer.innerHTML = `<i class="fa-solid fa-plus"></i> <span>Ajouter à l'appel / تسجيل</span>`;
+        btnConfirmer.innerHTML = `<i class="fa-solid fa-plus"></i> <span>${TRADUCTIONS[langueCourante].btn_confirm_add}</span>`;
       }
     };
 
@@ -654,12 +800,12 @@
     if(btnValider) {
       btnValider.onclick = async function() {
         if(!selectClasse.value || currentEleves.length === 0) {
-          afficherToast('Erreur', 'Veuillez sélectionner une division valide.');
+          afficherToast(langueCourante === 'ar' ? 'خطأ' : 'Erreur', TRADUCTIONS[langueCourante].prompt_select_classe);
           return;
         }
 
         btnValider.disabled = true; 
-        btnValider.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Traitement...`;
+        btnValider.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`;
 
         const t = selectHoraire.value.split('-');
         const donneesAppel = {
@@ -675,9 +821,9 @@
           const queue = getQueueHorsLigne();
           queue.push(donneesAppel);
           saveQueueHorsLigne(queue);
-          afficherToast('Enregistré hors-ligne', 'Appel stocké localement. Il sera synchronisé dès le retour du réseau.');
+          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Enregistré hors-ligne', langueCourante === 'ar' ? 'سيتم الإرسال فور عودة الإنترنت.' : 'Appel stocké localement. Synchronisation dès retour du réseau.');
           btnValider.disabled = false;
-          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel`;
+          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`;
           return;
         }
 
@@ -702,16 +848,16 @@
           const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
           if(e2) throw e2;
           
-          afficherToast('Succès', 'Appel transmis avec succès à la vie scolaire !');
+          afficherToast(langueCourante === 'ar' ? 'تم تأكيد الغياب' : 'Succès', langueCourante === 'ar' ? 'تم إرسال الورقة بنجاح إلى الاستشارة التربوية.' : 'Appel transmis avec succès !');
         } catch(e) { 
-          console.warn("Échec réseau, bascule hors-ligne :", e);
+          console.warn("Échec réseau, mise en file locale :", e);
           const queue = getQueueHorsLigne();
           queue.push(donneesAppel);
           saveQueueHorsLigne(queue);
-          afficherToast('Sauvegardé hors-ligne', 'Réseau instable : appel sécurisé sur votre appareil.');
+          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Sauvegardé hors-ligne', langueCourante === 'ar' ? 'حُفظت الورقة في الجهاز بسبب عدم استقرار الشبكة.' : 'Réseau instable : appel sécurisé sur votre appareil.');
         } finally { 
           btnValider.disabled = false; 
-          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Valider et transmettre l'appel`; 
+          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`; 
         }
       };
     }
@@ -761,6 +907,9 @@
     if (btnLock) {
       btnLock.onclick = function() { sessionStorage.removeItem('prof_auth'); location.reload(); };
     }
+
+    // Appliquer la langue enregistrée au démarrage
+    appliquerLangue(langueCourante);
 
     if (sessionStorage.getItem('prof_auth') === 'true') { 
       debloquerPage(); 
