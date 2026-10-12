@@ -3,541 +3,430 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Superviseur - ثانوية شعبان أعمر أوقاس</title>
+  <title>Feuille d'Appel - ثانوية شعبان أعمر أوقاس</title>
   
-  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#4338ca">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135755.png">
 
-  <!-- Tailwind & Supabase & SheetJS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
-  <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-  
+
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     button, select, input { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
     button:active { transform: scale(0.96); }
-    
-    @keyframes slideUpFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-table-row { animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    
+    @keyframes slideUpFade { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-row { animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
     .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
-    
-    @keyframes alertPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }
-    .badge-alerte-rouge { animation: alertPulse 1.4s infinite ease-in-out; }
-
-    @media print {
-      body * { visibility: hidden; }
-      body.print-billet #zone-impression-billet, body.print-billet #zone-impression-billet * { visibility: visible; }
-      body.print-billet #zone-impression-billet { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
-      
-      body.print-convocation #zone-impression-convocation, body.print-convocation #zone-impression-convocation * { visibility: visible; }
-      body.print-convocation #zone-impression-convocation { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
-      
-      body.print-rapport #zone-impression-rapport, body.print-rapport #zone-impression-rapport * { visibility: visible; }
-      body.print-rapport #zone-impression-rapport { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
-      
-      @page { size: A4 portrait; margin: 15mm; }
-    }
+    #toast-notification { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col transition-all">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans transition-all">
 
-  <!-- ========================================== -->
-  <!-- MODAL: MODIFIER UN POINTAGE -->
-  <!-- ========================================== -->
-  <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row">
+  <!-- Toast Notification -->
+  <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
+    <div class="bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md">
+      <div id="toast-icon" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div>
+        <h4 class="text-sm font-bold text-white" id="toast-titre">Opération réussie</h4>
+        <p class="text-xs text-slate-300" id="toast-message">Les données ont été envoyées.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL : SIGNALER / AJOUTER UN ÉLÈVE MANQUANT -->
+  <div id="modal-nouvel-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-          <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
-          <span data-i18n="modal_edit_title">Modifier l'enregistrement</span>
-        </h3>
-        <button onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+        <div class="flex items-center gap-2 text-indigo-700">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 leading-tight" data-i18n="modal_add_title">Élève manquant</h3>
+            <p class="text-xs text-slate-500" data-i18n="modal_add_sub">إضافة تلميذ غير مسجل في الفوج</p>
+          </div>
+        </div>
+        <button onclick="fermerModalNouvelEleve()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
-      <input type="hidden" id="edit-pointage-id" />
-      <div class="space-y-4 text-sm">
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1" data-i18n="lbl_eleve">Élève</label>
-          <div id="edit-eleve-nom" class="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200"></div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1" data-i18n="lbl_statut">Statut</label>
-          <select id="edit-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500">
-            <option value="P" data-i18n="opt_status_p">✅ Présent</option>
-            <option value="A" data-i18n="opt_status_a">❌ Absent</option>
-            <option value="R" data-i18n="opt_status_r">⏳ Retard</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-500 mb-1" data-i18n="lbl_justification">Justification</label>
-          <div class="flex gap-4 mb-2">
-            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold">
-              <input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600 focus:ring-indigo-500" />
-              <span data-i18n="opt_not_justified">Non justifié</span>
-            </label>
-            <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700">
-              <input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600 focus:ring-emerald-500" />
-              <span data-i18n="opt_justified">Justifié</span>
-            </label>
+
+      <div class="space-y-3.5 text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_nom_fr">Nom (FR) *</label>
+            <input type="text" id="add-eleve-nom" placeholder="Ex: BENALI" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 uppercase" />
           </div>
-          <input type="text" id="edit-motif" placeholder="Motif / السبب..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-500" />
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_prenom_fr">Prénom (FR) *</label>
+            <input type="text" id="add-eleve-prenom" placeholder="Ex: Yanis" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 capitalize" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_nom_ar">اللقب (بالعربية)</label>
+            <input type="text" id="add-eleve-nom-ar" placeholder="مثال: بن علي" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_prenom_ar">الاسم (بالعربية)</label>
+            <input type="text" id="add-eleve-prenom-ar" placeholder="مثال: يانيس" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800">
+          <p class="flex items-center gap-1.5 font-bold mb-0.5" data-i18n="modal_note_title">
+            <i class="fa-solid fa-circle-info"></i> Inscription directe
+          </p>
+          <p class="text-[11px] text-indigo-600" data-i18n="modal_note_desc">L'élève sera automatiquement affecté à la division sélectionnée et marqué Présent pour ce cours.</p>
         </div>
       </div>
-      <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
-        <button onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer" data-i18n="btn_cancel">
+
+      <div class="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100">
+        <button type="button" onclick="fermerModalNouvelEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer" data-i18n="btn_cancel">
           Annuler
         </button>
-        <button onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer shadow-md shadow-indigo-600/20" data-i18n="btn_save">
-          Enregistrer
+        <button type="button" id="btn-confirmer-ajout-eleve" onclick="confirmerAjoutEleve()" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-indigo-600/20 cursor-pointer flex items-center gap-1.5">
+          <i class="fa-solid fa-plus"></i>
+          <span data-i18n="btn_confirm_add">Ajouter à l'appel</span>
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- ÉCRAN PIN SÉCURISÉ (BASE64: 2626) -->
-  <!-- ========================================== -->
-  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
+  <!-- ÉCRAN PIN : CHOIX DE MATIÈRE ET CODE D'ACCÈS SPÉCIFIQUE -->
+  <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-indigo-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
-        <i class="fa-solid fa-shield-halved"></i>
+        <i class="fa-solid fa-chalkboard-user"></i>
       </div>
-      <h2 class="text-xl font-extrabold text-slate-900" data-i18n="pin_title">Espace Sécurisé</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-6" data-i18n="pin_sub">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
+      <h2 class="text-xl font-extrabold text-slate-900" data-i18n="pin_title">Espace Enseignant</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-5" data-i18n="pin_sub">Sélectionnez votre matière et entrez le code secret</p>
+      
       <div class="space-y-4">
-        <div>
-          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl outline-none focus:border-indigo-600 transition" />
-          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2" data-i18n="pin_error">Code incorrect / رمز غير صحيح</p>
+        <!-- Sélection de la matière sur l'écran de déverrouillage -->
+        <div class="text-left">
+          <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="lbl_pin_matiere">Matière / المادة *</label>
+          <select id="pin-select-matiere" class="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-indigo-600 focus:bg-white outline-none cursor-pointer">
+            <option value="">-- Choisir la matière / اختر المادة --</option>
+            <optgroup label="📚 Scientifiques / علمية">
+              <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
+              <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
+              <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
+              <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
+            </optgroup>
+            <optgroup label="⚙️ Techniques & Économie / تقنية واقتصاد">
+              <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
+              <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
+              <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
+              <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
+              <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
+              <option value="Droit / قانون">قانون / Droit</option>
+            </optgroup>
+            <optgroup label="📖 Littéraires & Langues / آداب ولغات">
+              <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
+              <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
+              <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
+              <option value="Langue Allemande / ألمانية">ألمانية / Langue Allemande</option>
+              <option value="Langue Espagnole / إسبانية">إسبانية / Langue Espagnole</option>
+              <option value="Langue Amazighe / أمازيغية">أمازيغية / Tamazight</option>
+              <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
+              <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
+              <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
+            </optgroup>
+            <optgroup label="🏃 Sport / رياضة">
+              <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
+            </optgroup>
+          </select>
         </div>
-        <button id="btn-valider-pin" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer" data-i18n="pin_btn">
+
+        <!-- Champ PIN -->
+        <div>
+          <input type="password" id="input-pin-prof" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric"
+            class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
+          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2" data-i18n="pin_error">Code incorrect / رمز غير صحيح</p>
+        </div>
+
+        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer" data-i18n="pin_btn">
           Déverrouiller / الدخول
         </button>
       </div>
-      <p class="text-[11px] text-slate-400 mt-5" data-i18n="pin_footer">Accès réservé au Conseiller d'Éducation et à l'Administration</p>
+      <p class="text-[11px] text-slate-400 mt-5" data-i18n="pin_footer">Chaque matière dispose de son propre code d'accès</p>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- HEADER -->
-  <!-- ========================================== -->
-  <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+  <!-- Header avec sélecteur de langue -->
+  <header class="bg-indigo-700 text-white shadow-md">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-xl shadow-md">
-          <i class="fa-solid fa-shield-halved"></i>
-        </div>
+        <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
         <div>
-          <h1 class="text-lg font-bold tracking-tight">
-            <span data-i18n="header_title">Espace Vie Scolaire</span>
-            <span class="text-indigo-400 mx-1">|</span>
-            <span class="font-bold" data-i18n="header_sub_title">فضاء الاستشارة التربوية</span>
-          </h1>
-          <p class="text-xs text-slate-400" data-i18n="header_desc">ثانوية شعبان أعمر أوقاس - Suivi des Absences & Alertes</p>
+          <h1 class="text-xl font-bold tracking-tight" data-i18n="header_title">Feuille d'Appel Numérique</h1>
+          <p class="text-xs text-indigo-200" data-i18n="header_sub">ثانوية شعبان أعمر أوقاس - تسجيل الحضور والغياب</p>
         </div>
       </div>
       
       <div class="flex items-center gap-2 flex-wrap justify-end">
-        <button id="btn-lang-toggle" type="button" onclick="toggleLangue()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 border border-slate-700 cursor-pointer shadow-sm">
+        <!-- Bouton Changement de Langue -->
+        <button id="btn-lang-toggle" type="button" onclick="toggleLangue()" class="text-xs font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-white/20 cursor-pointer shadow-sm">
           <i class="fa-solid fa-globe text-amber-300"></i>
           <span id="lang-label">العربية</span>
         </button>
 
-        <a href="index.html" class="text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 px-3.5 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5 cursor-pointer">
-          <i class="fa-solid fa-chalkboard-user text-indigo-400"></i>
-          <span data-i18n="nav_teacher">Vue Enseignant</span>
-        </a>
+        <button id="btn-lock-prof" type="button" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-indigo-600 cursor-pointer">
+          <i class="fa-solid fa-lock text-amber-300"></i><span data-i18n="btn_lock">Verrouiller</span>
+        </button>
 
-        <button id="btn-lock" type="button" class="text-xs font-semibold text-rose-300 bg-slate-800 hover:bg-rose-950/80 px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5 cursor-pointer">
-          <i class="fa-solid fa-lock text-rose-400"></i>
-          <span data-i18n="btn_lock">Verrouiller</span>
+        <!-- Badge connectivité -->
+        <button id="btn-sync-offline" type="button" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition cursor-pointer">
+          <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="conn-text" data-i18n="conn_online">En ligne</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- ========================================== -->
-  <!-- CONTENU PRINCIPAL -->
-  <!-- ========================================== -->
-  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+  <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- KPI -->
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between text-slate-500 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider" data-i18n="kpi_seances">Appels faits</span>
-          <i class="fa-solid fa-clipboard-check text-indigo-500 text-base"></i>
-        </div>
-        <div class="text-2xl sm:text-3xl font-extrabold text-slate-800" id="kpi-seances">0</div>
-        <p class="text-[11px] text-slate-400 mt-1" data-i18n="kpi_today">Aujourd'hui</p>
-      </div>
+    <!-- Paramètres du cours -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-sliders text-indigo-600"></i> <span data-i18n="sec_params">Paramètres du Cours</span>
+      </h2>
 
-      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between text-rose-500 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider" data-i18n="kpi_absents">Absences Jour</span>
-          <i class="fa-solid fa-user-xmark text-rose-500 text-base"></i>
-        </div>
-        <div class="text-2xl sm:text-3xl font-extrabold text-rose-600" id="kpi-absents">0</div>
-        <p class="text-[11px] text-slate-400 mt-1" data-i18n="kpi_recorded">Signalés</p>
-      </div>
-
-      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-        <div class="flex justify-between text-amber-500 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider" data-i18n="kpi_retards">Retards Jour</span>
-          <i class="fa-solid fa-user-clock text-amber-500 text-base"></i>
-        </div>
-        <div class="text-2xl sm:text-3xl font-extrabold text-amber-600" id="kpi-retards">0</div>
-        <p class="text-[11px] text-slate-400 mt-1" data-i18n="kpi_late">En retard</p>
-      </div>
-
-      <div class="bg-rose-50/70 p-4 rounded-2xl border-2 border-rose-300 shadow-sm">
-        <div class="flex justify-between text-rose-700 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider" data-i18n="kpi_alertes">Alerte (≥ 3 Abs)</span>
-          <i class="fa-solid fa-triangle-exclamation text-rose-600 text-base badge-alerte-rouge"></i>
-        </div>
-        <div class="text-2xl sm:text-3xl font-black text-rose-700" id="kpi-alertes">0</div>
-        <p class="text-[11px] text-rose-500 font-bold mt-1" data-i18n="kpi_recidive">Élèves en récidive</p>
-      </div>
-
-      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm col-span-2 lg:col-span-1">
-        <div class="flex justify-between text-emerald-500 mb-1">
-          <span class="text-xs font-bold uppercase tracking-wider" data-i18n="kpi_taux">Taux Présence</span>
-          <i class="fa-solid fa-chart-pie text-emerald-500 text-base"></i>
-        </div>
-        <div class="text-2xl sm:text-3xl font-extrabold text-emerald-600" id="kpi-taux">--%</div>
-        <p class="text-[11px] text-slate-400 mt-1" data-i18n="kpi_average">Moyenne globale</p>
-      </div>
-    </div>
-
-    <!-- Filtres & Actions -->
-    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between gap-4">
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label class="block text-xs font-bold mb-1 text-slate-600" data-i18n="lbl_filter_date">Date / التاريخ</label>
-          <input type="date" id="filtre-date" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold mb-1 text-slate-600" data-i18n="lbl_filter_classe">Classe / القسم</label>
-          <select id="filtre-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-            <option value="ALL" data-i18n="opt_all_classes">-- Toutes les classes / كل الأقسام --</option>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_classe">Classe / القسم</label>
+          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+            <option value="" data-i18n="opt_classe_default">-- Choisir la division / اختر الفوج --</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-bold mb-1 text-slate-600" data-i18n="lbl_filter_statut">Statut / الحالة</label>
-          <select id="filtre-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-            <option value="A_R" data-i18n="opt_statut_ar">Absences & Retards / الغيابات والتأخرات</option>
-            <option value="ALERTE_3" data-i18n="opt_statut_alerte">🚨 En alerte (3+ abs) / في حالة إنذار فقط</option>
-            <option value="A" data-i18n="opt_statut_a">Absents uniquement / الغائبون فقط</option>
-            <option value="R" data-i18n="opt_statut_r">Retards uniquement / المتأخرون فقط</option>
-            <option value="ALL" data-i18n="opt_statut_all">Tout afficher / كل الحالات</option>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_matiere">Matière / المادة</label>
+          <select id="select-matiere" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-indigo-900 cursor-not-allowed">
+            <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
+            <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
+            <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
+            <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
+            <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
+            <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
+            <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
+            <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
+            <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
+            <option value="Droit / قانون">قانون / Droit</option>
+            <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
+            <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
+            <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
+            <option value="Langue Allemande / ألمانية">ألمانية / Langue Allemande</option>
+            <option value="Langue Espagnole / إسبانية">إسبانية / Langue Espagnole</option>
+            <option value="Langue Amazighe / أمازيغية">أمازيغية / Tamazight</option>
+            <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
+            <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
+            <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
+            <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_horaire">Séance / التوقيت</label>
+          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+            <optgroup label="☀️ Matin / الصباح">
+              <option value="08:00-09:00">08:00 - 09:00</option>
+              <option value="09:00-10:00">09:00 - 10:00</option>
+              <option value="10:00-11:00">10:00 - 11:00</option>
+              <option value="11:00-12:00">11:00 - 12:00</option>
+            </optgroup>
+            <optgroup label="🌤️ Après-midi / المساء">
+              <option value="13:00-14:00">13:00 - 14:00</option>
+              <option value="14:00-15:00">14:00 - 15:00</option>
+              <option value="15:00-16:00">15:00 - 16:00</option>
+              <option value="16:00-17:00">16:00 - 17:00</option>
+            </optgroup>
           </select>
         </div>
       </div>
-      
-      <div class="flex flex-wrap gap-2 items-end">
-        <button id="btn-refresh" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl text-sm font-bold border border-slate-300 transition cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-sm" title="Recharger">
-          <i id="icon-refresh" class="fa-solid fa-arrows-rotate text-indigo-600"></i>
-          <span data-i18n="btn_refresh">Actualiser</span>
-        </button>
-        <button id="btn-export-excel" type="button" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition cursor-pointer flex items-center gap-1.5 active:scale-95">
-          <i class="fa-solid fa-file-excel"></i>
-          <span data-i18n="btn_export">Exporter</span>
-        </button>
-        <button id="btn-imprimer-rapport" type="button" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/20 transition cursor-pointer flex items-center gap-1.5 active:scale-95">
-          <i class="fa-solid fa-print"></i>
-          <span data-i18n="btn_report">Rapport</span>
-        </button>
+    </div>
+
+    <!-- Barre de statistiques temps réel -->
+    <div id="stats-bar" class="hidden grid grid-cols-3 gap-3">
+      <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center">
+        <span class="block text-xs font-semibold text-emerald-700 uppercase" data-i18n="kpi_presents">Présents</span>
+        <span id="count-presents" class="text-3xl font-extrabold text-emerald-600 mt-1 block">0</span>
+      </div>
+      <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center">
+        <span class="block text-xs font-semibold text-rose-700 uppercase" data-i18n="kpi_absents">Absents</span>
+        <span id="count-absents" class="text-3xl font-extrabold text-rose-600 mt-1 block">0</span>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center">
+        <span class="block text-xs font-semibold text-amber-700 uppercase" data-i18n="kpi_retards">Retards</span>
+        <span id="count-retards" class="text-3xl font-extrabold text-amber-600 mt-1 block">0</span>
       </div>
     </div>
 
-    <!-- BANDEAU D'ACTIONS GROUPÉES (Affiché quand des lignes sont cochées) -->
-    <div id="barre-actions-groupees" class="hidden bg-indigo-900 text-white p-3.5 rounded-2xl shadow-lg flex-wrap items-center justify-between gap-3 border border-indigo-700 animate-table-row">
-      <div class="flex items-center gap-2.5 text-sm font-bold">
-        <span class="w-7 h-7 rounded-full bg-indigo-700 flex items-center justify-center text-xs font-black" id="count-selected">0</span>
-        <span data-i18n="msg_selected_rows">élément(s) sélectionné(s)</span>
+    <!-- Registre des élèves -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/70">
+        <div>
+          <h2 class="text-lg font-bold text-slate-800" id="classe-titre" data-i18n="default_classe_title">Sélectionnez une classe</h2>
+          <p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-indigo-100 transition">
+            <i class="fa-solid fa-check-double text-indigo-600"></i> <span data-i18n="btn_mark_all">Tout marquer présent</span>
+          </button>
+          <button id="btn-ouvrir-modal-eleve" type="button" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-emerald-100 transition active:scale-95">
+            <i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> <span data-i18n="btn_add_missing">Élève manquant ?</span>
+          </button>
+        </div>
       </div>
-      <div class="flex items-center gap-2 flex-wrap">
-        <button type="button" onclick="justifierSelectionGroupee()" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition">
-          <i class="fa-solid fa-check"></i>
-          <span data-i18n="btn_justify_selected">Marquer justifié</span>
-        </button>
-        <button type="button" onclick="supprimerSelectionGroupee()" class="bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition">
-          <i class="fa-solid fa-trash-can"></i>
-          <span data-i18n="btn_delete_selected">Supprimer la sélection</span>
-        </button>
-        <button type="button" onclick="deselectionnerTout()" class="bg-indigo-800 hover:bg-indigo-700 text-indigo-200 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition">
-          <span data-i18n="btn_unselect_all">Annuler</span>
-        </button>
+
+      <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 min-h-[180px]">
+        <div class="py-12 text-center text-slate-400">
+          <i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i>
+          <p class="text-sm" data-i18n="prompt_select_classe">Veuillez choisir une division ci-dessus pour afficher la liste des élèves.</p>
+        </div>
       </div>
     </div>
 
-    <!-- Table Registre avec Sélection Globale -->
-    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-      <div class="p-4 border-b bg-slate-50 flex justify-between items-center flex-wrap gap-2">
-        <h2 class="font-bold text-slate-800" data-i18n="table_title">Registre Quotidien des Absences</h2>
-        <p class="text-xs text-slate-600 font-bold bg-slate-200/80 px-3 py-1 rounded-full" id="registre-count">0 ligne(s)</p>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left">
-          <thead class="bg-slate-100 text-xs font-bold uppercase text-slate-700 border-b border-slate-200">
-            <tr>
-              <!-- CASE À COCHER GLOBALE (TOUT SÉLECTIONNER) -->
-              <th class="py-3.5 px-3 w-12 text-center">
-                <input type="checkbox" id="checkbox-select-all" onchange="toggleSelectAll(this)" title="Tout sélectionner / تحديد الكل" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600" />
-              </th>
-              <th class="py-3 px-2 w-10 text-center" data-i18n="th_num">N°</th>
-              <th class="py-3 px-4" data-i18n="th_student">Élève & Alerte</th>
-              <th class="py-3 px-3" data-i18n="th_class">Classe</th>
-              <th class="py-3 px-3" data-i18n="th_session">Séance & Matière</th>
-              <th class="py-3 px-3 text-center" data-i18n="th_cumul">Cumul Abs.</th>
-              <th class="py-3 px-3 text-center" data-i18n="th_status">Statut</th>
-              <th class="py-3 px-3 text-center" data-i18n="th_justification">Justification</th>
-              <th class="py-3 px-3 text-center" data-i18n="th_actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="registre-body" class="divide-y text-sm"></tbody>
-        </table>
-      </div>
+    <!-- Bouton Valider -->
+    <div id="actions-footer" class="hidden pb-10">
+      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer active:scale-95">
+        <i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_call">Valider et transmettre l'appel</span>
+      </button>
     </div>
 
   </main>
 
-  <!-- ========================================== -->
-  <!-- ZONES D'IMPRESSION (INVISIBLES À L'ÉCRAN) -->
-  <!-- ========================================== -->
-
-  <!-- RAPPORT CENSEUR (A4) - EN ARABE -->
-  <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black font-sans" dir="rtl">
-    <div class="text-center border-b-2 border-black pb-3 mb-4">
-      <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
-      <p class="font-bold text-sm mt-1">وزارة التربية الوطنية - مديرية التربية لولاية بجاية - ثانوية شعبان أعمر أوقاس</p>
-      <h2 class="font-black text-xl mt-4 border-2 border-black inline-block px-8 py-2">التقرير اليومي للغيابات والتأخرات</h2>
-      <p class="mt-3 font-bold text-base">تاريخ اليوم : <span id="rapport-date"></span></p>
-    </div>
-    
-    <div class="flex gap-4 mb-6 text-sm font-bold text-center">
-      <div class="border border-black p-2 flex-1 bg-slate-50">الحصص المنجزة : <span id="rapport-kpi-seances"></span></div>
-      <div class="border border-black p-2 flex-1 bg-slate-50">الغيابات : <span id="rapport-kpi-absents" class="text-rose-700"></span></div>
-      <div class="border border-black p-2 flex-1 bg-slate-50">التأخرات : <span id="rapport-kpi-retards" class="text-amber-700"></span></div>
-      <div class="border border-black p-2 flex-1 bg-slate-50">نسبة الحضور : <span id="rapport-kpi-taux" dir="ltr"></span></div>
-    </div>
-
-    <table class="w-full text-right border-collapse text-sm border border-black mb-6">
-      <thead class="bg-gray-100 font-bold">
-        <tr class="border-b-2 border-black">
-          <th class="border-l border-black p-2 w-10 text-center">الرقم</th>
-          <th class="border-l border-black p-2">اللقب والاسم</th>
-          <th class="border-l border-black p-2 text-center w-24">القسم</th>
-          <th class="border-l border-black p-2 text-center w-36">المادة والتوقيت</th>
-          <th class="border-l border-black p-2 text-center w-24">الحالة</th>
-          <th class="p-2 text-center w-36">التبرير / التأشيرة</th>
-        </tr>
-      </thead>
-      <tbody id="rapport-table-body" class="divide-y divide-black border-b border-black"></tbody>
-    </table>
-
-    <div class="flex justify-between text-sm font-bold px-12 pt-8">
-      <div class="text-center w-40">
-        <p>مستشار التربية</p>
-        <div class="h-24 border-b border-dashed border-black mt-2"></div>
-      </div>
-      <div class="text-center w-40">
-        <p>ناظر الدراسات</p>
-        <div class="h-24 border-b border-dashed border-black mt-2"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- BILLET D'ENTRÉE -->
-  <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10">
-    <div class="text-center border-b pb-3 mb-4">
-      <h3 class="font-bold">ثانوية شعبان أعمر أوقاس</h3>
-      <h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée / رخصة الدخول</h2>
-    </div>
-    <div id="billet-details" class="space-y-3 text-sm"></div>
-    <div class="mt-6 pt-4 border-t flex justify-between text-xs">
-      <p>Édité le : <span id="billet-date-emission"></span></p>
-      <p class="font-bold">Visa Administration</p>
-    </div>
-  </div>
-
-  <!-- CONVOCATION PARENT (3+ ABSENCES) -->
-  <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10">
-    <div class="text-center border-b border-black pb-4 mb-5">
-      <p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p>
-      <p class="text-xs font-bold">ثانوية شعبان أعمر - أوقاس</p>
-      <h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2>
-      <h3 class="text-base font-bold mt-1">(إشعار بتكرار الغياب)</h3>
-    </div>
-    <div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div>
-    <div class="mt-10 pt-4 border-t flex justify-between text-xs">
-      <p>أوقاس في : <span id="convoc-date-emission" class="font-bold"></span></p>
-      <p class="font-bold text-center">ختم وإمضاء مستشار التربية</p>
-    </div>
-  </div>
-
-  <!-- ========================================== -->
-  <!-- JAVASCRIPT COMPLET ET STRUCTURÉ -->
-  <!-- ========================================== -->
   <script>
     // ========================================================
-    // 1. DICTIONNAIRE MULTILINGUE
+    // CODES D'ACCÈS SPÉCIFIQUES PAR MATIÈRE (ENCODÉS BASE64)
+    // ========================================================
+    const CODES_MATIERES_BASE64 = {
+      "Mathématiques / رياضيات": "MTAwMQ==",           // 1001
+      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",   // 1002
+      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",   // 1003
+      "Informatique / إعلام آلي": "MTAwNA==",             // 1004
+      "Génie Civil / هندسة مدنية": "MjAwMQ==",             // 2001
+      "Génie Électrique / هندسة كهربائية": "MjAwMg==",     // 2002
+      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",     // 2003
+      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",    // 2004
+      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",    // 2005
+      "Droit / قانون": "MjAwNg==",                         // 2006
+      "Langue Arabe / لغة عربية": "MzAwMQ==",             // 3001
+      "Langue Française / فرنسية": "MzAwMg==",             // 3002
+      "Langue Anglaise / إنجليزية": "MzAwMw==",           // 3003
+      "Langue Allemande / ألمانية": "MzAwNA==",           // 3004
+      "Langue Espagnole / إسبانية": "MzAwNQ==",           // 3005
+      "Langue Amazighe / أمازيغية": "MzAwNg==",           // 3006
+      "Philosophie / فلسفة": "MzAwNw==",                  // 3007
+      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", // 3008
+      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",   // 3009
+      "EPS / تربية بدنية": "NDAwMQ=="                     // 4001
+    };
+
+    // ========================================================
+    // DICTIONNAIRE MULTILINGUE
     // ========================================================
     const TRADUCTIONS = {
       fr: {
         lang_btn: "العربية",
-        header_title: "Espace Vie Scolaire",
-        header_sub_title: "فضاء الاستشارة التربوية",
-        header_desc: "ثانوية شعبان أعمر أوقاس - Suivi des Absences & Alertes",
-        nav_teacher: "Vue Enseignant",
+        header_title: "Feuille d'Appel Numérique",
+        header_sub: "ثانوية شعبان أعمر أوقاس - تسجيل الحضور والغياب",
         btn_lock: "Verrouiller",
-        kpi_seances: "Appels faits",
-        kpi_today: "Aujourd'hui",
-        kpi_absents: "Absences Jour",
-        kpi_recorded: "Signalés",
-        kpi_retards: "Retards Jour",
-        kpi_late: "En retard",
-        kpi_alertes: "Alerte (≥ 3 Abs)",
-        kpi_recidive: "Élèves en récidive",
-        kpi_taux: "Taux Présence",
-        kpi_average: "Moyenne globale",
-        lbl_filter_date: "Date / التاريخ",
-        lbl_filter_classe: "Classe / القسم",
-        lbl_filter_statut: "Statut / الحالة",
-        opt_all_classes: "-- Toutes les classes / كل الأقسام --",
-        opt_statut_ar: "Absences & Retards",
-        opt_statut_alerte: "🚨 En alerte (3+ abs)",
-        opt_statut_a: "Absents uniquement",
-        opt_statut_r: "Retards uniquement",
-        opt_statut_all: "Tout afficher",
-        btn_refresh: "Actualiser",
-        btn_export: "Exporter",
-        btn_report: "Rapport",
-        table_title: "Registre Quotidien des Absences",
-        th_num: "N°",
-        th_student: "Élève & Alerte",
-        th_class: "Classe",
-        th_session: "Séance & Matière",
-        th_cumul: "Cumul Abs.",
-        th_status: "Statut",
-        th_justification: "Justification",
-        th_actions: "Actions",
-        status_a: "Absent",
-        status_r: "Retard",
-        status_p: "Présent",
-        tag_justified: "Justifié",
-        tag_not_justified: "Non justifié",
-        badge_alert: "ABSENCES",
-        action_btn_billet: "Billet",
-        action_btn_convoc: "Convoc.",
-        empty_table: "Aucun enregistrement correspondant.",
-        lines_count: "ligne(s)",
-        pin_title: "Espace Sécurisé",
-        pin_sub: "ثانوية شعبان أعمر - يرجى إدخال الرمز السري",
-        pin_error: "Code incorrect",
+        conn_online: "En ligne",
+        conn_offline: "Hors-ligne",
+        sec_params: "Paramètres du Cours",
+        lbl_classe: "Classe / القسم",
+        lbl_matiere: "Matière / المادة",
+        lbl_horaire: "Séance / التوقيت",
+        lbl_pin_matiere: "Matière / المادة *",
+        opt_classe_default: "-- Choisir la division / اختر الفوج --",
+        kpi_presents: "Présents",
+        kpi_absents: "Absents",
+        kpi_retards: "Retards",
+        default_classe_title: "Sélectionnez une classe",
+        btn_mark_all: "Tout marquer présent",
+        btn_add_missing: "Élève manquant ?",
+        prompt_select_classe: "Veuillez choisir une division ci-dessus pour afficher la liste des élèves.",
+        btn_submit_call: "Valider et transmettre l'appel",
+        btn_present: "Présent",
+        btn_absent: "Absent",
+        btn_retard: "Retard",
+        tag_added_session: "Ajouté en séance",
+        pin_title: "Espace Enseignant",
+        pin_sub: "Sélectionnez votre matière et entrez le code secret",
+        pin_error: "Code incorrect pour cette matière / رمز غير صحيح",
         pin_btn: "Déverrouiller",
-        pin_footer: "Accès réservé au Conseiller d'Éducation et à l'Administration",
-        modal_edit_title: "Modifier l'enregistrement",
-        lbl_eleve: "Élève",
-        lbl_statut: "Statut",
-        lbl_justification: "Justification",
-        opt_status_p: "✅ Présent",
-        opt_status_a: "❌ Absent",
-        opt_status_r: "⏳ Retard",
-        opt_not_justified: "Non justifié",
-        opt_justified: "Justifié",
+        pin_footer: "Chaque matière dispose de son propre code d'accès",
+        modal_add_title: "Élève manquant",
+        modal_add_sub: "إضافة تلميذ غير مسجل في الفوج",
+        label_nom_fr: "Nom (FR) *",
+        label_prenom_fr: "Prénom (FR) *",
+        label_nom_ar: "اللقب (بالعربية)",
+        label_prenom_ar: "الاسم (بالعربية)",
+        modal_note_title: "Inscription directe",
+        modal_note_desc: "L'élève sera automatiquement affecté à la division sélectionnée et marqué Présent pour ce cours.",
         btn_cancel: "Annuler",
-        btn_save: "Enregistrer",
-        msg_selected_rows: "élément(s) sélectionné(s)",
-        btn_delete_selected: "Supprimer la sélection",
-        btn_justify_selected: "Marquer justifié",
-        btn_unselect_all: "Désélectionner"
+        btn_confirm_add: "Ajouter à l'appel",
+        registered_count: "inscrits"
       },
       ar: {
         lang_btn: "Français",
-        header_title: "فضاء الاستشارة التربوية",
-        header_sub_title: "ثانوية شعبان أعمر أوقاس",
-        header_desc: "متابعة غيابات وتأخرات التلاميذ ونظام الإنذار الآلي",
-        nav_teacher: "فضاء الأستاذ",
+        header_title: "ورقة الحضور والغياب الرقمية",
+        header_sub: "ثانوية شعبان أعمر أوقاس - تسجيل غيابات وحضور التلاميذ",
         btn_lock: "قفل الشاشة",
-        kpi_seances: "الحصص المنجزة",
-        kpi_today: "اليوم",
-        kpi_absents: "غيابات اليوم",
-        kpi_recorded: "مسجلة اليوم",
-        kpi_retards: "تأخرات اليوم",
-        kpi_late: "متأخرون",
-        kpi_alertes: "إنذار (3+ غيابات)",
-        kpi_recidive: "تكرار الغياب",
-        kpi_taux: "نسبة الحضور",
-        kpi_average: "المعدل العام",
-        lbl_filter_date: "التاريخ",
-        lbl_filter_classe: "القسم / الفوج",
-        lbl_filter_statut: "الحالة",
-        opt_all_classes: "-- كل الأقسام التربوية --",
-        opt_statut_ar: "الغيابات والتأخرات",
-        opt_statut_alerte: "🚨 التلاميذ في حالة إنذار (3+ غيابات)",
-        opt_statut_a: "الغائبون فقط",
-        opt_statut_r: "المتأخرون فقط",
-        opt_statut_all: "عرض كل الحالات",
-        btn_refresh: "تحديث",
-        btn_export: "تصدير Excel",
-        btn_report: "التقرير اليومي",
-        table_title: "سجل الغيابات والتأخرات اليومي",
-        th_num: "الرقم",
-        th_student: "التلميذ والإنذار",
-        th_class: "القسم",
-        th_session: "الحصة والمادة",
-        th_cumul: "مجموع الغياب",
-        th_status: "الحالة",
-        th_justification: "التبرير",
-        th_actions: "العمليات",
-        status_a: "غائب",
-        status_r: "متأخر",
-        status_p: "حاضر",
-        tag_justified: "مبرر",
-        tag_not_justified: "غير مبرر",
-        badge_alert: "غيابات",
-        action_btn_billet: "رخصة دخول",
-        action_btn_convoc: "استدعاء",
-        empty_table: "لا توجد أي تسجيلات مطابقة لمعايير البحث.",
-        lines_count: "تسجيل",
-        pin_title: "فضاء الإدارة والاستشارة",
-        pin_sub: "ثانوية شعبان أعمر - يرجى إدخال الرمز السري",
-        pin_error: "الرمز السري غير صحيح",
-        pin_btn: "الدخول إلى الفضاء",
-        pin_footer: "فضاء محمي مخصص للسيد مستشار التربية وإدارة الثانوية فقط",
-        modal_edit_title: "تعديل حالة التلميذ",
-        lbl_eleve: "التلميذ(ة)",
-        lbl_statut: "حالة الحضور",
-        lbl_justification: "التبرير القانوني",
-        opt_status_p: "✅ حاضر",
-        opt_status_a: "❌ غائب",
-        opt_status_r: "⏳ متأخر",
-        opt_not_justified: "غير مبرر",
-        opt_justified: "مبرر",
+        conn_online: "متصل بالإنترنت",
+        conn_offline: "غير متصل (محلي)",
+        sec_params: "بيانات ومعلومات الحصة",
+        lbl_classe: "القسم / الفوج التربوي",
+        lbl_matiere: "المادة التعليمية",
+        lbl_horaire: "توقيت الحصة",
+        lbl_pin_matiere: "المادة التعليمية *",
+        opt_classe_default: "-- اختر الفوج التربوي --",
+        kpi_presents: "الحاضرون",
+        kpi_absents: "الغائبون",
+        kpi_retards: "المتأخرون",
+        default_classe_title: "يرجى اختيار القسم أولاً",
+        btn_mark_all: "تعليم الجميع كحاضرين",
+        btn_add_missing: "تلميذ غير مسجل ؟",
+        prompt_select_classe: "يرجى اختيار الفوج التربوي من القائمة أعلاه لعرض قائمة التلاميذ.",
+        btn_submit_call: "تأكيد وإرسال ورقة الغياب إلى الاستشارة التربوية",
+        btn_present: "حاضر",
+        btn_absent: "غائب",
+        btn_retard: "متأخر",
+        tag_added_session: "أضيف خلال الحصة",
+        pin_title: "فضاء الأستاذ",
+        pin_sub: "يرجى اختيار مادتك وإدخال الرمز السري الخاص بها",
+        pin_error: "الرمز السري غير مطابق لهذه المادة",
+        pin_btn: "الدخول إلى ورقة الحضور",
+        pin_footer: "كل مادة تعليمية تملك رمز دخول خاص بها",
+        modal_add_title: "تسجيل تلميذ غير مسجل",
+        modal_add_sub: "إضافة التلميذ مباشرة إلى الفوج الحاضر",
+        label_nom_fr: "اللقب بالحروف اللاتينية *",
+        label_prenom_fr: "الاسم بالحروف اللاتينية *",
+        label_nom_ar: "اللقب بالعربية",
+        label_prenom_ar: "الاسم بالعربية",
+        modal_note_title: "تسجيل مباشر وفوري",
+        modal_note_desc: "سيتم تسجيل التلميذ رسمياً في هذا القسم واحتسابه كحاضر في هذه الحصة.",
         btn_cancel: "إلغاء",
-        btn_save: "حفظ التعديل",
-        msg_selected_rows: "عنصر محدد",
-        btn_delete_selected: "حذف المحدد",
-        btn_justify_selected: "تبرير المحدد",
-        btn_unselect_all: "إلغاء التحديد"
+        btn_confirm_add: "تسجيل التلميذ في الحصة",
+        registered_count: "تلميذ مسجل"
       }
     };
 
-    let langueCourante = localStorage.getItem('pref_langue_superviseur') || 'fr';
+    let langueCourante = localStorage.getItem('pref_langue_prof') || 'fr';
 
     function appliquerLangue(lang) {
       langueCourante = lang;
-      localStorage.setItem('pref_langue_superviseur', lang);
+      localStorage.setItem('pref_langue_prof', lang);
 
       const htmlRoot = document.getElementById('html-root');
       htmlRoot.setAttribute('lang', lang);
@@ -553,9 +442,11 @@
       const lblLang = document.getElementById('lang-label');
       if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
 
-      loadClassesBilingues();
-      renderTableau();
-      mettreAJourBarreSelection();
+      if (currentEleves.length > 0) {
+        afficherEleves();
+        mettreAJourCompteurs();
+      }
+      mettreAJourBadgeReseau();
     }
 
     function toggleLangue() {
@@ -564,602 +455,550 @@
     }
 
     // ========================================================
-    // 2. PIN SÉCURISÉ (Base64) - "2626"
-    // ========================================================
-    const PIN_MASQUE = "MjYyNg==";
-
-    function debloquerSuperviseur() {
-      const pinScreen = document.getElementById('pin-screen'); 
-      if(pinScreen) pinScreen.remove();
-      sessionStorage.setItem('superviseur_auth', 'true');
-      initialiserApplication();
-    }
-
-    function validerPinDirect() {
-      const input = document.getElementById('input-pin');
-      const err = document.getElementById('pin-error');
-      const card = document.getElementById('pin-card');
-      const val = input ? input.value.trim() : '';
-      
-      if(val.length < 4) return;
-      
-      if(val === atob(PIN_MASQUE)) {
-        if(err) err.classList.add('hidden');
-        debloquerSuperviseur();
-      } else {
-        if(err) err.classList.remove('hidden');
-        if(card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
-        if(input) { input.value = ''; input.focus(); }
-      }
-    }
-
-    const inputPin = document.getElementById('input-pin');
-    const btnValiderPin = document.getElementById('btn-valider-pin');
-    if(btnValiderPin) btnValiderPin.addEventListener('click', validerPinDirect);
-    if(inputPin) {
-      inputPin.addEventListener('input', () => { if(inputPin.value.length === 4) validerPinDirect(); });
-      inputPin.addEventListener('keydown', (e) => { if(e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
-    }
-
-    const btnLock = document.getElementById('btn-lock');
-    if(btnLock) {
-      btnLock.addEventListener('click', () => {
-        sessionStorage.removeItem('superviseur_auth'); 
-        location.reload(); 
-      });
-    }
-
-    if(sessionStorage.getItem('superviseur_auth') === 'true') { 
-      debloquerSuperviseur(); 
-    }
-
-    // ========================================================
-    // 3. SUPABASE INITIALISATION & ÉTAT SÉLECTION
+    // 1. SUPABASE
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    let classesCache = [];
-    let vuePointages = [];
-    let pointagesSelectionnes = new Set(); // Ensemble d'IDs cochés
 
-    function animerChiffre(el, cible) {
-      if(!el) return; 
-      let dep = parseInt(el.textContent)||0; 
-      if(dep === cible) return;
-      const duree = 250, deb = performance.now();
-      function frame(t) { 
-        const p = Math.min((t - deb) / duree, 1); 
-        el.textContent = Math.floor(dep + (cible - dep) * p); 
-        if(p < 1) requestAnimationFrame(frame); 
-        else el.textContent = cible; 
-      }
-      requestAnimationFrame(frame);
-    }
+    let classesList = [], currentEleves = [], currentStatuts = {};
+    const selectClasse = document.getElementById('select-classe');
+    const selectMatiere = document.getElementById('select-matiere');
+    const selectHoraire = document.getElementById('select-horaire');
+    const elevesContainer = document.getElementById('eleves-container');
+    const btnValider = document.getElementById('btn-valider-appel');
+    const btnOuvrirModalEleve = document.getElementById('btn-ouvrir-modal-eleve');
 
-    // ========================================================
-    // 4. LOGIQUE MÉTIER & VUE POSTGRESQL
-    // ========================================================
-    const filtreDate = document.getElementById('filtre-date');
-    const filtreClasse = document.getElementById('filtre-classe');
-    const filtreStatut = document.getElementById('filtre-statut');
-    const registreBody = document.getElementById('registre-body');
-    const btnRefresh = document.getElementById('btn-refresh');
-    const iconRefresh = document.getElementById('icon-refresh');
-    const checkAllMaster = document.getElementById('checkbox-select-all');
-    const barreActions = document.getElementById('barre-actions-groupees');
-
-    if(filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
-
-    async function initialiserApplication() { 
-      await loadClassesBilingues(); 
-      await fetchDonnees(); 
-    }
-
-    async function loadClassesBilingues() {
-      try {
-        if (classesCache.length === 0) {
-          const { data, error } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
-          if (error) throw error;
-          classesCache = data || [];
-        }
-        
-        if(!filtreClasse) return;
-        const valCourante = filtreClasse.value || 'ALL';
-        filtreClasse.innerHTML = `<option value="ALL">${TRADUCTIONS[langueCourante].opt_all_classes}</option>`;
-        
-        const groupes = { 
-          '1AS': document.createElement('optgroup'), 
-          '2AS': document.createElement('optgroup'), 
-          '3AS': document.createElement('optgroup'), 
-          'AUTRE': document.createElement('optgroup') 
-        };
-        groupes['1AS'].label = (langueCourante === 'ar') ? "السنة الأولى ثانوي (1AS)" : "🎓 1ère Année Secondaire"; 
-        groupes['2AS'].label = (langueCourante === 'ar') ? "السنة الثانية ثانوي (2AS)" : "🎓 2ème Année Secondaire"; 
-        groupes['3AS'].label = (langueCourante === 'ar') ? "السنة الثالثة ثانوي - بكالوريا (3AS)" : "🎓 3ème Année (Bac)"; 
-        groupes['AUTRE'].label = (langueCourante === 'ar') ? "أفواج أخرى" : "Autres divisions";
-
-        classesCache.forEach(cls => {
-          const opt = document.createElement('option'); 
-          opt.value = cls.id; 
-          opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
-          
-          if(cls.nom_court.startsWith('1AS')) groupes['1AS'].appendChild(opt);
-          else if(cls.nom_court.startsWith('2AS')) groupes['2AS'].appendChild(opt);
-          else if(cls.nom_court.startsWith('3AS')) groupes['3AS'].appendChild(opt);
-          else groupes['AUTRE'].appendChild(opt);
-        });
-
-        ['1AS','2AS','3AS','AUTRE'].forEach(key => { 
-          if(groupes[key].children.length > 0) filtreClasse.appendChild(groupes[key]); 
-        });
-
-        filtreClasse.value = valCourante;
-      } catch (err) {
-        console.error("Erreur classes :", err);
-      }
-    }
-
-    async function fetchDonnees() {
-      const d = filtreDate.value;
-      if(!d) return;
-
-      if(iconRefresh) iconRefresh.classList.add('fa-spin');
-      registreBody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-indigo-500"><i class="fa-solid fa-spin fa-circle-notch text-2xl"></i><p class="mt-2 text-xs font-bold">...</p></td></tr>`;
-      
-      try {
-        const [vueRes, kpiRes] = await Promise.all([
-          supabaseClient
-            .from('v_registre_journalier')
-            .select('*')
-            .eq('date_cours', d)
-            .order('pointage_cree_a', { ascending: false }),
-          supabaseClient
-            .rpc('get_kpis_jour', { p_date: d })
-        ]);
-
-        if (vueRes.error) throw vueRes.error;
-        vuePointages = vueRes.data || [];
-
-        // Réinitialiser les sélections lors du rafraîchissement
-        pointagesSelectionnes.clear();
-        if(checkAllMaster) checkAllMaster.checked = false;
-        mettreAJourBarreSelection();
-
-        const kpis = kpiRes.data || { total_seances: 0, total_absents: 0, total_retards: 0, total_alertes: 0, taux_presence: 0 };
-        animerChiffre(document.getElementById('kpi-seances'), kpis.total_seances || 0);
-        animerChiffre(document.getElementById('kpi-absents'), kpis.total_absents || 0);
-        animerChiffre(document.getElementById('kpi-retards'), kpis.total_retards || 0);
-        animerChiffre(document.getElementById('kpi-alertes'), kpis.total_alertes || 0);
-        document.getElementById('kpi-taux').textContent = (kpis.taux_presence !== undefined && kpis.taux_presence !== null) ? `${kpis.taux_presence}%` : '--%';
-
-        renderTableau();
-
-      } catch (err) {
-        console.error("Erreur fetch vue :", err);
-        registreBody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-rose-500 font-bold">Erreur : ${err.message}</td></tr>`;
-      } finally {
-        if(iconRefresh) iconRefresh.classList.remove('fa-spin');
-      }
-    }
-
-    function obtenirDonneesFiltrees() {
-      const cl = filtreClasse ? filtreClasse.value : 'ALL';
-      const st = filtreStatut ? filtreStatut.value : 'A_R';
-
-      return vuePointages.filter(pt => {
-        if (cl !== 'ALL' && pt.classe_id != cl) return false;
-        
-        if (st === 'ALERTE_3') return pt.en_alerte === true || pt.total_absences >= 3;
-        if (st === 'A_R') return pt.statut === 'A' || pt.statut === 'R';
-        if (st !== 'ALL') return pt.statut === st;
-        return true;
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
       });
     }
 
-    function renderTableau() {
-      const fData = obtenirDonneesFiltrees();
-      document.getElementById('registre-count').textContent = `${fData.length} ${TRADUCTIONS[langueCourante].lines_count}`;
-      
-      if(fData.length === 0) {
-        registreBody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-slate-400 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>${TRADUCTIONS[langueCourante].empty_table}</td></tr>`;
-        if(checkAllMaster) checkAllMaster.checked = false;
+    // ========================================================
+    // 2. GESTION HORS-LIGNE
+    // ========================================================
+    function getQueueHorsLigne() {
+      try {
+        return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveQueueHorsLigne(queue) {
+      localStorage.setItem('offline_appels_queue', JSON.stringify(queue));
+      mettreAJourBadgeReseau();
+    }
+
+    function mettreAJourBadgeReseau() {
+      const dot = document.getElementById('conn-dot');
+      const text = document.getElementById('conn-text');
+      const queue = getQueueHorsLigne();
+      const isOnline = navigator.onLine;
+
+      if (!isOnline) {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+        text.textContent = queue.length > 0 
+          ? (langueCourante === 'ar' ? `غير متصل (${queue.length} معلق)` : `Hors-ligne (${queue.length} en attente)`) 
+          : TRADUCTIONS[langueCourante].conn_offline;
+      } else if (queue.length > 0) {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce';
+        text.textContent = (langueCourante === 'ar' ? `مزامنة (${queue.length})` : `Synchroniser (${queue.length})`);
+      } else {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+        text.textContent = TRADUCTIONS[langueCourante].conn_online;
+      }
+    }
+
+    async function synchroniserAppelsEnAttente() {
+      if (!navigator.onLine) {
+        afficherToast(langueCourante === 'ar' ? 'تنبيه' : 'Information', langueCourante === 'ar' ? 'لا يوجد اتصال بالإنترنت حالياً.' : 'Connexion internet absente.');
         return;
       }
-      
-      registreBody.innerHTML = '';
-      fData.forEach((pt, i) => {
-        const al = pt.en_alerte === true || (pt.total_absences >= 3);
-        const tot = pt.total_absences || 0;
-        const isChecked = pointagesSelectionnes.has(String(pt.pointage_id));
-        
-        const labelStatut = pt.statut === 'A' ? TRADUCTIONS[langueCourante].status_a : (pt.statut === 'R' ? TRADUCTIONS[langueCourante].status_r : TRADUCTIONS[langueCourante].status_p);
-        
-        const stHtml = pt.statut === 'A' 
-          ? `<span class="bg-rose-100 text-rose-700 px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1"><i class="fa-solid fa-xmark"></i> ${labelStatut}</span>`
-          : (pt.statut === 'R' 
-            ? `<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> ${labelStatut}</span>`
-            : `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> ${labelStatut}</span>`);
-            
-        let bg = al ? 'bg-rose-50 border-l-4 border-l-rose-500' : (i % 2 === 0 ? 'bg-white' : 'bg-slate-50/70');
-        if (isChecked) {
-          bg = 'bg-indigo-50/80 border-l-4 border-l-indigo-600';
-        }
-        const delay = Math.min(i * 15, 300);
-        
-        const nomPrincipal = (langueCourante === 'ar' && pt.nom_ar) ? `${pt.nom_ar} ${pt.prenom_ar}` : `${pt.nom} ${pt.prenom}`;
-        const nomSecondaire = (langueCourante === 'ar' && pt.nom_ar) ? `(${pt.nom} ${pt.prenom})` : `(${pt.nom_ar || ''} ${pt.prenom_ar || ''})`;
 
-        const labelJustifie = pt.justifie 
-          ? (pt.motif_justification || TRADUCTIONS[langueCourante].tag_justified) 
-          : TRADUCTIONS[langueCourante].tag_not_justified;
-
-        const tr = document.createElement('tr');
-        tr.className = `animate-table-row ${bg} hover:bg-indigo-50/50 transition cursor-pointer`;
-        tr.style.animationDelay = `${delay}ms`;
-        tr.id = `row-${pt.pointage_id}`;
-        
-        tr.innerHTML = `
-          <!-- CASE À COCHER LIGNE -->
-          <td class="py-3 px-3 text-center" onclick="event.stopPropagation()">
-            <input type="checkbox" value="${pt.pointage_id}" ${isChecked ? 'checked' : ''} onchange="toggleSelectRow('${pt.pointage_id}', this.checked)" class="row-checkbox w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600" />
-          </td>
-          <td class="py-3 px-2 text-center text-xs font-bold text-slate-400">${i + 1}</td>
-          <td class="py-3 px-4">
-            <div class="font-bold text-slate-900 ${al ? 'text-rose-800' : ''}">${nomPrincipal}</div>
-            <div class="text-xs text-slate-500">${nomSecondaire}</div>
-            ${al ? `<span class="badge-alerte-rouge bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full mt-1 inline-block"><i class="fa-solid fa-bell mr-1"></i> 🚨 ${tot}${TRADUCTIONS[langueCourante].badge_alert}</span>` : ''}
-          </td>
-          <td class="py-3 px-3"><span class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded-lg font-bold text-xs">${pt.classe_nom}</span></td>
-          <td class="py-3 px-3 text-xs"><div class="font-bold text-slate-700">${pt.matiere}</div><div class="text-slate-500">${pt.heure_debut?.substring(0,5)}</div></td>
-          <td class="py-3 px-3 text-center"><span class="px-2 py-1 rounded-lg font-black text-xs ${al ? 'bg-rose-200 text-rose-900' : 'bg-slate-100'}">${tot}</span></td>
-          <td class="py-3 px-3 text-center">${stHtml}</td>
-          <td class="py-3 px-3 text-center text-xs">${pt.justifie ? `<span class="text-emerald-700 bg-emerald-50 px-2 py-1 border border-emerald-200 rounded-lg font-bold">${labelJustifie}</span>` : `<span class="text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">${labelJustifie}</span>`}</td>
-          <td class="py-3 px-3 text-center" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-center gap-1.5 flex-wrap">
-              <button onclick="ouvrirModalModifier('${pt.pointage_id}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg cursor-pointer transition active:scale-95" title="Modifier"><i class="fa-solid fa-pen"></i></button>
-              <button onclick="imprimerBillet('${pt.nom}','${pt.prenom}','${pt.nom_ar}','${pt.prenom_ar}','${pt.classe_nom}','${pt.date_cours}','${pt.heure_debut}','${pt.statut}')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-2 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition active:scale-95" title="Billet"><i class="fa-solid fa-print mr-1"></i>${TRADUCTIONS[langueCourante].action_btn_billet}</button>
-              ${al ? `<button onclick="imprimerConvocation('${pt.nom}','${pt.prenom}','${pt.nom_ar}','${pt.prenom_ar}','${pt.classe_nom}',${tot})" class="bg-rose-600 text-white hover:bg-rose-700 px-2.5 py-1.5 rounded-lg font-bold text-xs cursor-pointer shadow-sm transition active:scale-95"><i class="fa-solid fa-envelope mr-1"></i>${TRADUCTIONS[langueCourante].action_btn_convoc}</button>` : ''}
-              <button onclick="supprimerPointage('${pt.pointage_id}')" class="bg-rose-50 text-rose-600 hover:bg-rose-100 p-2 rounded-lg cursor-pointer transition active:scale-95" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </td>
-        `;
-
-        // Permet aussi de cocher en cliquant sur la ligne entière
-        tr.onclick = () => {
-          const cb = tr.querySelector('.row-checkbox');
-          if (cb) {
-            cb.checked = !cb.checked;
-            toggleSelectRow(pt.pointage_id, cb.checked);
-          }
-        };
-
-        registreBody.appendChild(tr);
-      });
-
-      // Mettre à jour l'état de la case maîtresse
-      actualiserMasterCheckbox();
-    }
-
-    // ========================================================
-    // 5. GESTION DE LA SÉLECTION (TOUT COCHER / DÉCOCHER)
-    // ========================================================
-    window.toggleSelectAll = function(masterCheckbox) {
-      const fData = obtenirDonneesFiltrees();
-      if (masterCheckbox.checked) {
-        fData.forEach(pt => pointagesSelectionnes.add(String(pt.pointage_id)));
-      } else {
-        fData.forEach(pt => pointagesSelectionnes.delete(String(pt.pointage_id)));
-      }
-      renderTableau();
-      mettreAJourBarreSelection();
-    };
-
-    window.toggleSelectRow = function(id, isChecked) {
-      id = String(id);
-      if (isChecked) {
-        pointagesSelectionnes.add(id);
-      } else {
-        pointagesSelectionnes.delete(id);
-      }
-      actualiserMasterCheckbox();
-      mettreAJourBarreSelection();
-    };
-
-    window.deselectionnerTout = function() {
-      pointagesSelectionnes.clear();
-      if (checkAllMaster) checkAllMaster.checked = false;
-      renderTableau();
-      mettreAJourBarreSelection();
-    };
-
-    function actualiserMasterCheckbox() {
-      if (!checkAllMaster) return;
-      const fData = obtenirDonneesFiltrees();
-      if (fData.length === 0) {
-        checkAllMaster.checked = false;
-        checkAllMaster.indeterminate = false;
+      const queue = getQueueHorsLigne();
+      if (queue.length === 0) {
+        afficherToast(langueCourante === 'ar' ? 'تم التحديث' : 'Synchronisé', langueCourante === 'ar' ? 'جميع الأوراق مسجلة بالكامل.' : 'Tous les appels sont déjà enregistrés en ligne.');
         return;
       }
-      let nbSelected = 0;
-      fData.forEach(pt => {
-        if (pointagesSelectionnes.has(String(pt.pointage_id))) nbSelected++;
-      });
-      if (nbSelected === 0) {
-        checkAllMaster.checked = false;
-        checkAllMaster.indeterminate = false;
-      } else if (nbSelected === fData.length) {
-        checkAllMaster.checked = true;
-        checkAllMaster.indeterminate = false;
-      } else {
-        checkAllMaster.checked = false;
-        checkAllMaster.indeterminate = true;
-      }
-    }
 
-    function mettreAJourBarreSelection() {
-      if (!barreActions) return;
-      const total = pointagesSelectionnes.size;
-      const counterEl = document.getElementById('count-selected');
-      if (counterEl) counterEl.textContent = total;
+      const btnSync = document.getElementById('btn-sync-offline');
+      btnSync.disabled = true;
 
-      if (total > 0) {
-        barreActions.classList.remove('hidden');
-        barreActions.classList.add('flex');
-      } else {
-        barreActions.classList.add('hidden');
-        barreActions.classList.remove('flex');
-      }
-    }
+      let reussis = 0;
+      const nouvelleQueue = [];
 
-    // ACTIONS EN LOT (BATCH ACTIONS)
-    window.supprimerSelectionGroupee = async function() {
-      const ids = Array.from(pointagesSelectionnes);
-      if (ids.length === 0) return;
-
-      const confirmMsg = (langueCourante === 'ar')
-        ? `هل أنت متأكد من حذف ${ids.length} تسجيل محدد نهائياً ؟`
-        : `Voulez-vous vraiment supprimer définitivement les ${ids.length} enregistrements sélectionnés ?`;
-
-      if (!confirm(confirmMsg)) return;
-
-      try {
-        const { error } = await supabaseClient
-          .from('pointages')
-          .delete()
-          .in('id', ids);
-
-        if (error) throw error;
-        pointagesSelectionnes.clear();
-        await fetchDonnees();
-      } catch (err) {
-        alert("Erreur lors de la suppression groupée : " + err.message);
-      }
-    };
-
-    window.justifierSelectionGroupee = async function() {
-      const ids = Array.from(pointagesSelectionnes);
-      if (ids.length === 0) return;
-
-      const motifPrompt = (langueCourante === 'ar')
-        ? 'يرجى إدخال سبب التبرير القانوني (مثال: مبرر من طرف الإدارة):'
-        : 'Motif de justification (ex: Accord administration, Certificat...):';
-
-      const motif = prompt(motifPrompt, langueCourante === 'ar' ? 'مبرر من الإدارة' : 'Accord de l\'administration');
-      if (motif === null) return; // Annulé
-
-      try {
-        const { error } = await supabaseClient
-          .from('pointages')
-          .update({
-            justifie: true,
-            motif_justification: motif.trim() || (langueCourante === 'ar' ? 'مبرر' : 'Justifié')
-          })
-          .in('id', ids);
-
-        if (error) throw error;
-        pointagesSelectionnes.clear();
-        await fetchDonnees();
-      } catch (err) {
-        alert("Erreur lors de la mise à jour groupée : " + err.message);
-      }
-    };
-
-    // ========================================================
-    // 6. MODIFICATION INDIVIDUELLE & SUPPRESSION
-    // ========================================================
-    window.ouvrirModalModifier = (pid) => { 
-      const pt = vuePointages.find(p => p.pointage_id == pid); 
-      if(!pt) return;
-      document.getElementById('edit-pointage-id').value = pid; 
-      document.getElementById('edit-eleve-nom').textContent = `${pt.nom} ${pt.prenom} (${pt.nom_ar || ''})`;
-      document.getElementById('edit-statut').value = pt.statut; 
-      document.getElementById('edit-justifie-'+(pt.justifie?'oui':'non')).checked = true;
-      document.getElementById('edit-motif').value = pt.motif_justification || '';
-      document.getElementById('modal-modifier').classList.remove('hidden');
-      document.getElementById('modal-modifier').classList.add('flex');
-    };
-    
-    window.fermerModalModifier = () => {
-      document.getElementById('modal-modifier').classList.add('hidden');
-      document.getElementById('modal-modifier').classList.remove('flex');
-    };
-    
-    window.enregistrerModificationPointage = async () => {
-      const id = document.getElementById('edit-pointage-id').value;
-      const statut = document.getElementById('edit-statut').value;
-      const justifie = document.getElementById('edit-justifie-oui').checked;
-      const motif = document.getElementById('edit-motif').value.trim();
-      
-      try {
-        const { error } = await supabaseClient.from('pointages').update({ 
-          statut: statut, 
-          justifie: justifie, 
-          motif_justification: motif || null 
-        }).eq('id', id);
-        
-        if(error) throw error;
-        fermerModalModifier(); 
-        await fetchDonnees();
-      } catch(e) { 
-        alert(e.message); 
-      }
-    };
-    
-    window.supprimerPointage = async (id) => { 
-      const msgConfirm = (langueCourante === 'ar') 
-        ? 'هل أنت متأكد من حذف هذا التسجيل نهائياً ؟' 
-        : 'Êtes-vous sûr de vouloir supprimer définitivement cet enregistrement ?';
-      if(confirm(msgConfirm)) { 
+      for (const item of queue) {
         try {
-          const { error } = await supabaseClient.from('pointages').delete().eq('id', id);
-          if(error) throw error;
-          pointagesSelectionnes.delete(String(id));
-          await fetchDonnees(); 
-        } catch(e) {
-          alert(e.message);
+          const { data: seance, error: errS } = await supabaseClient
+            .from('seances')
+            .insert({
+              classe_id: item.classe_id,
+              matiere: item.matiere,
+              date_cours: item.date_cours,
+              heure_debut: item.heure_debut,
+              heure_fin: item.heure_fin,
+              appel_valide: true
+            })
+            .select()
+            .single();
+
+          if (errS) throw errS;
+
+          const pointages = item.pointages.map(pt => ({
+            seance_id: seance.id,
+            eleve_id: pt.eleve_id,
+            statut: pt.statut
+          }));
+
+          const { error: errP } = await supabaseClient.from('pointages').insert(pointages);
+          if (errP) throw errP;
+
+          reussis++;
+        } catch (e) {
+          console.error("Échec sync :", e);
+          nouvelleQueue.push(item);
         }
-      } 
+      }
+
+      saveQueueHorsLigne(nouvelleQueue);
+      btnSync.disabled = false;
+
+      if (reussis > 0) {
+        afficherToast(langueCourante === 'ar' ? 'تمت المزامنة بنجاح' : 'Synchronisation réussie', langueCourante === 'ar' ? `تم إرسال ${reussis} أوراق حضور.` : `${reussis} appel(s) transmis à la base.`);
+      }
+    }
+
+    window.addEventListener('online', () => {
+      mettreAJourBadgeReseau();
+      afficherToast(langueCourante === 'ar' ? 'عاد الاتصال' : 'Réseau rétabli', langueCourante === 'ar' ? 'جاري مزامنة البيانات...' : 'Synchronisation en cours...');
+      synchroniserAppelsEnAttente();
+    });
+
+    window.addEventListener('offline', () => {
+      mettreAJourBadgeReseau();
+      afficherToast(langueCourante === 'ar' ? 'انقطع الاتصال' : 'Hors-ligne', langueCourante === 'ar' ? 'العمل بالنمط المحلي.' : 'Mode local activé.');
+    });
+
+    document.getElementById('btn-sync-offline').addEventListener('click', synchroniserAppelsEnAttente);
+
+    // ========================================================
+    // 3. CHARGEMENT DES CLASSES & ÉLÈVES
+    // ========================================================
+    function afficherToast(titre, msg) {
+      const t = document.getElementById('toast-notification');
+      document.getElementById('toast-titre').textContent = titre; 
+      document.getElementById('toast-message').textContent = msg;
+      t.classList.remove('-translate-y-24', 'opacity-0'); 
+      t.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => { 
+        t.classList.add('-translate-y-24', 'opacity-0'); 
+        t.classList.remove('translate-y-0', 'opacity-100'); 
+      }, 3500);
+    }
+
+    async function initClasses() {
+      const cacheClasses = localStorage.getItem('cache_classes');
+      if (cacheClasses) {
+        try {
+          classesList = JSON.parse(cacheClasses);
+          remplirSelectClasses(classesList);
+        } catch (e) {}
+      }
+
+      if (navigator.onLine) {
+        try {
+          const { data, error } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
+          if (!error && data) {
+            classesList = data;
+            localStorage.setItem('cache_classes', JSON.stringify(data));
+            remplirSelectClasses(classesList);
+          }
+        } catch (err) {
+          console.warn("Classes chargées depuis le cache local.");
+        }
+      }
+      mettreAJourBadgeReseau();
+    }
+
+    function remplirSelectClasses(liste) {
+      if (!selectClasse) return;
+      selectClasse.innerHTML = `<option value="">${TRADUCTIONS[langueCourante].opt_classe_default}</option>`;
+      
+      const groupes = { 
+        '1AS': document.createElement('optgroup'), 
+        '2AS': document.createElement('optgroup'), 
+        '3AS': document.createElement('optgroup'), 
+        'AUTRE': document.createElement('optgroup') 
+      };
+      groupes['1AS'].label = (langueCourante === 'ar') ? "السنة الأولى ثانوي (1AS)" : "1ère Année Secondaire"; 
+      groupes['2AS'].label = (langueCourante === 'ar') ? "السنة الثانية ثانوي (2AS)" : "2ème Année Secondaire"; 
+      groupes['3AS'].label = (langueCourante === 'ar') ? "السنة الثالثة ثانوي - بكالوريا (3AS)" : "3ème Année (Bac)"; 
+      groupes['AUTRE'].label = (langueCourante === 'ar') ? "أفواج أخرى" : "Autres divisions";
+      
+      liste.forEach(cls => {
+        const o = document.createElement('option'); 
+        o.value = cls.id; 
+        o.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+        if(cls.nom_court.startsWith('1AS')) groupes['1AS'].appendChild(o);
+        else if(cls.nom_court.startsWith('2AS')) groupes['2AS'].appendChild(o);
+        else if(cls.nom_court.startsWith('3AS')) groupes['3AS'].appendChild(o);
+        else groupes['AUTRE'].appendChild(o);
+      });
+      
+      ['1AS','2AS','3AS','AUTRE'].forEach(k => { 
+        if(groupes[k].children.length) selectClasse.appendChild(groupes[k]); 
+      });
+    }
+
+    async function chargerEleves(cid) {
+      if(!cid) {
+        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
+        document.getElementById('stats-bar').classList.add('hidden'); 
+        document.getElementById('actions-footer').classList.add('hidden'); 
+        document.getElementById('btn-tout-present').classList.add('hidden');
+        btnOuvrirModalEleve.classList.add('hidden');
+        return;
+      }
+      elevesContainer.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
+      
+      const sc = classesList.find(c => c.id == cid);
+      document.getElementById('classe-titre').textContent = sc ? `${sc.nom_court} (${sc.nom_complet})` : 'Classe';
+
+      const cacheEleves = localStorage.getItem(`cache_eleves_${cid}`);
+      if (cacheEleves) {
+        try {
+          currentEleves = JSON.parse(cacheEleves);
+        } catch (e) {}
+      }
+
+      if (navigator.onLine) {
+        try {
+          const { data, error } = await supabaseClient.from('eleves').select('*').eq('classe_id', cid).eq('actif', true).order('nom');
+          if (!error && data) {
+            currentEleves = data;
+            localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(data));
+          }
+        } catch (err) {
+          console.warn("Élèves chargés depuis le cache local.");
+        }
+      }
+
+      document.getElementById('classe-effectif').textContent = `${currentEleves.length} ${TRADUCTIONS[langueCourante].registered_count}`;
+      currentStatuts = {}; 
+      currentEleves.forEach(e => currentStatuts[e.id] = 'P');
+      
+      afficherEleves();
+      mettreAJourCompteurs();
+      document.getElementById('stats-bar').classList.remove('hidden'); 
+      document.getElementById('actions-footer').classList.remove('hidden'); 
+      document.getElementById('btn-tout-present').classList.remove('hidden');
+      btnOuvrirModalEleve.classList.remove('hidden');
+    }
+
+    function afficherEleves() {
+      elevesContainer.innerHTML = '';
+      currentEleves.forEach((e, i) => {
+        const row = document.createElement('div');
+        const st = currentStatuts[e.id] || 'P';
+        row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 ${i%2===0?'bg-white':'bg-slate-50'}`;
+        row.style.animationDelay = `${Math.min(i*25,400)}ms`;
+
+        const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
+        const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3.5 w-full sm:w-auto">
+            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-xs font-bold">${i+1}</span>
+            <div class="truncate">
+              <span class="font-bold text-slate-900">${nomPrincipal}</span> 
+              <span class="text-xs text-slate-500 font-bold mx-1">${nomSecondaire}</span>
+              ${e.est_nouveau ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">${TRADUCTIONS[langueCourante].tag_added_session}</span>` : ''}
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            <button type="button" onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='P' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}">
+              <i class="fa-solid fa-check"></i>
+              <span>${TRADUCTIONS[langueCourante].btn_present}</span>
+            </button>
+            <button type="button" onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='A' ? 'bg-rose-600 text-white shadow-md ring-2 ring-rose-500/30' : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700'}">
+              <i class="fa-solid fa-xmark"></i>
+              <span>${TRADUCTIONS[langueCourante].btn_absent}</span>
+            </button>
+            <button type="button" onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='R' ? 'bg-amber-500 text-white shadow-md ring-2 ring-amber-500/30' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700'}">
+              <i class="fa-solid fa-clock"></i>
+              <span>${TRADUCTIONS[langueCourante].btn_retard}</span>
+            </button>
+          </div>
+        `;
+        elevesContainer.appendChild(row);
+      });
+    }
+
+    window.changerStatut = function(id, st) { currentStatuts[id] = st; afficherEleves(); mettreAJourCompteurs(); };
+    
+    if(document.getElementById('btn-tout-present')) {
+      document.getElementById('btn-tout-present').onclick = function(){ 
+        currentEleves.forEach(e => currentStatuts[e.id] = 'P'); 
+        afficherEleves(); 
+        mettreAJourCompteurs(); 
+      };
+    }
+
+    function mettreAJourCompteurs() {
+      let p=0, a=0, r=0; 
+      Object.values(currentStatuts).forEach(s => { if(s==='P') p++; else if(s==='A') a++; else r++; });
+      document.getElementById('count-presents').textContent = p; 
+      document.getElementById('count-absents').textContent = a; 
+      document.getElementById('count-retards').textContent = r;
+    }
+
+    // ========================================================
+    // 4. MODAL AJOUT D'ÉLÈVE
+    // ========================================================
+    window.ouvrirModalNouvelEleve = function() {
+      const cid = selectClasse.value;
+      if (!cid) {
+        afficherToast(langueCourante === 'ar' ? 'تنبيه' : 'Attention', TRADUCTIONS[langueCourante].prompt_select_classe);
+        return;
+      }
+      document.getElementById('add-eleve-nom').value = '';
+      document.getElementById('add-eleve-prenom').value = '';
+      document.getElementById('add-eleve-nom-ar').value = '';
+      document.getElementById('add-eleve-prenom-ar').value = '';
+      const modal = document.getElementById('modal-nouvel-eleve');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('add-eleve-nom').focus();
+    };
+
+    window.fermerModalNouvelEleve = function() {
+      const modal = document.getElementById('modal-nouvel-eleve');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    };
+
+    window.confirmerAjoutEleve = async function() {
+      const cid = selectClasse.value;
+      const nom = document.getElementById('add-eleve-nom').value.trim().toUpperCase();
+      const prenom = document.getElementById('add-eleve-prenom').value.trim();
+      const nomAr = document.getElementById('add-eleve-nom-ar').value.trim();
+      const prenomAr = document.getElementById('add-eleve-prenom-ar').value.trim();
+
+      if (!nom || !prenom) {
+        alert(langueCourante === 'ar' ? 'يرجى إدخال اللقب والاسم بالحروف اللاتينية.' : 'Le Nom et le Prénom (FR) sont obligatoires.');
+        return;
+      }
+
+      const btnConfirmer = document.getElementById('btn-confirmer-ajout-eleve');
+      btnConfirmer.disabled = true;
+      btnConfirmer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`;
+
+      const matriculeAuto = 'TEMP-' + Date.now().toString().slice(-6);
+
+      const nouvelEleveData = {
+        classe_id: parseInt(cid, 10),
+        nom: nom,
+        prenom: prenom,
+        nom_ar: nomAr || null,
+        prenom_ar: prenomAr || null,
+        matricule: matriculeAuto,
+        actif: true
+      };
+
+      try {
+        let insertedEleve = null;
+
+        if (navigator.onLine) {
+          const { data, error } = await supabaseClient
+            .from('eleves')
+            .insert(nouvelEleveData)
+            .select()
+            .single();
+
+          if (error) throw error;
+          insertedEleve = data;
+        } else {
+          insertedEleve = {
+            id: Date.now(),
+            ...nouvelEleveData,
+            est_nouveau: true
+          };
+        }
+
+        insertedEleve.est_nouveau = true;
+        currentEleves.push(insertedEleve);
+        currentStatuts[insertedEleve.id] = 'P';
+
+        localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(currentEleves));
+
+        document.getElementById('classe-effectif').textContent = `${currentEleves.length} ${TRADUCTIONS[langueCourante].registered_count}`;
+        afficherEleves();
+        mettreAJourCompteurs();
+        fermerModalNouvelEleve();
+
+        afficherToast(langueCourante === 'ar' ? 'تمت إضافة التلميذ' : 'Élève ajouté', `${nom} ${prenom}`);
+      } catch (err) {
+        console.error("Erreur ajout élève :", err);
+        alert(err.message);
+      } finally {
+        btnConfirmer.disabled = false;
+        btnConfirmer.innerHTML = `<i class="fa-solid fa-plus"></i> <span>${TRADUCTIONS[langueCourante].btn_confirm_add}</span>`;
+      }
     };
 
     // ========================================================
-    // 7. EXPORT EXCEL (BILINGUE)
+    // 5. VALIDATION DE L'APPEL
     // ========================================================
-    const btnExportExcel = document.getElementById('btn-export-excel');
-    if(btnExportExcel) {
-      btnExportExcel.addEventListener('click', () => {
-        let sources = obtenirDonneesFiltrees();
-        // Si des lignes sont cochées, exporter en priorité celles cochées
-        if (pointagesSelectionnes.size > 0) {
-          sources = sources.filter(p => pointagesSelectionnes.has(String(p.pointage_id)));
-        }
-
-        const d = sources.map((p, i) => ({ 
-          "N° / الرقم": i + 1, 
-          "Date / التاريخ": p.date_cours, 
-          "Division / القسم": p.classe_nom, 
-          "Nom / اللقب": p.nom, 
-          "Prénom / الاسم": p.prenom, 
-          "اللقب AR": p.nom_ar || '', 
-          "الاسم AR": p.prenom_ar || '', 
-          "Matière / المادة": p.matiere,
-          "Statut / الحالة": p.statut === 'A' ? 'Absent/غائب' : (p.statut === 'R' ? 'Retard/تأخر' : 'Présent/حاضر'), 
-          "Cumul Abs / مجموع الغياب": p.total_absences || 0,
-          "Alerte (≥ 3 Abs) / إنذار": (p.en_alerte || p.total_absences >= 3) ? "OUI / نعم" : "NON / لا",
-          "Justifié / مبرر": p.justifie ? "OUI / نعم" : "NON / لا",
-          "Motif / السبب": p.motif_justification || ''
-        }));
-        
-        if(d.length === 0) {
-          alert(langueCourante === 'ar' ? 'الجدول فارغ، لا توجد بيانات للتصدير.' : 'Le tableau est vide, rien à exporter !');
+    if(btnValider) {
+      btnValider.onclick = async function() {
+        if(!selectClasse.value || currentEleves.length === 0) {
+          afficherToast(langueCourante === 'ar' ? 'خطأ' : 'Erreur', TRADUCTIONS[langueCourante].prompt_select_classe);
           return;
         }
-        
-        const ws = XLSX.utils.json_to_sheet(d);
-        ws['!cols'] = [{wch:6}, {wch:12}, {wch:14}, {wch:15}, {wch:15}, {wch:15}, {wch:15}, {wch:20}, {wch:15}, {wch:14}, {wch:14}, {wch:12}, {wch:20}];
-        
-        const wb = XLSX.utils.book_new(); 
-        XLSX.utils.book_append_sheet(wb, ws, "Registre_Absences"); 
-        XLSX.writeFile(wb, `Absences_Chaabane_Aamar_${filtreDate.value}.xlsx`);
-      });
-    }
 
-    // ========================================================
-    // 8. IMPRESSION RAPPORT ADMINISTRATIF (ARABE OFFICIEL)
-    // ========================================================
-    const btnImprimerRapport = document.getElementById('btn-imprimer-rapport');
-    if(btnImprimerRapport) {
-      btnImprimerRapport.addEventListener('click', () => {
-        const dChoisie = filtreDate.value;
-        if(!dChoisie) return;
+        btnValider.disabled = true; 
+        btnValider.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`;
 
-        const incidents = vuePointages.filter(p => p.statut === 'A' || p.statut === 'R');
-        
-        document.getElementById('rapport-date').textContent = new Date(dChoisie).toLocaleDateString('ar-DZ', { 
-          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-        });
-        
-        document.getElementById('rapport-kpi-seances').textContent = document.getElementById('kpi-seances').textContent;
-        document.getElementById('rapport-kpi-absents').textContent = document.getElementById('kpi-absents').textContent;
-        document.getElementById('rapport-kpi-retards').textContent = document.getElementById('kpi-retards').textContent;
-        document.getElementById('rapport-kpi-taux').textContent = document.getElementById('kpi-taux').textContent;
+        const t = selectHoraire.value.split('-');
+        const donneesAppel = {
+          classe_id: selectClasse.value,
+          matiere: selectMatiere.value,
+          date_cours: new Date().toISOString().split('T')[0],
+          heure_debut: t[0] + ':00',
+          heure_fin: t[1] + ':00',
+          pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' }))
+        };
 
-        const tbody = document.getElementById('rapport-table-body');
-        tbody.innerHTML = '';
-        
-        if (incidents.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center font-bold">لا توجد أي غيابات أو تأخرات مسجلة لهذا اليوم.</td></tr>`;
-        } else {
-          incidents.forEach((pt, i) => {
-            const statutL = pt.statut === 'A' ? 'غياب' : 'تأخر';
-            const colorStatut = pt.statut === 'A' ? 'text-rose-700' : 'text-amber-700';
-            const just = pt.justifie ? (pt.motif_justification || 'مبرر') : 'غير مبرر';
-            const nomCompletArabe = (pt.nom_ar || pt.nom) + ' ' + (pt.prenom_ar || pt.prenom);
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td class="border-l border-black p-2 text-center font-bold">${i + 1}</td>
-              <td class="border-l border-black p-2 font-bold">${nomCompletArabe}</td>
-              <td class="border-l border-black p-2 text-center font-bold" dir="ltr">${pt.classe_nom}</td>
-              <td class="border-l border-black p-2 text-center" dir="ltr">${pt.matiere}<br>${pt.heure_debut?.substring(0,5)}</td>
-              <td class="border-l border-black p-2 text-center font-bold ${colorStatut}">${statutL}</td>
-              <td class="p-2 text-center">${just}</td>
-            `;
-            tbody.appendChild(tr);
-          });
+        if (!navigator.onLine) {
+          const queue = getQueueHorsLigne();
+          queue.push(donneesAppel);
+          saveQueueHorsLigne(queue);
+          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Enregistré hors-ligne', langueCourante === 'ar' ? 'سيتم الإرسال فور عودة الإنترنت.' : 'Appel stocké localement. Synchronisation dès retour du réseau.');
+          btnValider.disabled = false;
+          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`;
+          return;
         }
 
-        document.body.classList.remove('print-billet', 'print-convocation');
-        document.body.classList.add('print-rapport');
-        window.print();
-        setTimeout(() => document.body.classList.remove('print-rapport'), 1000);
+        try {
+          const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ 
+            classe_id: donneesAppel.classe_id, 
+            matiere: donneesAppel.matiere, 
+            date_cours: donneesAppel.date_cours, 
+            heure_debut: donneesAppel.heure_debut, 
+            heure_fin: donneesAppel.heure_fin, 
+            appel_valide: true 
+          }).select().single();
+          
+          if(e1) throw e1;
+
+          const pts = donneesAppel.pointages.map(p => ({
+            seance_id: s.id,
+            eleve_id: p.eleve_id,
+            statut: p.statut
+          }));
+
+          const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
+          if(e2) throw e2;
+          
+          afficherToast(langueCourante === 'ar' ? 'تم تأكيد الغياب' : 'Succès', langueCourante === 'ar' ? 'تم إرسال الورقة بنجاح إلى الاستشارة التربوية.' : 'Appel transmis avec succès !');
+        } catch(e) { 
+          console.warn("Échec réseau, mise en file locale :", e);
+          const queue = getQueueHorsLigne();
+          queue.push(donneesAppel);
+          saveQueueHorsLigne(queue);
+          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Sauvegardé hors-ligne', langueCourante === 'ar' ? 'حُفظت الورقة في الجهاز بسبب عدم استقرار الشبكة.' : 'Réseau instable : appel sécurisé sur votre appareil.');
+        } finally { 
+          btnValider.disabled = false; 
+          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`; 
+        }
+      };
+    }
+    
+    if(selectClasse) selectClasse.addEventListener('change', (e) => chargerEleves(e.target.value));
+
+    // ========================================================
+    // 6. GESTION DU DÉVERROUILLAGE PAR MATIÈRE
+    // ========================================================
+    const pinSelectMatiere = document.getElementById('pin-select-matiere');
+    const inputPin = document.getElementById('input-pin-prof');
+    const btnPin = document.getElementById('btn-valider-pin-prof');
+
+    function debloquerPagePourMatiere(matiere) {
+      const pinScreen = document.getElementById('pin-screen-prof');
+      if (pinScreen) pinScreen.remove();
+      
+      sessionStorage.setItem('prof_auth_matiere', matiere);
+      
+      // Sélectionner et verrouiller la matière pour la session
+      if (selectMatiere) {
+        selectMatiere.value = matiere;
+        selectMatiere.disabled = true; // Empêche l'enseignant de changer de matière par inadvertance
+      }
+
+      initClasses();
+    }
+
+    function validerPinDirect() {
+      const err = document.getElementById('pin-prof-error');
+      const card = document.getElementById('pin-card-prof');
+      const matiere = pinSelectMatiere.value;
+      const codeSaisi = inputPin.value.trim();
+
+      if (!matiere) {
+        alert(langueCourante === 'ar' ? 'يرجى اختيار مادتك أولاً من القائمة' : 'Veuillez d\'abord choisir votre matière dans la liste');
+        pinSelectMatiere.focus();
+        return;
+      }
+
+      if (codeSaisi.length < 4) return;
+
+      const codeAttenduBase64 = CODES_MATIERES_BASE64[matiere];
+
+      if (codeAttenduBase64 && codeSaisi === atob(codeAttenduBase64)) {
+        if (err) err.classList.add('hidden');
+        debloquerPagePourMatiere(matiere);
+      } else {
+        if (err) err.classList.remove('hidden');
+        if (card) { 
+          card.classList.remove('shake-error'); 
+          void card.offsetWidth; 
+          card.classList.add('shake-error'); 
+        }
+        inputPin.value = '';
+        inputPin.focus();
+      }
+    }
+
+    if (btnPin) btnPin.onclick = validerPinDirect;
+    if (inputPin) {
+      inputPin.addEventListener('input', function() { 
+        if (this.value.trim().length === 4) validerPinDirect(); 
+      });
+      inputPin.addEventListener('keydown', function(e) { 
+        if (e.key === 'Enter') { 
+          e.preventDefault(); 
+          validerPinDirect(); 
+        } 
       });
     }
 
-    // ========================================================
-    // 9. IMPRESSION BILLET & CONVOCATION
-    // ========================================================
-    window.imprimerBillet = (nom, prenom, nomAr, prenomAr, classe, date, heure, statut) => {
-      document.getElementById('billet-details').innerHTML = `
-        <div class="flex justify-between border-b border-black pb-2"><p><b>Nom & Prénom:</b> ${nom} ${prenom}</p><p dir="rtl"><b>اللقب والاسم:</b> ${nomAr} ${prenomAr}</p></div>
-        <div class="flex justify-between border-b border-black py-2"><p><b>Division / القسم:</b> ${classe}</p><p><b>Statut / الطبيعة:</b> ${statut === 'A' ? 'Absence / غياب' : 'Retard / تأخر'}</p></div>
-        <div class="py-2"><p><b>Date & Heure:</b> ${date} à ${heure.substring(0,5)}</p></div>
-      `;
-      document.getElementById('billet-date-emission').textContent = new Date().toLocaleString('fr-FR');
-      
-      document.body.classList.remove('print-rapport', 'print-convocation');
-      document.body.classList.add('print-billet');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-billet'), 1000);
-    };
+    const btnLock = document.getElementById('btn-lock-prof');
+    if (btnLock) {
+      btnLock.onclick = function() { 
+        sessionStorage.removeItem('prof_auth_matiere'); 
+        location.reload(); 
+      };
+    }
 
-    window.imprimerConvocation = (nom, prenom, nomAr, prenomAr, classe, tot) => {
-      document.getElementById('convocation-details').innerHTML = `
-        <div class="mb-4 bg-gray-100 p-3 border border-black text-center font-bold">
-          <p>${nom} ${prenom} — ${nomAr} ${prenomAr} — القسم: ${classe}</p>
-          <p class="mt-2 text-rose-700 text-lg">مجموع الغيابات: ${tot} حصص</p>
-        </div>
-        <p>إلى السيد(ة) ولي أمر التلميذ(ة) المحترم(ة) :</p>
-        <p>نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجل غيابات متكررة تجاوزت الحد المسموح به (<span class="font-bold text-rose-700">${tot} غيابات</span>).</p>
-        <p>وعليه، يُرجى منكم الحضور شخصياً إلى مكتب مستشار التربية في أقرب الآجال لتسوية وضعية التمدرس ولتبرير هذه الغيابات قبل اتخاذ الإجراءات التأديبية المنصوص عليها قانوناً.</p>
-      `;
-      document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('ar-DZ');
-      
-      document.body.classList.remove('print-rapport', 'print-billet');
-      document.body.classList.add('print-convocation');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-convocation'), 1000);
-    };
+    // Vérification de session active
+    const matiereSession = sessionStorage.getItem('prof_auth_matiere');
+    if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) { 
+      debloquerPagePourMatiere(matiereSession); 
+    }
 
-    // ========================================================
-    // 10. ÉCOUTEURS D'ÉVÉNEMENTS
-    // ========================================================
-    if(filtreDate) filtreDate.addEventListener('change', fetchDonnees);
-    if(filtreClasse) filtreClasse.addEventListener('change', renderTableau);
-    if(filtreStatut) filtreStatut.addEventListener('change', renderTableau);
-    if(btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
-
+    // Appliquer la langue
     appliquerLangue(langueCourante);
   </script>
 </body>
