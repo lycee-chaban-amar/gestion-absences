@@ -6,30 +6,51 @@
   <title>Feuille d'Appel - ثانوية شعبان أعمر أوقاس</title>
   
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#4338ca">
+  <meta name="theme-color" content="#1e1b4b">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135755.png">
 
+  <!-- Tailwind CSS & Supabase SDK -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     button, select, input { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
     button:active { transform: scale(0.96); }
-    @keyframes slideUpFade { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    @keyframes slideUpFade { 
+      from { opacity: 0; transform: translateY(14px); } 
+      to { opacity: 1; transform: translateY(0); } 
+    }
     .animate-row { animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
-    .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
-    #toast-notification { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; }
+
+    @keyframes shakeBox { 
+      0%, 100% { transform: translateX(0); } 
+      20%, 60% { transform: translateX(-8px); } 
+      40%, 80% { transform: translateX(8px); } 
+    }
+    .shake-error { 
+      animation: shakeBox 0.35s ease-in-out; 
+      border-color: #f43f5e !important; 
+      box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; 
+    }
+
+    #toast-notification { 
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; 
+    }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans transition-all">
 
-  <!-- Toast Notification -->
+  <!-- ======================================================== -->
+  <!-- TOAST NOTIFICATION -->
+  <!-- ======================================================== -->
   <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
     <div class="bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md">
       <div id="toast-icon" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base">
@@ -42,7 +63,9 @@
     </div>
   </div>
 
+  <!-- ======================================================== -->
   <!-- MODAL : SIGNALER / AJOUTER UN ÉLÈVE MANQUANT -->
+  <!-- ======================================================== -->
   <div id="modal-nouvel-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
@@ -103,17 +126,35 @@
     </div>
   </div>
 
-  <!-- ÉCRAN PIN : CHOIX DE MATIÈRE ET CODE D'ACCÈS SPÉCIFIQUE -->
-  <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-indigo-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 transition-transform">
-      <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+  <!-- ======================================================== -->
+  <!-- ÉCRAN DE DÉVERROUILLAGE INSTITUTIONNEL COMPLET -->
+  <!-- ======================================================== -->
+  <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
+    
+    <!-- ZONE DU HAUT : EN-TÊTE OFFICIEL DE L'ÉTABLISSEMENT -->
+    <div class="text-center pt-2 sm:pt-4 text-white animate-row max-w-lg w-full">
+      <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-indigo-600/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 text-2xl shadow-xl backdrop-blur-md">
+        <i class="fa-solid fa-graduation-cap"></i>
+      </div>
+      <p class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-300">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+      <p class="text-[10px] sm:text-[11px] text-slate-400">وزارة التربية الوطنية • مديرية التربية لولاية بجاية</p>
+      <h1 class="text-lg sm:text-2xl font-black text-indigo-300 mt-1 tracking-tight">ثانوية شعبان أعمر — أوقاس</h1>
+      <div class="inline-flex items-center gap-2 mt-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[11px] text-slate-300">
+        <i class="fa-regular fa-calendar-check text-amber-400"></i>
+        <span>السنة الدراسية 2026 / 2027 • Lycée Chaabane Aamar</span>
+      </div>
+    </div>
+
+    <!-- ZONE DU MILIEU : CARTE PIN DE DÉVERROUILLAGE PAR MATIÈRE -->
+    <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 my-4 transition-transform animate-row">
+      <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">
         <i class="fa-solid fa-chalkboard-user"></i>
       </div>
       <h2 class="text-xl font-extrabold text-slate-900" data-i18n="pin_title">Espace Enseignant</h2>
       <p class="text-xs text-slate-500 mt-1 mb-5" data-i18n="pin_sub">Sélectionnez votre matière et entrez le code secret</p>
       
       <div class="space-y-4">
-        <!-- Sélection de la matière sur l'écran de déverrouillage -->
+        <!-- Choix de la matière -->
         <div class="text-left">
           <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="lbl_pin_matiere">Matière / المادة *</label>
           <select id="pin-select-matiere" class="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-indigo-600 focus:bg-white outline-none cursor-pointer">
@@ -156,15 +197,31 @@
           <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2" data-i18n="pin_error">Code incorrect / رمز غير صحيح</p>
         </div>
 
-        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer" data-i18n="pin_btn">
+        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/30 transition cursor-pointer" data-i18n="pin_btn">
           Déverrouiller / الدخول
         </button>
       </div>
-      <p class="text-[11px] text-slate-400 mt-5" data-i18n="pin_footer">Chaque matière dispose de son propre code d'accès</p>
+      <p class="text-[11px] text-slate-400 mt-4" data-i18n="pin_footer">Chaque matière dispose de son propre code d'accès</p>
     </div>
+
+    <!-- ZONE DU BAS : REDIRECTION VIE SCOLAIRE & ASSISTANCE -->
+    <div class="text-center pb-2 sm:pb-4 text-xs text-slate-400 space-y-2.5 animate-row max-w-sm w-full">
+      <a href="superviseur.html" class="inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white px-5 py-2.5 rounded-2xl border border-slate-700 transition shadow-md w-full sm:w-auto">
+        <i class="fa-solid fa-shield-halved text-indigo-400"></i>
+        <span class="font-bold">فضاء الاستشارة التربوية / Administration</span>
+      </a>
+
+      <p class="text-[11px] text-slate-500 leading-relaxed">
+        في حال نسيان الرمز السري، يرجى مراجعة السيد ناظر الدراسات أو مستشار التربية.<br>
+        <span class="text-slate-600">Système Numérique de Gestion des Présences • ثانوية شعبان أعمر</span>
+      </p>
+    </div>
+
   </div>
 
-  <!-- Header avec sélecteur de langue -->
+  <!-- ======================================================== -->
+  <!-- HEADER PRINCIPAL -->
+  <!-- ======================================================== -->
   <header class="bg-indigo-700 text-white shadow-md">
     <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
@@ -176,17 +233,18 @@
       </div>
       
       <div class="flex items-center gap-2 flex-wrap justify-end">
-        <!-- Bouton Changement de Langue -->
+        <!-- Sélecteur de Langue (Français / Arabe) -->
         <button id="btn-lang-toggle" type="button" onclick="toggleLangue()" class="text-xs font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-white/20 cursor-pointer shadow-sm">
           <i class="fa-solid fa-globe text-amber-300"></i>
           <span id="lang-label">العربية</span>
         </button>
 
+        <!-- Bouton Verrouiller -->
         <button id="btn-lock-prof" type="button" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-indigo-600 cursor-pointer">
           <i class="fa-solid fa-lock text-amber-300"></i><span data-i18n="btn_lock">Verrouiller</span>
         </button>
 
-        <!-- Badge connectivité -->
+        <!-- Badge Connectivité & Synchronisation Offline -->
         <button id="btn-sync-offline" type="button" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition cursor-pointer">
           <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="conn-text" data-i18n="conn_online">En ligne</span>
@@ -195,6 +253,9 @@
     </div>
   </header>
 
+  <!-- ======================================================== -->
+  <!-- CONTENU PRINCIPAL DE L'APPEL -->
+  <!-- ======================================================== -->
   <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
     <!-- Paramètres du cours -->
@@ -204,12 +265,15 @@
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Division -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_classe">Classe / القسم</label>
           <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
             <option value="" data-i18n="opt_classe_default">-- Choisir la division / اختر الفوج --</option>
           </select>
         </div>
+
+        <!-- Matière (Verrouillée sur la matière authentifiée) -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_matiere">Matière / المادة</label>
           <select id="select-matiere" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-indigo-900 cursor-not-allowed">
@@ -235,6 +299,8 @@
             <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
           </select>
         </div>
+
+        <!-- Horaire -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_horaire">Séance / التوقيت</label>
           <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
@@ -296,40 +362,43 @@
       </div>
     </div>
 
-    <!-- Bouton Valider -->
+    <!-- Bouton Valider l'appel -->
     <div id="actions-footer" class="hidden pb-10">
-      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer active:scale-95">
+      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer active:scale-95">
         <i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_call">Valider et transmettre l'appel</span>
       </button>
     </div>
 
   </main>
 
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT COMPLET ET INTÉGRAL -->
+  <!-- ======================================================== -->
   <script>
     // ========================================================
-   
+    // CODES D'ACCÈS SPÉCIFIQUES PAR MATIÈRE (ENCODÉS BASE64)
     // ========================================================
     const CODES_MATIERES_BASE64 = {
-      "Mathématiques / رياضيات": "MTAwMQ==",           
-      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",   
-      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",   
-      "Informatique / إعلام آلي": "MTAwNA==",             
-      "Génie Civil / هندسة مدنية": "MjAwMQ==",             
-      "Génie Électrique / هندسة كهربائية": "MjAwMg==",     
-      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",     
-      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",    
-      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",    
-      "Droit / قانون": "MjAwNg==",                         
-      "Langue Arabe / لغة عربية": "MzAwMQ==",             
-      "Langue Française / فرنسية": "MzAwMg==",             
-      "Langue Anglaise / إنجليزية": "MzAwMw==",           
-      "Langue Allemande / ألمانية": "MzAwNA==",           
-      "Langue Espagnole / إسبانية": "MzAwNQ==",           
-      "Langue Amazighe / أمازيغية": "MzAwNg==",          
-      "Philosophie / فلسفة": "MzAwNw==",                  
-      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", 
-      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",   
-      "EPS / تربية بدنية": "NDAwMQ=="                     
+      "Mathématiques / رياضيات": "MTAwMQ==",           // 1001
+      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",   // 1002
+      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",   // 1003
+      "Informatique / إعلام آلي": "MTAwNA==",             // 1004
+      "Génie Civil / هندسة مدنية": "MjAwMQ==",             // 2001
+      "Génie Électrique / هندسة كهربائية": "MjAwMg==",     // 2002
+      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",     // 2003
+      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",    // 2004
+      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",    // 2005
+      "Droit / قانون": "MjAwNg==",                         // 2006
+      "Langue Arabe / لغة عربية": "MzAwMQ==",             // 3001
+      "Langue Française / فرنسية": "MzAwMg==",             // 3002
+      "Langue Anglaise / إنجليزية": "MzAwMw==",           // 3003
+      "Langue Allemande / ألمانية": "MzAwNA==",           // 3004
+      "Langue Espagnole / إسبانية": "MzAwNQ==",           // 3005
+      "Langue Amazighe / أمازيغية": "MzAwNg==",           // 3006
+      "Philosophie / فلسفة": "MzAwNw==",                  // 3007
+      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", // 3008
+      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",   // 3009
+      "EPS / تربية بدنية": "NDAwMQ=="                     // 4001
     };
 
     // ========================================================
@@ -755,7 +824,7 @@
     }
 
     // ========================================================
-    // 4. MODAL AJOUT D'ÉLÈVE
+    // 4. MODAL AJOUT D'ÉLÈVE MANQUANT
     // ========================================================
     window.ouvrirModalNouvelEleve = function() {
       const cid = selectClasse.value;
@@ -931,10 +1000,9 @@
       
       sessionStorage.setItem('prof_auth_matiere', matiere);
       
-      // Sélectionner et verrouiller la matière pour la session
       if (selectMatiere) {
         selectMatiere.value = matiere;
-        selectMatiere.disabled = true; // Empêche l'enseignant de changer de matière par inadvertance
+        selectMatiere.disabled = true;
       }
 
       initClasses();
@@ -998,7 +1066,7 @@
       debloquerPagePourMatiere(matiereSession); 
     }
 
-    // Appliquer la langue
+    // Initialisation de la langue au démarrage
     appliquerLangue(langueCourante);
   </script>
 </body>
