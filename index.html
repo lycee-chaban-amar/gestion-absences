@@ -103,26 +103,64 @@
     </div>
   </div>
 
-  <!-- Écran PIN Enseignant (2626) -->
+  <!-- ÉCRAN PIN : CHOIX DE MATIÈRE ET CODE D'ACCÈS SPÉCIFIQUE -->
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-indigo-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
         <i class="fa-solid fa-chalkboard-user"></i>
       </div>
       <h2 class="text-xl font-extrabold text-slate-900" data-i18n="pin_title">Espace Enseignant</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-6" data-i18n="pin_sub">ثانوية شعبان أعمر - يرجى إدخال رمز الأستاذ</p>
+      <p class="text-xs text-slate-500 mt-1 mb-5" data-i18n="pin_sub">Sélectionnez votre matière et entrez le code secret</p>
       
       <div class="space-y-4">
+        <!-- Sélection de la matière sur l'écran de déverrouillage -->
+        <div class="text-left">
+          <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="lbl_pin_matiere">Matière / المادة *</label>
+          <select id="pin-select-matiere" class="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-indigo-600 focus:bg-white outline-none cursor-pointer">
+            <option value="">-- Choisir la matière / اختر المادة --</option>
+            <optgroup label="📚 Scientifiques / علمية">
+              <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
+              <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
+              <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
+              <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
+            </optgroup>
+            <optgroup label="⚙️ Techniques & Économie / تقنية واقتصاد">
+              <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
+              <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
+              <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
+              <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
+              <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
+              <option value="Droit / قانون">قانون / Droit</option>
+            </optgroup>
+            <optgroup label="📖 Littéraires & Langues / آداب ولغات">
+              <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
+              <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
+              <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
+              <option value="Langue Allemande / ألمانية">ألمانية / Langue Allemande</option>
+              <option value="Langue Espagnole / إسبانية">إسبانية / Langue Espagnole</option>
+              <option value="Langue Amazighe / أمازيغية">أمازيغية / Tamazight</option>
+              <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
+              <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
+              <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
+            </optgroup>
+            <optgroup label="🏃 Sport / رياضة">
+              <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- Champ PIN -->
         <div>
-          <input type="password" id="input-pin-prof" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus
-            class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
+          <input type="password" id="input-pin-prof" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric"
+            class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
           <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2" data-i18n="pin_error">Code incorrect / رمز غير صحيح</p>
         </div>
+
         <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg transition cursor-pointer" data-i18n="pin_btn">
           Déverrouiller / الدخول
         </button>
       </div>
-      <p class="text-[11px] text-slate-400 mt-5" data-i18n="pin_footer">Accès réservé au corps professoral du lycée</p>
+      <p class="text-[11px] text-slate-400 mt-5" data-i18n="pin_footer">Chaque matière dispose de son propre code d'accès</p>
     </div>
   </div>
 
@@ -174,35 +212,27 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_matiere">Matière / المادة</label>
-          <select id="select-matiere" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
-            <optgroup label="📚 Fondamentales & Scientifiques / علمية وأساسية">
-              <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
-              <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
-              <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
-              <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
-            </optgroup>
-            <optgroup label="⚙️ Techniques & Économie / تقنية واقتصاد">
-              <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
-              <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
-              <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
-              <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
-              <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
-              <option value="Droit / قانون">قانون / Droit</option>
-            </optgroup>
-            <optgroup label="📖 Lettres & Langues / آداب ولغات">
-              <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
-              <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
-              <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
-              <option value="Langue Allemande / ألمانية">ألمانية / Langue Allemande</option>
-              <option value="Langue Espagnole / إسبانية">إسبانية / Langue Espagnole</option>
-              <option value="Langue Amazighe / أمازيغية">أمازيغية / Tamazight</option>
-              <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
-              <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
-              <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
-            </optgroup>
-            <optgroup label="🏃 Sport / رياضة">
-              <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
-            </optgroup>
+          <select id="select-matiere" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-indigo-900 cursor-not-allowed">
+            <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
+            <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
+            <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
+            <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
+            <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
+            <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
+            <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
+            <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
+            <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
+            <option value="Droit / قانون">قانون / Droit</option>
+            <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
+            <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
+            <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
+            <option value="Langue Allemande / ألمانية">ألمانية / Langue Allemande</option>
+            <option value="Langue Espagnole / إسبانية">إسبانية / Langue Espagnole</option>
+            <option value="Langue Amazighe / أمازيغية">أمازيغية / Tamazight</option>
+            <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
+            <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
+            <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
+            <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
           </select>
         </div>
         <div>
@@ -277,7 +307,33 @@
 
   <script>
     // ========================================================
-    // GESTION DU MULTILINGUISME (FRANÇAIS / ARABE)
+    // CODES D'ACCÈS SPÉCIFIQUES PAR MATIÈRE (ENCODÉS BASE64)
+    // ========================================================
+    const CODES_MATIERES_BASE64 = {
+      "Mathématiques / رياضيات": "MTAwMQ==",           // 1001
+      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",   // 1002
+      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",   // 1003
+      "Informatique / إعلام آلي": "MTAwNA==",             // 1004
+      "Génie Civil / هندسة مدنية": "MjAwMQ==",             // 2001
+      "Génie Électrique / هندسة كهربائية": "MjAwMg==",     // 2002
+      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",     // 2003
+      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",    // 2004
+      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",    // 2005
+      "Droit / قانون": "MjAwNg==",                         // 2006
+      "Langue Arabe / لغة عربية": "MzAwMQ==",             // 3001
+      "Langue Française / فرنسية": "MzAwMg==",             // 3002
+      "Langue Anglaise / إنجليزية": "MzAwMw==",           // 3003
+      "Langue Allemande / ألمانية": "MzAwNA==",           // 3004
+      "Langue Espagnole / إسبانية": "MzAwNQ==",           // 3005
+      "Langue Amazighe / أمازيغية": "MzAwNg==",           // 3006
+      "Philosophie / فلسفة": "MzAwNw==",                  // 3007
+      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", // 3008
+      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",   // 3009
+      "EPS / تربية بدنية": "NDAwMQ=="                     // 4001
+    };
+
+    // ========================================================
+    // DICTIONNAIRE MULTILINGUE
     // ========================================================
     const TRADUCTIONS = {
       fr: {
@@ -291,6 +347,7 @@
         lbl_classe: "Classe / القسم",
         lbl_matiere: "Matière / المادة",
         lbl_horaire: "Séance / التوقيت",
+        lbl_pin_matiere: "Matière / المادة *",
         opt_classe_default: "-- Choisir la division / اختر الفوج --",
         kpi_presents: "Présents",
         kpi_absents: "Absents",
@@ -305,10 +362,10 @@
         btn_retard: "Retard",
         tag_added_session: "Ajouté en séance",
         pin_title: "Espace Enseignant",
-        pin_sub: "ثانوية شعبان أعمر - يرجى إدخال رمز الأستاذ",
-        pin_error: "Code incorrect",
+        pin_sub: "Sélectionnez votre matière et entrez le code secret",
+        pin_error: "Code incorrect pour cette matière / رمز غير صحيح",
         pin_btn: "Déverrouiller",
-        pin_footer: "Accès réservé au corps professoral du lycée",
+        pin_footer: "Chaque matière dispose de son propre code d'accès",
         modal_add_title: "Élève manquant",
         modal_add_sub: "إضافة تلميذ غير مسجل في الفوج",
         label_nom_fr: "Nom (FR) *",
@@ -332,6 +389,7 @@
         lbl_classe: "القسم / الفوج التربوي",
         lbl_matiere: "المادة التعليمية",
         lbl_horaire: "توقيت الحصة",
+        lbl_pin_matiere: "المادة التعليمية *",
         opt_classe_default: "-- اختر الفوج التربوي --",
         kpi_presents: "الحاضرون",
         kpi_absents: "الغائبون",
@@ -346,10 +404,10 @@
         btn_retard: "متأخر",
         tag_added_session: "أضيف خلال الحصة",
         pin_title: "فضاء الأستاذ",
-        pin_sub: "ثانوية شعبان أعمر - يرجى إدخال الرمز السري للأستاذ",
-        pin_error: "الرمز السري غير صحيح",
+        pin_sub: "يرجى اختيار مادتك وإدخال الرمز السري الخاص بها",
+        pin_error: "الرمز السري غير مطابق لهذه المادة",
         pin_btn: "الدخول إلى ورقة الحضور",
-        pin_footer: "فضاء مخصص لهيئة التدريس بالثانوية فقط",
+        pin_footer: "كل مادة تعليمية تملك رمز دخول خاص بها",
         modal_add_title: "تسجيل تلميذ غير مسجل",
         modal_add_sub: "إضافة التلميذ مباشرة إلى الفوج الحاضر",
         label_nom_fr: "اللقب بالحروف اللاتينية *",
@@ -374,7 +432,6 @@
       htmlRoot.setAttribute('lang', lang);
       htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
 
-      // Mettre à jour tous les éléments traduisibles
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const cle = el.getAttribute('data-i18n');
         if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) {
@@ -382,11 +439,9 @@
         }
       });
 
-      // Mettre à jour l'intitulé du bouton de langue
       const lblLang = document.getElementById('lang-label');
       if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
 
-      // Ré-afficher la liste si déjà chargée
       if (currentEleves.length > 0) {
         afficherEleves();
         mettreAJourCompteurs();
@@ -395,12 +450,12 @@
     }
 
     function toggleLangue() {
-      const nouvelleLangue = (langueCourante === 'fr') ? 'ar' : 'fr';
-      appliquerLangue(nouvelleLangue);
+      const nouvelle = (langueCourante === 'fr') ? 'ar' : 'fr';
+      appliquerLangue(nouvelle);
     }
 
     // ========================================================
-    // 1. CONFIGURATION SUPABASE
+    // 1. SUPABASE
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
@@ -650,7 +705,6 @@
         row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 ${i%2===0?'bg-white':'bg-slate-50'}`;
         row.style.animationDelay = `${Math.min(i*25,400)}ms`;
 
-        // Affichage dynamique du nom selon la langue
         const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
         const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
 
@@ -865,55 +919,87 @@
     if(selectClasse) selectClasse.addEventListener('change', (e) => chargerEleves(e.target.value));
 
     // ========================================================
-    // 6. PIN DE SÉCURITÉ
+    // 6. GESTION DU DÉVERROUILLAGE PAR MATIÈRE
     // ========================================================
-    const PIN_MASQUE = "MjYyNg==";
+    const pinSelectMatiere = document.getElementById('pin-select-matiere');
+    const inputPin = document.getElementById('input-pin-prof');
+    const btnPin = document.getElementById('btn-valider-pin-prof');
 
-    function debloquerPage() {
+    function debloquerPagePourMatiere(matiere) {
       const pinScreen = document.getElementById('pin-screen-prof');
       if (pinScreen) pinScreen.remove();
-      sessionStorage.setItem('prof_auth', 'true');
+      
+      sessionStorage.setItem('prof_auth_matiere', matiere);
+      
+      // Sélectionner et verrouiller la matière pour la session
+      if (selectMatiere) {
+        selectMatiere.value = matiere;
+        selectMatiere.disabled = true; // Empêche l'enseignant de changer de matière par inadvertance
+      }
+
       initClasses();
     }
 
     function validerPinDirect() {
-      const input = document.getElementById('input-pin-prof');
       const err = document.getElementById('pin-prof-error');
       const card = document.getElementById('pin-card-prof');
-      const val = input ? input.value.trim() : '';
-      
-      if (val.length < 4) return;
-      
-      if (val === atob(PIN_MASQUE)) {
+      const matiere = pinSelectMatiere.value;
+      const codeSaisi = inputPin.value.trim();
+
+      if (!matiere) {
+        alert(langueCourante === 'ar' ? 'يرجى اختيار مادتك أولاً من القائمة' : 'Veuillez d\'abord choisir votre matière dans la liste');
+        pinSelectMatiere.focus();
+        return;
+      }
+
+      if (codeSaisi.length < 4) return;
+
+      const codeAttenduBase64 = CODES_MATIERES_BASE64[matiere];
+
+      if (codeAttenduBase64 && codeSaisi === atob(codeAttenduBase64)) {
         if (err) err.classList.add('hidden');
-        debloquerPage();
+        debloquerPagePourMatiere(matiere);
       } else {
         if (err) err.classList.remove('hidden');
-        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
-        if (input) { input.value = ''; input.focus(); }
+        if (card) { 
+          card.classList.remove('shake-error'); 
+          void card.offsetWidth; 
+          card.classList.add('shake-error'); 
+        }
+        inputPin.value = '';
+        inputPin.focus();
       }
     }
 
-    const inputPin = document.getElementById('input-pin-prof');
-    const btnPin = document.getElementById('btn-valider-pin-prof');
-    
     if (btnPin) btnPin.onclick = validerPinDirect;
     if (inputPin) {
-      inputPin.addEventListener('input', function() { if (this.value.trim().length === 4) validerPinDirect(); });
-      inputPin.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
+      inputPin.addEventListener('input', function() { 
+        if (this.value.trim().length === 4) validerPinDirect(); 
+      });
+      inputPin.addEventListener('keydown', function(e) { 
+        if (e.key === 'Enter') { 
+          e.preventDefault(); 
+          validerPinDirect(); 
+        } 
+      });
     }
 
     const btnLock = document.getElementById('btn-lock-prof');
     if (btnLock) {
-      btnLock.onclick = function() { sessionStorage.removeItem('prof_auth'); location.reload(); };
+      btnLock.onclick = function() { 
+        sessionStorage.removeItem('prof_auth_matiere'); 
+        location.reload(); 
+      };
     }
 
-    // Appliquer la langue enregistrée au démarrage
+    // Vérification de session active
+    const matiereSession = sessionStorage.getItem('prof_auth_matiere');
+    if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) { 
+      debloquerPagePourMatiere(matiereSession); 
+    }
+
+    // Appliquer la langue
     appliquerLangue(langueCourante);
-
-    if (sessionStorage.getItem('prof_auth') === 'true') { 
-      debloquerPage(); 
-    }
   </script>
 </body>
 </html>
