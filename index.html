@@ -127,11 +127,11 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- ÉCRAN DE DÉVERROUILLAGE INSTITUTIONNEL COMPLET -->
+  <!-- ÉCRAN DE DÉVERROUILLAGE INSTITUTIONNEL -->
   <!-- ======================================================== -->
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
     
-    <!-- ZONE DU HAUT : EN-TÊTE OFFICIEL DE L'ÉTABLISSEMENT -->
+    <!-- EN-TÊTE DU HAUT -->
     <div class="text-center pt-2 sm:pt-4 text-white animate-row max-w-lg w-full">
       <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-indigo-600/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 text-2xl shadow-xl backdrop-blur-md">
         <i class="fa-solid fa-graduation-cap"></i>
@@ -145,7 +145,7 @@
       </div>
     </div>
 
-    <!-- ZONE DU MILIEU : CARTE PIN DE DÉVERROUILLAGE PAR MATIÈRE -->
+    <!-- CARTE PIN DU MILIEU -->
     <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 my-4 transition-transform animate-row">
       <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">
         <i class="fa-solid fa-chalkboard-user"></i>
@@ -154,7 +154,6 @@
       <p class="text-xs text-slate-500 mt-1 mb-5" data-i18n="pin_sub">Sélectionnez votre matière et entrez le code secret</p>
       
       <div class="space-y-4">
-        <!-- Choix de la matière -->
         <div class="text-left">
           <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="lbl_pin_matiere">Matière / المادة *</label>
           <select id="pin-select-matiere" class="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-indigo-600 focus:bg-white outline-none cursor-pointer">
@@ -190,7 +189,6 @@
           </select>
         </div>
 
-        <!-- Champ PIN -->
         <div>
           <input type="password" id="input-pin-prof" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric"
             class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
@@ -204,7 +202,7 @@
       <p class="text-[11px] text-slate-400 mt-4" data-i18n="pin_footer">Chaque matière dispose de son propre code d'accès</p>
     </div>
 
-    <!-- ZONE DU BAS : REDIRECTION VIE SCOLAIRE & ASSISTANCE -->
+    <!-- ZONE DU BAS : LIEN VIE SCOLAIRE -->
     <div class="text-center pb-2 sm:pb-4 text-xs text-slate-400 space-y-2.5 animate-row max-w-sm w-full">
       <a href="superviseur.html" class="inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white px-5 py-2.5 rounded-2xl border border-slate-700 transition shadow-md w-full sm:w-auto">
         <i class="fa-solid fa-shield-halved text-indigo-400"></i>
@@ -233,18 +231,15 @@
       </div>
       
       <div class="flex items-center gap-2 flex-wrap justify-end">
-        <!-- Sélecteur de Langue (Français / Arabe) -->
         <button id="btn-lang-toggle" type="button" onclick="toggleLangue()" class="text-xs font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-white/20 cursor-pointer shadow-sm">
           <i class="fa-solid fa-globe text-amber-300"></i>
           <span id="lang-label">العربية</span>
         </button>
 
-        <!-- Bouton Verrouiller -->
         <button id="btn-lock-prof" type="button" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-indigo-600 cursor-pointer">
           <i class="fa-solid fa-lock text-amber-300"></i><span data-i18n="btn_lock">Verrouiller</span>
         </button>
 
-        <!-- Badge Connectivité & Synchronisation Offline -->
         <button id="btn-sync-offline" type="button" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition cursor-pointer">
           <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="conn-text" data-i18n="conn_online">En ligne</span>
@@ -265,7 +260,6 @@
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Division -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_classe">Classe / القسم</label>
           <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
@@ -273,7 +267,6 @@
           </select>
         </div>
 
-        <!-- Matière (Verrouillée sur la matière authentifiée) -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_matiere">Matière / المادة</label>
           <select id="select-matiere" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-indigo-900 cursor-not-allowed">
@@ -300,7 +293,6 @@
           </select>
         </div>
 
-        <!-- Horaire -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_horaire">Séance / التوقيت</label>
           <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
@@ -354,6 +346,32 @@
         </div>
       </div>
 
+      <!-- ======================================================== -->
+      <!-- BARRE DE RECHERCHE D'ÉLÈVE EN TEMPS RÉEL -->
+      <!-- ======================================================== -->
+      <div id="search-container" class="hidden p-3 sm:px-5 bg-slate-50/50 border-b border-slate-200">
+        <div class="relative">
+          <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-slate-400">
+            <i class="fa-solid fa-magnifying-glass text-sm text-indigo-500"></i>
+          </div>
+          <input 
+            type="text" 
+            id="input-search-eleve" 
+            placeholder="Rechercher par nom ou prénom..." 
+            autocomplete="off"
+            class="w-full bg-white border border-slate-300 rounded-xl ps-10 pe-10 py-2.5 text-xs sm:text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-inner" 
+          />
+          <button 
+            id="btn-clear-search" 
+            onclick="clearSearchEleve()" 
+            type="button" 
+            title="Effacer la recherche"
+            class="hidden absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400 hover:text-slate-600 cursor-pointer transition">
+            <i class="fa-solid fa-circle-xmark text-base"></i>
+          </button>
+        </div>
+      </div>
+
       <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 min-h-[180px]">
         <div class="py-12 text-center text-slate-400">
           <i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i>
@@ -372,11 +390,11 @@
   </main>
 
   <!-- ======================================================== -->
-  <!-- JAVASCRIPT COMPLET ET INTÉGRAL -->
+  <!-- JAVASCRIPT COMPLET ET STRUCTURÉ -->
   <!-- ======================================================== -->
   <script>
     // ========================================================
-    // CODES D'ACCÈS SPÉCIFIQUES PAR MATIÈRE (ENCODÉS BASE64)
+    
     // ========================================================
     const CODES_MATIERES_BASE64 = {
       "Mathématiques / رياضيات": "MTAwMQ==",           
@@ -385,15 +403,15 @@
       "Informatique / إعلام آلي": "MTAwNA==",             
       "Génie Civil / هندسة مدنية": "MjAwMQ==",            
       "Génie Électrique / هندسة كهربائية": "MjAwMg==",     
-      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",     
-      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",   
-      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",    
+      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",    
+      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",    
+      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",   
       "Droit / قانون": "MjAwNg==",                         
       "Langue Arabe / لغة عربية": "MzAwMQ==",             
       "Langue Française / فرنسية": "MzAwMg==",             
       "Langue Anglaise / إنجليزية": "MzAwMw==",           
-      "Langue Allemande / ألمانية": "MzAwNA==",           
-      "Langue Espagnole / إسبانية": "MzAwNQ==",           
+      "Langue Allemande / ألمانية": "MzAwNA==",          
+      "Langue Espagnole / إسبانية": "MzAwNQ==",          
       "Langue Amazighe / أمازيغية": "MzAwNg==",           
       "Philosophie / فلسفة": "MzAwNw==",                  
       "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", 
@@ -445,7 +463,9 @@
         modal_note_desc: "L'élève sera automatiquement affecté à la division sélectionnée et marqué Présent pour ce cours.",
         btn_cancel: "Annuler",
         btn_confirm_add: "Ajouter à l'appel",
-        registered_count: "inscrits"
+        registered_count: "inscrits",
+        search_placeholder: "Rechercher par nom ou prénom...",
+        no_search_result: "Aucun élève ne correspond à votre recherche."
       },
       ar: {
         lang_btn: "Français",
@@ -487,7 +507,9 @@
         modal_note_desc: "سيتم تسجيل التلميذ رسمياً في هذا القسم واحتسابه كحاضر في هذه الحصة.",
         btn_cancel: "إلغاء",
         btn_confirm_add: "تسجيل التلميذ في الحصة",
-        registered_count: "تلميذ مسجل"
+        registered_count: "تلميذ مسجل",
+        search_placeholder: "بحث عن تلميذ بالاسم أو اللقب...",
+        no_search_result: "لا يوجد أي تلميذ يطابق هذا البحث."
       }
     };
 
@@ -511,6 +533,11 @@
       const lblLang = document.getElementById('lang-label');
       if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
 
+      const inputSearch = document.getElementById('input-search-eleve');
+      if (inputSearch) {
+        inputSearch.placeholder = TRADUCTIONS[lang].search_placeholder;
+      }
+
       if (currentEleves.length > 0) {
         afficherEleves();
         mettreAJourCompteurs();
@@ -531,12 +558,17 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let classesList = [], currentEleves = [], currentStatuts = {};
+    let searchTermEleve = ''; // Terme de recherche actuel
+
     const selectClasse = document.getElementById('select-classe');
     const selectMatiere = document.getElementById('select-matiere');
     const selectHoraire = document.getElementById('select-horaire');
     const elevesContainer = document.getElementById('eleves-container');
     const btnValider = document.getElementById('btn-valider-appel');
     const btnOuvrirModalEleve = document.getElementById('btn-ouvrir-modal-eleve');
+    const searchContainer = document.getElementById('search-container');
+    const inputSearchEleve = document.getElementById('input-search-eleve');
+    const btnClearSearch = document.getElementById('btn-clear-search');
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -728,8 +760,11 @@
         document.getElementById('actions-footer').classList.add('hidden'); 
         document.getElementById('btn-tout-present').classList.add('hidden');
         btnOuvrirModalEleve.classList.add('hidden');
+        if (searchContainer) searchContainer.classList.add('hidden');
+        clearSearchEleve();
         return;
       }
+      
       elevesContainer.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
       
       const sc = classesList.find(c => c.id == cid);
@@ -758,28 +793,83 @@
       currentStatuts = {}; 
       currentEleves.forEach(e => currentStatuts[e.id] = 'P');
       
+      // Réinitialiser la recherche
+      clearSearchEleve();
+
       afficherEleves();
       mettreAJourCompteurs();
+      
       document.getElementById('stats-bar').classList.remove('hidden'); 
       document.getElementById('actions-footer').classList.remove('hidden'); 
       document.getElementById('btn-tout-present').classList.remove('hidden');
       btnOuvrirModalEleve.classList.remove('hidden');
+      if (searchContainer) searchContainer.classList.remove('hidden');
+    }
+
+    // ========================================================
+    // RECHERCHE EN TEMPS RÉEL D'ÉLÈVES
+    // ========================================================
+    function filterEleves(terme) {
+      searchTermEleve = (terme || '').trim().toLowerCase();
+      
+      if (btnClearSearch) {
+        if (searchTermEleve.length > 0) {
+          btnClearSearch.classList.remove('hidden');
+        } else {
+          btnClearSearch.classList.add('hidden');
+        }
+      }
+      afficherEleves();
+    }
+
+    window.clearSearchEleve = function() {
+      if (inputSearchEleve) inputSearchEleve.value = '';
+      searchTermEleve = '';
+      if (btnClearSearch) btnClearSearch.classList.add('hidden');
+      afficherEleves();
+    };
+
+    if (inputSearchEleve) {
+      inputSearchEleve.addEventListener('input', (e) => {
+        filterEleves(e.target.value);
+      });
     }
 
     function afficherEleves() {
       elevesContainer.innerHTML = '';
-      currentEleves.forEach((e, i) => {
+
+      // Filtrer les élèves selon la recherche (Nom ou Prénom en Français ou Arabe)
+      const listeFiltree = currentEleves.filter(e => {
+        if (!searchTermEleve) return true;
+        const nomFr = `${e.nom || ''} ${e.prenom || ''}`.toLowerCase();
+        const nomAr = `${e.nom_ar || ''} ${e.prenom_ar || ''}`.toLowerCase();
+        return nomFr.includes(searchTermEleve) || nomAr.includes(searchTermEleve);
+      });
+
+      if (listeFiltree.length === 0) {
+        elevesContainer.innerHTML = `
+          <div class="py-10 text-center text-slate-400">
+            <i class="fa-solid fa-user-slash text-2xl text-slate-300 mb-2 block"></i>
+            <p class="text-sm font-semibold">${TRADUCTIONS[langueCourante].no_search_result}</p>
+          </div>
+        `;
+        return;
+      }
+
+      listeFiltree.forEach((e) => {
+        // Numéro officiel d'ordre dans la classe
+        const indexOfficiel = currentEleves.findIndex(item => item.id === e.id) + 1;
         const row = document.createElement('div');
         const st = currentStatuts[e.id] || 'P';
-        row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 ${i%2===0?'bg-white':'bg-slate-50'}`;
-        row.style.animationDelay = `${Math.min(i*25,400)}ms`;
 
+        row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 hover:bg-slate-50/80 transition`;
+        
         const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
         const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
 
         row.innerHTML = `
           <div class="flex items-center gap-3.5 w-full sm:w-auto">
-            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-xs font-bold">${i+1}</span>
+            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">${indexOfficiel}</span>
             <div class="truncate">
               <span class="font-bold text-slate-900">${nomPrincipal}</span> 
               <span class="text-xs text-slate-500 font-bold mx-1">${nomSecondaire}</span>
@@ -805,7 +895,11 @@
       });
     }
 
-    window.changerStatut = function(id, st) { currentStatuts[id] = st; afficherEleves(); mettreAJourCompteurs(); };
+    window.changerStatut = function(id, st) { 
+      currentStatuts[id] = st; 
+      afficherEleves(); 
+      mettreAJourCompteurs(); 
+    };
     
     if(document.getElementById('btn-tout-present')) {
       document.getElementById('btn-tout-present').onclick = function(){ 
@@ -903,6 +997,7 @@
         localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(currentEleves));
 
         document.getElementById('classe-effectif').textContent = `${currentEleves.length} ${TRADUCTIONS[langueCourante].registered_count}`;
+        clearSearchEleve();
         afficherEleves();
         mettreAJourCompteurs();
         fermerModalNouvelEleve();
