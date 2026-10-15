@@ -46,7 +46,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans transition-all">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans transition-all pb-28">
 
   <!-- TOAST NOTIFICATION -->
   <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
@@ -125,7 +125,6 @@
   <!-- ÉCRAN DE DÉVERROUILLAGE INSTITUTIONNEL -->
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
     
-    <!-- EN-TÊTE DU HAUT -->
     <div class="text-center pt-2 sm:pt-4 text-white animate-row max-w-lg w-full">
       <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-indigo-600/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 text-2xl shadow-xl backdrop-blur-md">
         <i class="fa-solid fa-graduation-cap"></i>
@@ -139,7 +138,6 @@
       </div>
     </div>
 
-    <!-- CARTE PIN DU MILIEU -->
     <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 my-4 transition-transform animate-row">
       <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner">
         <i class="fa-solid fa-chalkboard-user"></i>
@@ -196,7 +194,6 @@
       <p class="text-[11px] text-slate-400 mt-4" data-i18n="pin_footer">Chaque matière dispose de son propre code d'accès</p>
     </div>
 
-    <!-- ZONE DU BAS : LIEN VIE SCOLAIRE -->
     <div class="text-center pb-2 sm:pb-4 text-xs text-slate-400 space-y-2.5 animate-row max-w-sm w-full">
       <a href="superviseur.html" class="inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white px-5 py-2.5 rounded-2xl border border-slate-700 transition shadow-md w-full sm:w-auto">
         <i class="fa-solid fa-shield-halved text-indigo-400"></i>
@@ -243,20 +240,18 @@
   <!-- CONTENU PRINCIPAL DE L'APPEL -->
   <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- PARAMÈTRES DU COURS AVEC CALENDRIER INTÉGRÉ -->
+    <!-- PARAMÈTRES DU COURS -->
     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
       <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
         <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
           <i class="fa-solid fa-sliders text-indigo-600"></i> <span data-i18n="sec_params">Paramètres du Cours</span>
         </h2>
-        <!-- Indicateur de séance existante -->
         <span id="badge-mode-seance" class="hidden text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
           <i class="fa-solid fa-clock-rotate-left mr-1"></i> <span data-i18n="tag_mode_edit">Modification d'une séance passée</span>
         </span>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- 1. CALENDRIER (DATE DE LA SÉANCE) -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_date">Date / التاريخ</label>
           <input 
@@ -266,7 +261,6 @@
           />
         </div>
 
-        <!-- 2. Division -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_classe">Classe / القسم</label>
           <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm">
@@ -274,7 +268,6 @@
           </select>
         </div>
 
-        <!-- 3. Matière -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_matiere">Matière / المادة</label>
           <select id="select-matiere" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-indigo-900 cursor-not-allowed shadow-sm">
@@ -301,7 +294,6 @@
           </select>
         </div>
 
-        <!-- 4. Horaire -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_horaire">Séance / التوقيت</label>
           <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm">
@@ -352,10 +344,14 @@
           <button id="btn-ouvrir-modal-eleve" type="button" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-emerald-100 transition active:scale-95">
             <i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> <span data-i18n="btn_add_missing">Élève manquant ?</span>
           </button>
+          <!-- BOUTON VALIDATION RAPIDE DU HAUT -->
+          <button id="btn-valider-rapide-top" type="button" onclick="declencherValidationAppel()" class="hidden text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl cursor-pointer transition active:scale-95 shadow-sm">
+            <i class="fa-solid fa-paper-plane mr-1"></i> <span data-i18n="btn_validate_quick">Valider</span>
+          </button>
         </div>
       </div>
 
-      <!-- BARRE DE RECHERCHE D'ÉLÈVE -->
+      <!-- BARRE DE RECHERCHE -->
       <div id="search-container" class="hidden p-3 sm:px-5 bg-slate-50/50 border-b border-slate-200">
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-slate-400">
@@ -387,14 +383,31 @@
       </div>
     </div>
 
-    <!-- Bouton Valider l'appel -->
-    <div id="actions-footer" class="hidden pb-10">
-      <button id="btn-valider-appel" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-4 px-6 rounded-2xl shadow-lg transition cursor-pointer active:scale-95">
-        <i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_call">Valider et transmettre l'appel</span>
+  </main>
+
+  <!-- ======================================================== -->
+  <!-- BARRE FLOTTANTE FIXE EN BAS : BOUTON DE VALIDATION PERMANENT -->
+  <!-- ======================================================== -->
+  <div id="sticky-footer-bar" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl p-3 sm:py-3.5 transition-all">
+    <div class="max-w-5xl mx-auto flex items-center justify-between gap-3 px-2 sm:px-4">
+      <div class="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-bold">
+        <span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+          <span data-i18n="kpi_presents">Présents</span>: <b id="sticky-presents" class="text-emerald-600">0</b>
+        </span>
+        <span class="text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+          <span data-i18n="kpi_absents">Absents</span>: <b id="sticky-absents" class="text-rose-600">0</b>
+        </span>
+      </div>
+      <button 
+        id="btn-valider-appel" 
+        type="button" 
+        onclick="declencherValidationAppel()" 
+        class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-extrabold text-sm sm:text-base py-2.5 sm:py-3 px-5 sm:px-8 rounded-xl shadow-lg shadow-indigo-600/30 transition cursor-pointer flex items-center gap-2">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span data-i18n="btn_submit_call">Valider et transmettre l'appel</span>
       </button>
     </div>
-
-  </main>
+  </div>
 
   <!-- JAVASCRIPT COMPLET -->
   <script>
@@ -442,6 +455,7 @@
         default_classe_title: "Sélectionnez une classe",
         btn_mark_all: "Tout marquer présent",
         btn_add_missing: "Élève manquant ?",
+        btn_validate_quick: "Valider",
         prompt_select_classe: "Veuillez choisir une division ci-dessus pour afficher la liste des élèves.",
         btn_submit_call: "Valider et transmettre l'appel",
         btn_present: "Présent",
@@ -488,6 +502,7 @@
         default_classe_title: "يرجى اختيار القسم أولاً",
         btn_mark_all: "تعليم الجميع كحاضرين",
         btn_add_missing: "تلميذ غير مسجل ؟",
+        btn_validate_quick: "تأكيد",
         prompt_select_classe: "يرجى اختيار الفوج التربوي من القائمة أعلاه لعرض قائمة التلاميذ.",
         btn_submit_call: "تأكيد وإرسال ورقة الغياب إلى الاستشارة التربوية",
         btn_present: "حاضر",
@@ -537,9 +552,7 @@
       if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
 
       const inputSearch = document.getElementById('input-search-eleve');
-      if (inputSearch) {
-        inputSearch.placeholder = TRADUCTIONS[lang].search_placeholder;
-      }
+      if (inputSearch) inputSearch.placeholder = TRADUCTIONS[lang].search_placeholder;
 
       if (currentEleves.length > 0) {
         afficherEleves();
@@ -559,7 +572,7 @@
 
     let classesList = [], currentEleves = [], currentStatuts = {};
     let searchTermEleve = '';
-    let seanceExistanteId = null; // Stocke l'ID de la séance si elle existe déjà dans le passé
+    let seanceExistanteId = null;
 
     const inputDateCours = document.getElementById('input-date-cours');
     const selectClasse = document.getElementById('select-classe');
@@ -567,13 +580,14 @@
     const selectHoraire = document.getElementById('select-horaire');
     const elevesContainer = document.getElementById('eleves-container');
     const btnValider = document.getElementById('btn-valider-appel');
+    const btnValiderRapideTop = document.getElementById('btn-valider-rapide-top');
     const btnOuvrirModalEleve = document.getElementById('btn-ouvrir-modal-eleve');
     const searchContainer = document.getElementById('search-container');
     const inputSearchEleve = document.getElementById('input-search-eleve');
     const btnClearSearch = document.getElementById('btn-clear-search');
     const badgeModeSeance = document.getElementById('badge-mode-seance');
+    const stickyFooterBar = document.getElementById('sticky-footer-bar');
 
-    // Initialiser le calendrier à la date d'aujourd'hui
     if (inputDateCours) {
       inputDateCours.value = new Date().toISOString().split('T')[0];
     }
@@ -619,7 +633,6 @@
 
     async function synchroniserAppelsEnAttente() {
       if (!navigator.onLine) return;
-
       const queue = getQueueHorsLigne();
       if (queue.length === 0) return;
 
@@ -749,7 +762,6 @@
       });
     }
 
-    // VÉRIFICATION D'UNE SÉANCE PASSÉE DÉJÀ EXISTANTE
     async function verifierEtChargerSeanceExistante() {
       const cid = selectClasse.value;
       const mat = selectMatiere.value;
@@ -779,7 +791,6 @@
           seanceExistanteId = seance.id;
           if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
 
-          // Charger les statuts enregistrés
           if (seance.pointages && seance.pointages.length > 0) {
             seance.pointages.forEach(pt => {
               currentStatuts[pt.eleve_id] = pt.statut;
@@ -804,8 +815,9 @@
       if(!cid) {
         elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
         document.getElementById('stats-bar').classList.add('hidden'); 
-        document.getElementById('actions-footer').classList.add('hidden'); 
         document.getElementById('btn-tout-present').classList.add('hidden');
+        if (btnValiderRapideTop) btnValiderRapideTop.classList.add('hidden');
+        if (stickyFooterBar) stickyFooterBar.classList.add('hidden');
         btnOuvrirModalEleve.classList.add('hidden');
         if (searchContainer) searchContainer.classList.add('hidden');
         if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
@@ -847,12 +859,12 @@
       mettreAJourCompteurs();
       
       document.getElementById('stats-bar').classList.remove('hidden'); 
-      document.getElementById('actions-footer').classList.remove('hidden'); 
       document.getElementById('btn-tout-present').classList.remove('hidden');
+      if (btnValiderRapideTop) btnValiderRapideTop.classList.remove('hidden');
+      if (stickyFooterBar) stickyFooterBar.classList.remove('hidden');
       btnOuvrirModalEleve.classList.remove('hidden');
       if (searchContainer) searchContainer.classList.remove('hidden');
 
-      // Vérifier si cette séance passée a déjà été pointée
       await verifierEtChargerSeanceExistante();
     }
 
@@ -954,6 +966,11 @@
       document.getElementById('count-presents').textContent = p; 
       document.getElementById('count-absents').textContent = a; 
       document.getElementById('count-retards').textContent = r;
+
+      const stickyP = document.getElementById('sticky-presents');
+      const stickyA = document.getElementById('sticky-absents');
+      if (stickyP) stickyP.textContent = p;
+      if (stickyA) stickyA.textContent = a;
     }
 
     window.ouvrirModalNouvelEleve = function() {
@@ -1048,90 +1065,97 @@
       }
     };
 
-    // VALIDATION DE L'APPEL (NOUVEL APPEL OU MODIFICATION SÉANCE PASSÉE)
-    if(btnValider) {
-      btnValider.onclick = async function() {
-        if(!selectClasse.value || currentEleves.length === 0) {
-          afficherToast(langueCourante === 'ar' ? 'خطأ' : 'Erreur', TRADUCTIONS[langueCourante].prompt_select_classe);
-          return;
-        }
+    // FONCTION UNIQUE DE VALIDATION DE L'APPEL
+    window.declencherValidationAppel = async function() {
+      if(!selectClasse.value || currentEleves.length === 0) {
+        afficherToast(langueCourante === 'ar' ? 'خطأ' : 'Erreur', TRADUCTIONS[langueCourante].prompt_select_classe);
+        return;
+      }
 
-        btnValider.disabled = true; 
-        btnValider.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`;
+      const btnSticky = document.getElementById('btn-valider-appel');
+      if (btnSticky) {
+        btnSticky.disabled = true;
+        btnSticky.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Traitement...`;
+      }
+      if (btnValiderRapideTop) {
+        btnValiderRapideTop.disabled = true;
+      }
 
-        const t = selectHoraire.value.split('-');
-        const dateChoisie = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
+      const t = selectHoraire.value.split('-');
+      const dateChoisie = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
 
-        const donneesAppel = {
-          classe_id: selectClasse.value,
-          matiere: selectMatiere.value,
-          date_cours: dateChoisie,
-          heure_debut: t[0] + ':00',
-          heure_fin: t[1] + ':00',
-          pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' }))
-        };
-
-        if (!navigator.onLine) {
-          const queue = getQueueHorsLigne();
-          queue.push(donneesAppel);
-          saveQueueHorsLigne(queue);
-          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Enregistré hors-ligne', 'Synchronisation dès le retour du réseau.');
-          btnValider.disabled = false;
-          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`;
-          return;
-        }
-
-        try {
-          let seanceId = seanceExistanteId;
-
-          // 1. Si la séance n'existait pas encore, on la crée
-          if (!seanceId) {
-            const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ 
-              classe_id: donneesAppel.classe_id, 
-              matiere: donneesAppel.matiere, 
-              date_cours: donneesAppel.date_cours, 
-              heure_debut: donneesAppel.heure_debut, 
-              heure_fin: donneesAppel.heure_fin, 
-              appel_valide: true 
-            }).select().single();
-            
-            if(e1) throw e1;
-            seanceId = s.id;
-          }
-
-          // 2. On supprime les anciens pointages de cette séance pour éviter les doublons puis on réinsère
-          await supabaseClient.from('pointages').delete().eq('seance_id', seanceId);
-
-          const pts = donneesAppel.pointages.map(p => ({
-            seance_id: seanceId,
-            eleve_id: p.eleve_id,
-            statut: p.statut
-          }));
-
-          const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
-          if(e2) throw e2;
-          
-          seanceExistanteId = seanceId;
-          if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
-
-          afficherToast(
-            langueCourante === 'ar' ? 'تم تسجيل الحضور' : 'Succès',
-            langueCourante === 'ar' ? 'تم حفظ الورقة وتحديث قاعدة البيانات بنجاح.' : 'Appel enregistré et synchronisé avec succès !'
-          );
-        } catch(e) { 
-          console.warn("Échec réseau, mise en file locale :", e);
-          const queue = getQueueHorsLigne();
-          queue.push(donneesAppel);
-          saveQueueHorsLigne(queue);
-          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Sauvegardé hors-ligne', 'Réseau instable : appel sécurisé.');
-        } finally { 
-          btnValider.disabled = false; 
-          btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`; 
-        }
+      const donneesAppel = {
+        classe_id: selectClasse.value,
+        matiere: selectMatiere.value,
+        date_cours: dateChoisie,
+        heure_debut: t[0] + ':00',
+        heure_fin: t[1] + ':00',
+        pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' }))
       };
-    }
+
+      if (!navigator.onLine) {
+        const queue = getQueueHorsLigne();
+        queue.push(donneesAppel);
+        saveQueueHorsLigne(queue);
+        afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Enregistré hors-ligne', 'Synchronisation dès le retour du réseau.');
+        if (btnSticky) {
+          btnSticky.disabled = false;
+          btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`;
+        }
+        if (btnValiderRapideTop) btnValiderRapideTop.disabled = false;
+        return;
+      }
+
+      try {
+        let seanceId = seanceExistanteId;
+
+        if (!seanceId) {
+          const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ 
+            classe_id: donneesAppel.classe_id, 
+            matiere: donneesAppel.matiere, 
+            date_cours: donneesAppel.date_cours, 
+            heure_debut: donneesAppel.heure_debut, 
+            heure_fin: donneesAppel.heure_fin, 
+            appel_valide: true 
+          }).select().single();
+          
+          if(e1) throw e1;
+          seanceId = s.id;
+        }
+
+        await supabaseClient.from('pointages').delete().eq('seance_id', seanceId);
+
+        const pts = donneesAppel.pointages.map(p => ({
+          seance_id: seanceId,
+          eleve_id: p.eleve_id,
+          statut: p.statut
+        }));
+
+        const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
+        if(e2) throw e2;
+        
+        seanceExistanteId = seanceId;
+        if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
+
+        afficherToast(
+          langueCourante === 'ar' ? 'تم تسجيل الحضور' : 'Succès',
+          langueCourante === 'ar' ? 'تم حفظ ورقة الحضور وتحديث السجل بنجاح.' : 'Appel enregistré et synchronisé avec succès !'
+        );
+      } catch(e) { 
+        console.warn("Échec réseau :", e);
+        const queue = getQueueHorsLigne();
+        queue.push(donneesAppel);
+        saveQueueHorsLigne(queue);
+        afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Sauvegardé hors-ligne', 'Réseau instable : appel sécurisé.');
+      } finally { 
+        if (btnSticky) {
+          btnSticky.disabled = false;
+          btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`;
+        }
+        if (btnValiderRapideTop) btnValiderRapideTop.disabled = false;
+      }
+    };
     
-    // Écouteurs pour actualiser et vérifier les séances passées
     if(selectClasse) selectClasse.addEventListener('change', (e) => chargerEleves(e.target.value));
     if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
     if(selectHoraire) selectHoraire.addEventListener('change', verifierEtChargerSeanceExistante);
