@@ -33,7 +33,6 @@
     @keyframes alertPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }
     .badge-alerte-rouge { animation: alertPulse 1.4s infinite ease-in-out; }
 
-    /* Impression ciblée */
     @media print {
       body * { visibility: hidden; }
       body.print-billet #zone-impression-billet, body.print-billet #zone-impression-billet * { visibility: visible; }
@@ -52,7 +51,7 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col transition-all">
 
   <!-- ========================================== -->
-  <!-- MODAL: MODIFIER UN POINTAGE -->
+  <!-- MODAL: MODIFIER LE POINTAGE (STATUT / JUSTIFICATION) -->
   <!-- ========================================== -->
   <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row">
@@ -106,7 +105,64 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- ÉCRAN PIN SÉCURISÉ (BASE64: 2626) -->
+  <!-- MODAL: MODIFIER L'IDENTITÉ DE L'ÉLÈVE (NOM & PRÉNOM) -->
+  <!-- ========================================== -->
+  <div id="modal-editer-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-user-pen text-amber-500"></i>
+          <span data-i18n="modal_edit_student_title">Modifier l'identité de l'élève</span>
+        </h3>
+        <button onclick="fermerModalEditerEleve()" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      
+      <input type="hidden" id="edit-student-id" />
+
+      <div class="space-y-3.5 text-sm">
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-xs text-amber-800 flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-amber-600"></i>
+          <span data-i18n="modal_edit_student_info">La correction s'appliquera immédiatement dans toute la base.</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_nom_fr">Nom (FR) *</label>
+            <input type="text" id="edit-student-nom" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500 uppercase" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_prenom_fr">Prénom (FR) *</label>
+            <input type="text" id="edit-student-prenom" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500 capitalize" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_nom_ar">اللقب (بالعربية)</label>
+            <input type="text" id="edit-student-nom-ar" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1" data-i18n="label_prenom_ar">الاسم (بالعربية)</label>
+            <input type="text" id="edit-student-prenom-ar" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-amber-500" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100">
+        <button onclick="fermerModalEditerEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer" data-i18n="btn_cancel">
+          Annuler
+        </button>
+        <button id="btn-save-student" onclick="enregistrerModificationEleve()" class="bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer shadow-md shadow-amber-600/20" data-i18n="btn_save">
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!--
   <!-- ========================================== -->
   <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
@@ -148,7 +204,6 @@
       </div>
       
       <div class="flex items-center gap-2 flex-wrap justify-end">
-        <!-- Bouton Changement de Langue -->
         <button id="btn-lang-toggle" type="button" onclick="toggleLangue()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 border border-slate-700 cursor-pointer shadow-sm">
           <i class="fa-solid fa-globe text-amber-300"></i>
           <span id="lang-label">العربية</span>
@@ -172,7 +227,7 @@
   <!-- ========================================== -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- KPI (Calculés côté PostgreSQL via RPC) -->
+    <!-- KPI -->
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
       <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <div class="flex justify-between text-slate-500 mb-1">
@@ -246,20 +301,38 @@
       </div>
       
       <div class="flex flex-wrap gap-2 items-end">
-        <!-- Bouton Actualiser -->
-        <button id="btn-refresh" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl text-sm font-bold border border-slate-300 transition cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-sm" title="Recharger les données">
+        <button id="btn-refresh" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2.5 rounded-xl text-sm font-bold border border-slate-300 transition cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-sm" title="Recharger">
           <i id="icon-refresh" class="fa-solid fa-arrows-rotate text-indigo-600"></i>
           <span data-i18n="btn_refresh">Actualiser</span>
         </button>
-        <!-- Bouton Exporter Excel -->
         <button id="btn-export-excel" type="button" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20 transition cursor-pointer flex items-center gap-1.5 active:scale-95">
           <i class="fa-solid fa-file-excel"></i>
           <span data-i18n="btn_export">Exporter</span>
         </button>
-        <!-- Bouton Rapport Censeur -->
         <button id="btn-imprimer-rapport" type="button" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md shadow-indigo-600/20 transition cursor-pointer flex items-center gap-1.5 active:scale-95">
           <i class="fa-solid fa-print"></i>
           <span data-i18n="btn_report">Rapport</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- BANDEAU D'ACTIONS GROUPÉES -->
+    <div id="barre-actions-groupees" class="hidden bg-indigo-900 text-white p-3.5 rounded-2xl shadow-lg flex-wrap items-center justify-between gap-3 border border-indigo-700 animate-table-row">
+      <div class="flex items-center gap-2.5 text-sm font-bold">
+        <span class="w-7 h-7 rounded-full bg-indigo-700 flex items-center justify-center text-xs font-black" id="count-selected">0</span>
+        <span data-i18n="msg_selected_rows">élément(s) sélectionné(s)</span>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button type="button" onclick="justifierSelectionGroupee()" class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition">
+          <i class="fa-solid fa-check"></i>
+          <span data-i18n="btn_justify_selected">Marquer justifié</span>
+        </button>
+        <button type="button" onclick="supprimerSelectionGroupee()" class="bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm transition">
+          <i class="fa-solid fa-trash-can"></i>
+          <span data-i18n="btn_delete_selected">Supprimer la sélection</span>
+        </button>
+        <button type="button" onclick="deselectionnerTout()" class="bg-indigo-800 hover:bg-indigo-700 text-indigo-200 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition">
+          <span data-i18n="btn_unselect_all">Annuler</span>
         </button>
       </div>
     </div>
@@ -272,9 +345,12 @@
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-left">
-          <thead class="bg-slate-100 text-xs font-bold uppercase text-slate-700">
+          <thead class="bg-slate-100 text-xs font-bold uppercase text-slate-700 border-b border-slate-200">
             <tr>
-              <th class="py-3 px-3 w-10 text-center" data-i18n="th_num">N°</th>
+              <th class="py-3.5 px-3 w-12 text-center">
+                <input type="checkbox" id="checkbox-select-all" onchange="toggleSelectAll(this)" title="Tout sélectionner / تحديد الكل" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600" />
+              </th>
+              <th class="py-3 px-2 w-10 text-center" data-i18n="th_num">N°</th>
               <th class="py-3 px-4" data-i18n="th_student">Élève & Alerte</th>
               <th class="py-3 px-3" data-i18n="th_class">Classe</th>
               <th class="py-3 px-3" data-i18n="th_session">Séance & Matière</th>
@@ -295,7 +371,7 @@
   <!-- ZONES D'IMPRESSION (INVISIBLES À L'ÉCRAN) -->
   <!-- ========================================== -->
 
-  <!-- RAPPORT CENSEUR (A4) - ENTIÈREMENT EN ARABE -->
+  <!-- RAPPORT CENSEUR (A4) - EN ARABE -->
   <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black font-sans" dir="rtl">
     <div class="text-center border-b-2 border-black pb-3 mb-4">
       <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
@@ -366,11 +442,11 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- JAVASCRIPT COMPLET ET MULTILINGUE -->
+  <!-- JAVASCRIPT COMPLET ET STRUCTURÉ -->
   <!-- ========================================== -->
   <script>
     // ========================================================
-    // 1. DICTIONNAIRE MULTILINGUE (FR / AR)
+    // 1. DICTIONNAIRE MULTILINGUE
     // ========================================================
     const TRADUCTIONS = {
       fr: {
@@ -436,7 +512,17 @@
         opt_not_justified: "Non justifié",
         opt_justified: "Justifié",
         btn_cancel: "Annuler",
-        btn_save: "Enregistrer"
+        btn_save: "Enregistrer",
+        msg_selected_rows: "élément(s) sélectionné(s)",
+        btn_delete_selected: "Supprimer la sélection",
+        btn_justify_selected: "Marquer justifié",
+        btn_unselect_all: "Désélectionner",
+        modal_edit_student_title: "Modifier l'identité de l'élève",
+        modal_edit_student_info: "La correction s'appliquera immédiatement dans toute la base.",
+        label_nom_fr: "Nom (FR) *",
+        label_prenom_fr: "Prénom (FR) *",
+        label_nom_ar: "اللقب (بالعربية)",
+        label_prenom_ar: "الاسم (بالعربية)"
       },
       ar: {
         lang_btn: "Français",
@@ -501,7 +587,17 @@
         opt_not_justified: "غير مبرر",
         opt_justified: "مبرر",
         btn_cancel: "إلغاء",
-        btn_save: "حفظ التعديل"
+        btn_save: "حفظ التعديل",
+        msg_selected_rows: "عنصر محدد",
+        btn_delete_selected: "حذف المحدد",
+        btn_justify_selected: "تبرير المحدد",
+        btn_unselect_all: "إلغاء التحديد",
+        modal_edit_student_title: "تعديل وتصحيح هوية التلميذ",
+        modal_edit_student_info: "سيتم تطبيق التعديل فوراً في كامل النظام وقاعدة البيانات.",
+        label_nom_fr: "اللقب بالحروف اللاتينية *",
+        label_prenom_fr: "الاسم بالحروف اللاتينية *",
+        label_nom_ar: "اللقب بالعربية",
+        label_prenom_ar: "الاسم بالعربية"
       }
     };
 
@@ -515,7 +611,6 @@
       htmlRoot.setAttribute('lang', lang);
       htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
 
-      // Traduction de tous les éléments data-i18n
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const cle = el.getAttribute('data-i18n');
         if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) {
@@ -523,13 +618,12 @@
         }
       });
 
-      // Mettre à jour le bouton de langue
       const lblLang = document.getElementById('lang-label');
       if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
 
-      // Re-générer les options de classes et le tableau
       loadClassesBilingues();
       renderTableau();
+      mettreAJourBarreSelection();
     }
 
     function toggleLangue() {
@@ -538,7 +632,7 @@
     }
 
     // ========================================================
-    // 2. PIN SÉCURISÉ (Base64) - "2626"
+    // 
     // ========================================================
     const PIN_MASQUE = "MjYyNg==";
 
@@ -588,7 +682,7 @@
     }
 
     // ========================================================
-    // 3. SUPABASE INITIALISATION
+    // 3. SUPABASE INITIALISATION & ÉTAT SÉLECTION
     // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
@@ -596,6 +690,7 @@
     
     let classesCache = [];
     let vuePointages = [];
+    let pointagesSelectionnes = new Set();
 
     function animerChiffre(el, cible) {
       if(!el) return; 
@@ -620,6 +715,8 @@
     const registreBody = document.getElementById('registre-body');
     const btnRefresh = document.getElementById('btn-refresh');
     const iconRefresh = document.getElementById('icon-refresh');
+    const checkAllMaster = document.getElementById('checkbox-select-all');
+    const barreActions = document.getElementById('barre-actions-groupees');
 
     if(filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
@@ -677,7 +774,7 @@
       if(!d) return;
 
       if(iconRefresh) iconRefresh.classList.add('fa-spin');
-      registreBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-indigo-500"><i class="fa-solid fa-spin fa-circle-notch text-2xl"></i><p class="mt-2 text-xs font-bold">...</p></td></tr>`;
+      registreBody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-indigo-500"><i class="fa-solid fa-spin fa-circle-notch text-2xl"></i><p class="mt-2 text-xs font-bold">...</p></td></tr>`;
       
       try {
         const [vueRes, kpiRes] = await Promise.all([
@@ -693,6 +790,10 @@
         if (vueRes.error) throw vueRes.error;
         vuePointages = vueRes.data || [];
 
+        pointagesSelectionnes.clear();
+        if(checkAllMaster) checkAllMaster.checked = false;
+        mettreAJourBarreSelection();
+
         const kpis = kpiRes.data || { total_seances: 0, total_absents: 0, total_retards: 0, total_alertes: 0, taux_presence: 0 };
         animerChiffre(document.getElementById('kpi-seances'), kpis.total_seances || 0);
         animerChiffre(document.getElementById('kpi-absents'), kpis.total_absents || 0);
@@ -704,7 +805,7 @@
 
       } catch (err) {
         console.error("Erreur fetch vue :", err);
-        registreBody.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-rose-500 font-bold">Erreur : ${err.message}</td></tr>`;
+        registreBody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-rose-500 font-bold">Erreur : ${err.message}</td></tr>`;
       } finally {
         if(iconRefresh) iconRefresh.classList.remove('fa-spin');
       }
@@ -729,7 +830,8 @@
       document.getElementById('registre-count').textContent = `${fData.length} ${TRADUCTIONS[langueCourante].lines_count}`;
       
       if(fData.length === 0) {
-        registreBody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-slate-400 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>${TRADUCTIONS[langueCourante].empty_table}</td></tr>`;
+        registreBody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-slate-400 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>${TRADUCTIONS[langueCourante].empty_table}</td></tr>`;
+        if(checkAllMaster) checkAllMaster.checked = false;
         return;
       }
       
@@ -737,6 +839,7 @@
       fData.forEach((pt, i) => {
         const al = pt.en_alerte === true || (pt.total_absences >= 3);
         const tot = pt.total_absences || 0;
+        const isChecked = pointagesSelectionnes.has(String(pt.pointage_id));
         
         const labelStatut = pt.statut === 'A' ? TRADUCTIONS[langueCourante].status_a : (pt.statut === 'R' ? TRADUCTIONS[langueCourante].status_r : TRADUCTIONS[langueCourante].status_p);
         
@@ -746,7 +849,10 @@
             ? `<span class="bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> ${labelStatut}</span>`
             : `<span class="bg-emerald-100 text-emerald-700 px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> ${labelStatut}</span>`);
             
-        const bg = al ? 'bg-rose-50 border-l-4 border-l-rose-500' : (i % 2 === 0 ? 'bg-white' : 'bg-slate-50/70');
+        let bg = al ? 'bg-rose-50 border-l-4 border-l-rose-500' : (i % 2 === 0 ? 'bg-white' : 'bg-slate-50/70');
+        if (isChecked) {
+          bg = 'bg-indigo-50/80 border-l-4 border-l-indigo-600';
+        }
         const delay = Math.min(i * 15, 300);
         
         const nomPrincipal = (langueCourante === 'ar' && pt.nom_ar) ? `${pt.nom_ar} ${pt.prenom_ar}` : `${pt.nom} ${pt.prenom}`;
@@ -757,14 +863,18 @@
           : TRADUCTIONS[langueCourante].tag_not_justified;
 
         const tr = document.createElement('tr');
-        tr.className = `animate-table-row ${bg} hover:bg-slate-100 transition`;
+        tr.className = `animate-table-row ${bg} hover:bg-indigo-50/50 transition cursor-pointer`;
         tr.style.animationDelay = `${delay}ms`;
+        tr.id = `row-${pt.pointage_id}`;
         
         tr.innerHTML = `
-          <td class="py-3 px-3 text-center text-xs font-bold text-slate-400">${i + 1}</td>
+          <td class="py-3 px-3 text-center" onclick="event.stopPropagation()">
+            <input type="checkbox" value="${pt.pointage_id}" ${isChecked ? 'checked' : ''} onchange="toggleSelectRow('${pt.pointage_id}', this.checked)" class="row-checkbox w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600" />
+          </td>
+          <td class="py-3 px-2 text-center text-xs font-bold text-slate-400">${i + 1}</td>
           <td class="py-3 px-4">
             <div class="font-bold text-slate-900 ${al ? 'text-rose-800' : ''}">${nomPrincipal}</div>
-            <div class="text-xs font-bold text-slate-500">${nomSecondaire}</div>
+            <div class="text-xs text-slate-500">${nomSecondaire}</div>
             ${al ? `<span class="badge-alerte-rouge bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full mt-1 inline-block"><i class="fa-solid fa-bell mr-1"></i> 🚨 ${tot}${TRADUCTIONS[langueCourante].badge_alert}</span>` : ''}
           </td>
           <td class="py-3 px-3"><span class="bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-1 rounded-lg font-bold text-xs">${pt.classe_nom}</span></td>
@@ -772,22 +882,234 @@
           <td class="py-3 px-3 text-center"><span class="px-2 py-1 rounded-lg font-black text-xs ${al ? 'bg-rose-200 text-rose-900' : 'bg-slate-100'}">${tot}</span></td>
           <td class="py-3 px-3 text-center">${stHtml}</td>
           <td class="py-3 px-3 text-center text-xs">${pt.justifie ? `<span class="text-emerald-700 bg-emerald-50 px-2 py-1 border border-emerald-200 rounded-lg font-bold">${labelJustifie}</span>` : `<span class="text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">${labelJustifie}</span>`}</td>
-          <td class="py-3 px-3 text-center">
+          <td class="py-3 px-3 text-center" onclick="event.stopPropagation()">
             <div class="flex items-center justify-center gap-1.5 flex-wrap">
-              <button onclick="ouvrirModalModifier('${pt.pointage_id}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg cursor-pointer transition active:scale-95" title="Modifier"><i class="fa-solid fa-pen"></i></button>
-              <button onclick="imprimerBillet('${pt.nom}','${pt.prenom}','${pt.nom_ar}','${pt.prenom_ar}','${pt.classe_nom}','${pt.date_cours}','${pt.heure_debut}','${pt.statut}')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-2 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition active:scale-95" title="Billet"><i class="fa-solid fa-print mr-1"></i>${TRADUCTIONS[langueCourante].action_btn_billet}</button>
-              ${al ? `<button onclick="imprimerConvocation('${pt.nom}','${pt.prenom}','${pt.nom_ar}','${pt.prenom_ar}','${pt.classe_nom}',${tot})" class="bg-rose-600 text-white hover:bg-rose-700 px-2 py-1.5 rounded-lg font-bold text-xs cursor-pointer shadow-sm transition active:scale-95"><i class="fa-solid fa-envelope mr-1"></i>${TRADUCTIONS[langueCourante].action_btn_convoc}</button>` : ''}
-              <button onclick="supprimerPointage('${pt.pointage_id}')" class="bg-rose-50 text-rose-600 hover:bg-rose-100 p-2 rounded-lg cursor-pointer transition active:scale-95" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+              <!-- BOUTON MODIFIER ÉLÈVE (NOM / PRÉNOM) -->
+              <button onclick="ouvrirModalEditerEleve('${pt.eleve_id}')" class="bg-amber-50 text-amber-700 hover:bg-amber-100 p-2 rounded-lg cursor-pointer transition active:scale-95" title="${langueCourante === 'ar' ? 'تعديل هوية التلميذ' : 'Modifier l\'élève'}">
+                <i class="fa-solid fa-user-pen"></i>
+              </button>
+              
+              <!-- BOUTON MODIFIER POINTAGE -->
+              <button onclick="ouvrirModalModifier('${pt.pointage_id}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg cursor-pointer transition active:scale-95" title="Modifier statut">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              
+              <button onclick="imprimerBillet('${pt.nom}','${pt.prenom}','${pt.nom_ar}','${pt.prenom_ar}','${pt.classe_nom}','${pt.date_cours}','${pt.heure_debut}','${pt.statut}')" class="bg-slate-100 text-slate-700 hover:bg-slate-200 px-2 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition active:scale-95" title="Billet">
+                <i class="fa-solid fa-print mr-1"></i>${TRADUCTIONS[langueCourante].action_btn_billet}
+              </button>
+              
+              ${al ? `<button onclick="imprimerConvocation('${pt.nom}','${pt.prenom}','${pt.nom_ar}','${pt.prenom_ar}','${pt.classe_nom}',${tot})" class="bg-rose-600 text-white hover:bg-rose-700 px-2.5 py-1.5 rounded-lg font-bold text-xs cursor-pointer shadow-sm transition active:scale-95"><i class="fa-solid fa-envelope mr-1"></i>${TRADUCTIONS[langueCourante].action_btn_convoc}</button>` : ''}
+              
+              <button onclick="supprimerPointage('${pt.pointage_id}')" class="bg-rose-50 text-rose-600 hover:bg-rose-100 p-2 rounded-lg cursor-pointer transition active:scale-95" title="Supprimer">
+                <i class="fa-solid fa-trash"></i>
+              </button>
             </div>
           </td>
         `;
+
+        tr.onclick = () => {
+          const cb = tr.querySelector('.row-checkbox');
+          if (cb) {
+            cb.checked = !cb.checked;
+            toggleSelectRow(pt.pointage_id, cb.checked);
+          }
+        };
+
         registreBody.appendChild(tr);
       });
+
+      actualiserMasterCheckbox();
     }
 
     // ========================================================
-    // 5. MODIFICATION & SUPPRESSION
+    // 5. GESTION DE LA SÉLECTION GLOBALE
     // ========================================================
+    window.toggleSelectAll = function(masterCheckbox) {
+      const fData = obtenirDonneesFiltrees();
+      if (masterCheckbox.checked) {
+        fData.forEach(pt => pointagesSelectionnes.add(String(pt.pointage_id)));
+      } else {
+        fData.forEach(pt => pointagesSelectionnes.delete(String(pt.pointage_id)));
+      }
+      renderTableau();
+      mettreAJourBarreSelection();
+    };
+
+    window.toggleSelectRow = function(id, isChecked) {
+      id = String(id);
+      if (isChecked) {
+        pointagesSelectionnes.add(id);
+      } else {
+        pointagesSelectionnes.delete(id);
+      }
+      actualiserMasterCheckbox();
+      mettreAJourBarreSelection();
+    };
+
+    window.deselectionnerTout = function() {
+      pointagesSelectionnes.clear();
+      if (checkAllMaster) checkAllMaster.checked = false;
+      renderTableau();
+      mettreAJourBarreSelection();
+    };
+
+    function actualiserMasterCheckbox() {
+      if (!checkAllMaster) return;
+      const fData = obtenirDonneesFiltrees();
+      if (fData.length === 0) {
+        checkAllMaster.checked = false;
+        checkAllMaster.indeterminate = false;
+        return;
+      }
+      let nbSelected = 0;
+      fData.forEach(pt => {
+        if (pointagesSelectionnes.has(String(pt.pointage_id))) nbSelected++;
+      });
+      if (nbSelected === 0) {
+        checkAllMaster.checked = false;
+        checkAllMaster.indeterminate = false;
+      } else if (nbSelected === fData.length) {
+        checkAllMaster.checked = true;
+        checkAllMaster.indeterminate = false;
+      } else {
+        checkAllMaster.checked = false;
+        checkAllMaster.indeterminate = true;
+      }
+    }
+
+    function mettreAJourBarreSelection() {
+      if (!barreActions) return;
+      const total = pointagesSelectionnes.size;
+      const counterEl = document.getElementById('count-selected');
+      if (counterEl) counterEl.textContent = total;
+
+      if (total > 0) {
+        barreActions.classList.remove('hidden');
+        barreActions.classList.add('flex');
+      } else {
+        barreActions.classList.add('hidden');
+        barreActions.classList.remove('flex');
+      }
+    }
+
+    window.supprimerSelectionGroupee = async function() {
+      const ids = Array.from(pointagesSelectionnes);
+      if (ids.length === 0) return;
+
+      const confirmMsg = (langueCourante === 'ar')
+        ? `هل أنت متأكد من حذف ${ids.length} تسجيل محدد نهائياً ؟`
+        : `Voulez-vous vraiment supprimer définitivement les ${ids.length} enregistrements sélectionnés ?`;
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('pointages')
+          .delete()
+          .in('id', ids);
+
+        if (error) throw error;
+        pointagesSelectionnes.clear();
+        await fetchDonnees();
+      } catch (err) {
+        alert("Erreur lors de la suppression groupée : " + err.message);
+      }
+    };
+
+    window.justifierSelectionGroupee = async function() {
+      const ids = Array.from(pointagesSelectionnes);
+      if (ids.length === 0) return;
+
+      const motifPrompt = (langueCourante === 'ar')
+        ? 'يرجى إدخال سبب التبرير القانوني (مثال: مبرر من طرف الإدارة):'
+        : 'Motif de justification (ex: Accord administration, Certificat...):';
+
+      const motif = prompt(motifPrompt, langueCourante === 'ar' ? 'مبرر من الإدارة' : 'Accord de l\'administration');
+      if (motif === null) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('pointages')
+          .update({
+            justifie: true,
+            motif_justification: motif.trim() || (langueCourante === 'ar' ? 'مبرر' : 'Justifié')
+          })
+          .in('id', ids);
+
+        if (error) throw error;
+        pointagesSelectionnes.clear();
+        await fetchDonnees();
+      } catch (err) {
+        alert("Erreur lors de la mise à jour groupée : " + err.message);
+      }
+    };
+
+    // ========================================================
+    // 6. GESTION DE LA MODIFICATION DE L'ÉLÈVE (NOM / PRÉNOM)
+    // ========================================================
+    window.ouvrirModalEditerEleve = (eleveId) => {
+      const pt = vuePointages.find(p => p.eleve_id == eleveId);
+      if (!pt) return;
+
+      document.getElementById('edit-student-id').value = eleveId;
+      document.getElementById('edit-student-nom').value = pt.nom || '';
+      document.getElementById('edit-student-prenom').value = pt.prenom || '';
+      document.getElementById('edit-student-nom-ar').value = pt.nom_ar || '';
+      document.getElementById('edit-student-prenom-ar').value = pt.prenom_ar || '';
+
+      const modal = document.getElementById('modal-editer-eleve');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('edit-student-nom').focus();
+    };
+
+    window.fermerModalEditerEleve = () => {
+      const modal = document.getElementById('modal-editer-eleve');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    };
+
+    window.enregistrerModificationEleve = async () => {
+      const eleveId = document.getElementById('edit-student-id').value;
+      const nom = document.getElementById('edit-student-nom').value.trim().toUpperCase();
+      const prenom = document.getElementById('edit-student-prenom').value.trim();
+      const nomAr = document.getElementById('edit-student-nom-ar').value.trim();
+      const prenomAr = document.getElementById('edit-student-prenom-ar').value.trim();
+
+      if (!nom || !prenom) {
+        alert(langueCourante === 'ar' ? 'يرجى إدخال اللقب والاسم بالحروف اللاتينية.' : 'Le Nom et le Prénom (FR) sont obligatoires.');
+        return;
+      }
+
+      const btnSave = document.getElementById('btn-save-student');
+      btnSave.disabled = true;
+      btnSave.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`;
+
+      try {
+        const { error } = await supabaseClient
+          .from('eleves')
+          .update({
+            nom: nom,
+            prenom: prenom,
+            nom_ar: nomAr || null,
+            prenom_ar: prenomAr || null
+          })
+          .eq('id', eleveId);
+
+        if (error) throw error;
+
+        fermerModalEditerEleve();
+        await fetchDonnees();
+      } catch (err) {
+        console.error("Erreur mise à jour élève :", err);
+        alert(err.message);
+      } finally {
+        btnSave.disabled = false;
+        btnSave.innerHTML = TRADUCTIONS[langueCourante].btn_save;
+      }
+    };
+
+    // MODIFICATION DE POINTAGE
     window.ouvrirModalModifier = (pid) => { 
       const pt = vuePointages.find(p => p.pointage_id == pid); 
       if(!pt) return;
@@ -834,6 +1156,7 @@
         try {
           const { error } = await supabaseClient.from('pointages').delete().eq('id', id);
           if(error) throw error;
+          pointagesSelectionnes.delete(String(id));
           await fetchDonnees(); 
         } catch(e) {
           alert(e.message);
@@ -842,12 +1165,17 @@
     };
 
     // ========================================================
-    // 6. EXPORT EXCEL (BILINGUE)
+    // 7. EXPORT EXCEL
     // ========================================================
     const btnExportExcel = document.getElementById('btn-export-excel');
     if(btnExportExcel) {
       btnExportExcel.addEventListener('click', () => {
-        const d = obtenirDonneesFiltrees().map((p, i) => ({ 
+        let sources = obtenirDonneesFiltrees();
+        if (pointagesSelectionnes.size > 0) {
+          sources = sources.filter(p => pointagesSelectionnes.has(String(p.pointage_id)));
+        }
+
+        const d = sources.map((p, i) => ({ 
           "N° / الرقم": i + 1, 
           "Date / التاريخ": p.date_cours, 
           "Division / القسم": p.classe_nom, 
@@ -878,7 +1206,7 @@
     }
 
     // ========================================================
-    // 7. IMPRESSION DU RAPPORT ADMINISTRATIF (ARABE OFFICIEL)
+    // 8. IMPRESSION RAPPORT ADMINISTRATIF
     // ========================================================
     const btnImprimerRapport = document.getElementById('btn-imprimer-rapport');
     if(btnImprimerRapport) {
@@ -930,7 +1258,7 @@
     }
 
     // ========================================================
-    // 8. IMPRESSION BILLET & CONVOCATION
+    // 9. IMPRESSION BILLET & CONVOCATION
     // ========================================================
     window.imprimerBillet = (nom, prenom, nomAr, prenomAr, classe, date, heure, statut) => {
       document.getElementById('billet-details').innerHTML = `
@@ -965,14 +1293,13 @@
     };
 
     // ========================================================
-    // 9. ÉCOUTEURS D'ÉVÉNEMENTS
+    // 10. ÉCOUTEURS D'ÉVÉNEMENTS
     // ========================================================
     if(filtreDate) filtreDate.addEventListener('change', fetchDonnees);
     if(filtreClasse) filtreClasse.addEventListener('change', renderTableau);
     if(filtreStatut) filtreStatut.addEventListener('change', renderTableau);
     if(btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
 
-    // Initialisation de la langue enregistrée
     appliquerLangue(langueCourante);
   </script>
 </body>
