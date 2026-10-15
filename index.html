@@ -16,7 +16,7 @@
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
@@ -48,9 +48,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans transition-all">
 
-  <!-- ======================================================== -->
   <!-- TOAST NOTIFICATION -->
-  <!-- ======================================================== -->
   <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
     <div class="bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md">
       <div id="toast-icon" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base">
@@ -63,9 +61,7 @@
     </div>
   </div>
 
-  <!-- ======================================================== -->
   <!-- MODAL : SIGNALER / AJOUTER UN ÉLÈVE MANQUANT -->
-  <!-- ======================================================== -->
   <div id="modal-nouvel-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
@@ -126,9 +122,7 @@
     </div>
   </div>
 
-  <!-- ======================================================== -->
   <!-- ÉCRAN DE DÉVERROUILLAGE INSTITUTIONNEL -->
-  <!-- ======================================================== -->
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
     
     <!-- EN-TÊTE DU HAUT -->
@@ -217,9 +211,7 @@
 
   </div>
 
-  <!-- ======================================================== -->
   <!-- HEADER PRINCIPAL -->
-  <!-- ======================================================== -->
   <header class="bg-indigo-700 text-white shadow-md">
     <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
@@ -248,28 +240,44 @@
     </div>
   </header>
 
-  <!-- ======================================================== -->
   <!-- CONTENU PRINCIPAL DE L'APPEL -->
-  <!-- ======================================================== -->
   <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
 
-    <!-- Paramètres du cours -->
+    <!-- PARAMÈTRES DU COURS AVEC CALENDRIER INTÉGRÉ -->
     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-sliders text-indigo-600"></i> <span data-i18n="sec_params">Paramètres du Cours</span>
-      </h2>
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-indigo-600"></i> <span data-i18n="sec_params">Paramètres du Cours</span>
+        </h2>
+        <!-- Indicateur de séance existante -->
+        <span id="badge-mode-seance" class="hidden text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+          <i class="fa-solid fa-clock-rotate-left mr-1"></i> <span data-i18n="tag_mode_edit">Modification d'une séance passée</span>
+        </span>
+      </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- 1. CALENDRIER (DATE DE LA SÉANCE) -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_date">Date / التاريخ</label>
+          <input 
+            type="date" 
+            id="input-date-cours" 
+            class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm" 
+          />
+        </div>
+
+        <!-- 2. Division -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_classe">Classe / القسم</label>
-          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm">
             <option value="" data-i18n="opt_classe_default">-- Choisir la division / اختر الفوج --</option>
           </select>
         </div>
 
+        <!-- 3. Matière -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_matiere">Matière / المادة</label>
-          <select id="select-matiere" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-indigo-900 cursor-not-allowed">
+          <select id="select-matiere" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none font-bold text-indigo-900 cursor-not-allowed shadow-sm">
             <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
             <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
             <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
@@ -293,9 +301,10 @@
           </select>
         </div>
 
+        <!-- 4. Horaire -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1" data-i18n="lbl_horaire">Séance / التوقيت</label>
-          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-sm">
             <optgroup label="☀️ Matin / الصباح">
               <option value="08:00-09:00">08:00 - 09:00</option>
               <option value="09:00-10:00">09:00 - 10:00</option>
@@ -346,9 +355,7 @@
         </div>
       </div>
 
-      <!-- ======================================================== -->
-      <!-- BARRE DE RECHERCHE D'ÉLÈVE EN TEMPS RÉEL -->
-      <!-- ======================================================== -->
+      <!-- BARRE DE RECHERCHE D'ÉLÈVE -->
       <div id="search-container" class="hidden p-3 sm:px-5 bg-slate-50/50 border-b border-slate-200">
         <div class="relative">
           <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-slate-400">
@@ -389,39 +396,31 @@
 
   </main>
 
-  <!-- ======================================================== -->
-  <!-- JAVASCRIPT COMPLET ET STRUCTURÉ -->
-  <!-- ======================================================== -->
+  <!-- JAVASCRIPT COMPLET -->
   <script>
-    // ========================================================
-    
-    // ========================================================
     const CODES_MATIERES_BASE64 = {
-      "Mathématiques / رياضيات": "MTAwMQ==",           
-      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",   
-      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",   
-      "Informatique / إعلام آلي": "MTAwNA==",             
-      "Génie Civil / هندسة مدنية": "MjAwMQ==",            
-      "Génie Électrique / هندسة كهربائية": "MjAwMg==",     
-      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",    
-      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",    
-      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",   
-      "Droit / قانون": "MjAwNg==",                         
-      "Langue Arabe / لغة عربية": "MzAwMQ==",             
-      "Langue Française / فرنسية": "MzAwMg==",             
-      "Langue Anglaise / إنجليزية": "MzAwMw==",           
-      "Langue Allemande / ألمانية": "MzAwNA==",          
-      "Langue Espagnole / إسبانية": "MzAwNQ==",          
-      "Langue Amazighe / أمازيغية": "MzAwNg==",           
-      "Philosophie / فلسفة": "MzAwNw==",                  
-      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", 
-      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",   
-      "EPS / تربية بدنية": "NDAwMQ=="                     
+      "Mathématiques / رياضيات": "MTAwMQ==",
+      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",
+      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",
+      "Informatique / إعلام آلي": "MTAwNA==",
+      "Génie Civil / هندسة مدنية": "MjAwMQ==",
+      "Génie Électrique / هندسة كهربائية": "MjAwMg==",
+      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",
+      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",
+      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",
+      "Droit / قانون": "MjAwNg==",
+      "Langue Arabe / لغة عربية": "MzAwMQ==",
+      "Langue Française / فرنسية": "MzAwMg==",
+      "Langue Anglaise / إنجليزية": "MzAwMw==",
+      "Langue Allemande / ألمانية": "MzAwNA==",
+      "Langue Espagnole / إسبانية": "MzAwNQ==",
+      "Langue Amazighe / أمازيغية": "MzAwNg==",
+      "Philosophie / فلسفة": "MzAwNw==",
+      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==",
+      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",
+      "EPS / تربية بدنية": "NDAwMQ=="
     };
 
-    // ========================================================
-    // DICTIONNAIRE MULTILINGUE
-    // ========================================================
     const TRADUCTIONS = {
       fr: {
         lang_btn: "العربية",
@@ -431,6 +430,7 @@
         conn_online: "En ligne",
         conn_offline: "Hors-ligne",
         sec_params: "Paramètres du Cours",
+        lbl_date: "Date / التاريخ",
         lbl_classe: "Classe / القسم",
         lbl_matiere: "Matière / المادة",
         lbl_horaire: "Séance / التوقيت",
@@ -448,6 +448,7 @@
         btn_absent: "Absent",
         btn_retard: "Retard",
         tag_added_session: "Ajouté en séance",
+        tag_mode_edit: "Séance existante (Mode modification)",
         pin_title: "Espace Enseignant",
         pin_sub: "Sélectionnez votre matière et entrez le code secret",
         pin_error: "Code incorrect pour cette matière / رمز غير صحيح",
@@ -475,6 +476,7 @@
         conn_online: "متصل بالإنترنت",
         conn_offline: "غير متصل (محلي)",
         sec_params: "بيانات ومعلومات الحصة",
+        lbl_date: "تاريخ الحصة",
         lbl_classe: "القسم / الفوج التربوي",
         lbl_matiere: "المادة التعليمية",
         lbl_horaire: "توقيت الحصة",
@@ -492,6 +494,7 @@
         btn_absent: "غائب",
         btn_retard: "متأخر",
         tag_added_session: "أضيف خلال الحصة",
+        tag_mode_edit: "حصة مسجلة مسبقاً (وضع التعديل)",
         pin_title: "فضاء الأستاذ",
         pin_sub: "يرجى اختيار مادتك وإدخال الرمز السري الخاص بها",
         pin_error: "الرمز السري غير مطابق لهذه المادة",
@@ -550,16 +553,15 @@
       appliquerLangue(nouvelle);
     }
 
-    // ========================================================
-    // 1. SUPABASE
-    // ========================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let classesList = [], currentEleves = [], currentStatuts = {};
-    let searchTermEleve = ''; // Terme de recherche actuel
+    let searchTermEleve = '';
+    let seanceExistanteId = null; // Stocke l'ID de la séance si elle existe déjà dans le passé
 
+    const inputDateCours = document.getElementById('input-date-cours');
     const selectClasse = document.getElementById('select-classe');
     const selectMatiere = document.getElementById('select-matiere');
     const selectHoraire = document.getElementById('select-horaire');
@@ -569,6 +571,12 @@
     const searchContainer = document.getElementById('search-container');
     const inputSearchEleve = document.getElementById('input-search-eleve');
     const btnClearSearch = document.getElementById('btn-clear-search');
+    const badgeModeSeance = document.getElementById('badge-mode-seance');
+
+    // Initialiser le calendrier à la date d'aujourd'hui
+    if (inputDateCours) {
+      inputDateCours.value = new Date().toISOString().split('T')[0];
+    }
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -576,9 +584,6 @@
       });
     }
 
-    // ========================================================
-    // 2. GESTION HORS-LIGNE
-    // ========================================================
     function getQueueHorsLigne() {
       try {
         return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]');
@@ -613,16 +618,10 @@
     }
 
     async function synchroniserAppelsEnAttente() {
-      if (!navigator.onLine) {
-        afficherToast(langueCourante === 'ar' ? 'تنبيه' : 'Information', langueCourante === 'ar' ? 'لا يوجد اتصال بالإنترنت حالياً.' : 'Connexion internet absente.');
-        return;
-      }
+      if (!navigator.onLine) return;
 
       const queue = getQueueHorsLigne();
-      if (queue.length === 0) {
-        afficherToast(langueCourante === 'ar' ? 'تم التحديث' : 'Synchronisé', langueCourante === 'ar' ? 'جميع الأوراق مسجلة بالكامل.' : 'Tous les appels sont déjà enregistrés en ligne.');
-        return;
-      }
+      if (queue.length === 0) return;
 
       const btnSync = document.getElementById('btn-sync-offline');
       btnSync.disabled = true;
@@ -667,26 +666,23 @@
       btnSync.disabled = false;
 
       if (reussis > 0) {
-        afficherToast(langueCourante === 'ar' ? 'تمت المزامنة بنجاح' : 'Synchronisation réussie', langueCourante === 'ar' ? `تم إرسال ${reussis} أوراق حضور.` : `${reussis} appel(s) transmis à la base.`);
+        afficherToast(langueCourante === 'ar' ? 'تمت المزامنة بنجاح' : 'Synchronisation réussie', `${reussis} appel(s) transmis.`);
       }
     }
 
     window.addEventListener('online', () => {
       mettreAJourBadgeReseau();
-      afficherToast(langueCourante === 'ar' ? 'عاد الاتصال' : 'Réseau rétabli', langueCourante === 'ar' ? 'جاري مزامنة البيانات...' : 'Synchronisation en cours...');
+      afficherToast(langueCourante === 'ar' ? 'عاد الاتصال' : 'Réseau rétabli', 'Synchronisation...');
       synchroniserAppelsEnAttente();
     });
 
     window.addEventListener('offline', () => {
       mettreAJourBadgeReseau();
-      afficherToast(langueCourante === 'ar' ? 'انقطع الاتصال' : 'Hors-ligne', langueCourante === 'ar' ? 'العمل بالنمط المحلي.' : 'Mode local activé.');
+      afficherToast(langueCourante === 'ar' ? 'انقطع الاتصال' : 'Hors-ligne', 'Mode local activé.');
     });
 
     document.getElementById('btn-sync-offline').addEventListener('click', synchroniserAppelsEnAttente);
 
-    // ========================================================
-    // 3. CHARGEMENT DES CLASSES & ÉLÈVES
-    // ========================================================
     function afficherToast(titre, msg) {
       const t = document.getElementById('toast-notification');
       document.getElementById('toast-titre').textContent = titre; 
@@ -753,6 +749,57 @@
       });
     }
 
+    // VÉRIFICATION D'UNE SÉANCE PASSÉE DÉJÀ EXISTANTE
+    async function verifierEtChargerSeanceExistante() {
+      const cid = selectClasse.value;
+      const mat = selectMatiere.value;
+      const dt = inputDateCours ? inputDateCours.value : '';
+      const hor = selectHoraire.value;
+
+      if (!cid || !mat || !dt || !hor || !navigator.onLine) {
+        seanceExistanteId = null;
+        if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
+        return;
+      }
+
+      const t = hor.split('-');
+      const heureDeb = t[0] + ':00';
+
+      try {
+        const { data: seance, error } = await supabaseClient
+          .from('seances')
+          .select('id, pointages (eleve_id, statut)')
+          .eq('classe_id', cid)
+          .eq('matiere', mat)
+          .eq('date_cours', dt)
+          .eq('heure_debut', heureDeb)
+          .maybeSingle();
+
+        if (seance) {
+          seanceExistanteId = seance.id;
+          if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
+
+          // Charger les statuts enregistrés
+          if (seance.pointages && seance.pointages.length > 0) {
+            seance.pointages.forEach(pt => {
+              currentStatuts[pt.eleve_id] = pt.statut;
+            });
+            afficherEleves();
+            mettreAJourCompteurs();
+            afficherToast(
+              langueCourante === 'ar' ? 'استرجاع الحصة' : 'Séance chargée',
+              langueCourante === 'ar' ? 'تم استرجاع غيابات الحصة السابقة لتعديلها.' : 'Vous modifiez une séance déjà enregistrée.'
+            );
+          }
+        } else {
+          seanceExistanteId = null;
+          if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
+        }
+      } catch (err) {
+        console.warn("Vérification séance passée :", err);
+      }
+    }
+
     async function chargerEleves(cid) {
       if(!cid) {
         elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
@@ -761,7 +808,9 @@
         document.getElementById('btn-tout-present').classList.add('hidden');
         btnOuvrirModalEleve.classList.add('hidden');
         if (searchContainer) searchContainer.classList.add('hidden');
+        if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
         clearSearchEleve();
+        seanceExistanteId = null;
         return;
       }
       
@@ -793,9 +842,7 @@
       currentStatuts = {}; 
       currentEleves.forEach(e => currentStatuts[e.id] = 'P');
       
-      // Réinitialiser la recherche
       clearSearchEleve();
-
       afficherEleves();
       mettreAJourCompteurs();
       
@@ -804,20 +851,16 @@
       document.getElementById('btn-tout-present').classList.remove('hidden');
       btnOuvrirModalEleve.classList.remove('hidden');
       if (searchContainer) searchContainer.classList.remove('hidden');
+
+      // Vérifier si cette séance passée a déjà été pointée
+      await verifierEtChargerSeanceExistante();
     }
 
-    // ========================================================
-    // RECHERCHE EN TEMPS RÉEL D'ÉLÈVES
-    // ========================================================
     function filterEleves(terme) {
       searchTermEleve = (terme || '').trim().toLowerCase();
-      
       if (btnClearSearch) {
-        if (searchTermEleve.length > 0) {
-          btnClearSearch.classList.remove('hidden');
-        } else {
-          btnClearSearch.classList.add('hidden');
-        }
+        if (searchTermEleve.length > 0) btnClearSearch.classList.remove('hidden');
+        else btnClearSearch.classList.add('hidden');
       }
       afficherEleves();
     }
@@ -830,15 +873,12 @@
     };
 
     if (inputSearchEleve) {
-      inputSearchEleve.addEventListener('input', (e) => {
-        filterEleves(e.target.value);
-      });
+      inputSearchEleve.addEventListener('input', (e) => filterEleves(e.target.value));
     }
 
     function afficherEleves() {
       elevesContainer.innerHTML = '';
 
-      // Filtrer les élèves selon la recherche (Nom ou Prénom en Français ou Arabe)
       const listeFiltree = currentEleves.filter(e => {
         if (!searchTermEleve) return true;
         const nomFr = `${e.nom || ''} ${e.prenom || ''}`.toLowerCase();
@@ -857,7 +897,6 @@
       }
 
       listeFiltree.forEach((e) => {
-        // Numéro officiel d'ordre dans la classe
         const indexOfficiel = currentEleves.findIndex(item => item.id === e.id) + 1;
         const row = document.createElement('div');
         const st = currentStatuts[e.id] || 'P';
@@ -917,9 +956,6 @@
       document.getElementById('count-retards').textContent = r;
     }
 
-    // ========================================================
-    // 4. MODAL AJOUT D'ÉLÈVE MANQUANT
-    // ========================================================
     window.ouvrirModalNouvelEleve = function() {
       const cid = selectClasse.value;
       if (!cid) {
@@ -1012,9 +1048,7 @@
       }
     };
 
-    // ========================================================
-    // 5. VALIDATION DE L'APPEL
-    // ========================================================
+    // VALIDATION DE L'APPEL (NOUVEL APPEL OU MODIFICATION SÉANCE PASSÉE)
     if(btnValider) {
       btnValider.onclick = async function() {
         if(!selectClasse.value || currentEleves.length === 0) {
@@ -1026,10 +1060,12 @@
         btnValider.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`;
 
         const t = selectHoraire.value.split('-');
+        const dateChoisie = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
+
         const donneesAppel = {
           classe_id: selectClasse.value,
           matiere: selectMatiere.value,
-          date_cours: new Date().toISOString().split('T')[0],
+          date_cours: dateChoisie,
           heure_debut: t[0] + ':00',
           heure_fin: t[1] + ':00',
           pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' }))
@@ -1039,26 +1075,35 @@
           const queue = getQueueHorsLigne();
           queue.push(donneesAppel);
           saveQueueHorsLigne(queue);
-          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Enregistré hors-ligne', langueCourante === 'ar' ? 'سيتم الإرسال فور عودة الإنترنت.' : 'Appel stocké localement. Synchronisation dès retour du réseau.');
+          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Enregistré hors-ligne', 'Synchronisation dès le retour du réseau.');
           btnValider.disabled = false;
           btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`;
           return;
         }
 
         try {
-          const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ 
-            classe_id: donneesAppel.classe_id, 
-            matiere: donneesAppel.matiere, 
-            date_cours: donneesAppel.date_cours, 
-            heure_debut: donneesAppel.heure_debut, 
-            heure_fin: donneesAppel.heure_fin, 
-            appel_valide: true 
-          }).select().single();
-          
-          if(e1) throw e1;
+          let seanceId = seanceExistanteId;
+
+          // 1. Si la séance n'existait pas encore, on la crée
+          if (!seanceId) {
+            const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ 
+              classe_id: donneesAppel.classe_id, 
+              matiere: donneesAppel.matiere, 
+              date_cours: donneesAppel.date_cours, 
+              heure_debut: donneesAppel.heure_debut, 
+              heure_fin: donneesAppel.heure_fin, 
+              appel_valide: true 
+            }).select().single();
+            
+            if(e1) throw e1;
+            seanceId = s.id;
+          }
+
+          // 2. On supprime les anciens pointages de cette séance pour éviter les doublons puis on réinsère
+          await supabaseClient.from('pointages').delete().eq('seance_id', seanceId);
 
           const pts = donneesAppel.pointages.map(p => ({
-            seance_id: s.id,
+            seance_id: seanceId,
             eleve_id: p.eleve_id,
             statut: p.statut
           }));
@@ -1066,13 +1111,19 @@
           const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
           if(e2) throw e2;
           
-          afficherToast(langueCourante === 'ar' ? 'تم تأكيد الغياب' : 'Succès', langueCourante === 'ar' ? 'تم إرسال الورقة بنجاح إلى الاستشارة التربوية.' : 'Appel transmis avec succès !');
+          seanceExistanteId = seanceId;
+          if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
+
+          afficherToast(
+            langueCourante === 'ar' ? 'تم تسجيل الحضور' : 'Succès',
+            langueCourante === 'ar' ? 'تم حفظ الورقة وتحديث قاعدة البيانات بنجاح.' : 'Appel enregistré et synchronisé avec succès !'
+          );
         } catch(e) { 
           console.warn("Échec réseau, mise en file locale :", e);
           const queue = getQueueHorsLigne();
           queue.push(donneesAppel);
           saveQueueHorsLigne(queue);
-          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Sauvegardé hors-ligne', langueCourante === 'ar' ? 'حُفظت الورقة في الجهاز بسبب عدم استقرار الشبكة.' : 'Réseau instable : appel sécurisé sur votre appareil.');
+          afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Sauvegardé hors-ligne', 'Réseau instable : appel sécurisé.');
         } finally { 
           btnValider.disabled = false; 
           btnValider.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`; 
@@ -1080,11 +1131,11 @@
       };
     }
     
+    // Écouteurs pour actualiser et vérifier les séances passées
     if(selectClasse) selectClasse.addEventListener('change', (e) => chargerEleves(e.target.value));
+    if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
+    if(selectHoraire) selectHoraire.addEventListener('change', verifierEtChargerSeanceExistante);
 
-    // ========================================================
-    // 6. GESTION DU DÉVERROUILLAGE PAR MATIÈRE
-    // ========================================================
     const pinSelectMatiere = document.getElementById('pin-select-matiere');
     const inputPin = document.getElementById('input-pin-prof');
     const btnPin = document.getElementById('btn-valider-pin-prof');
@@ -1155,13 +1206,11 @@
       };
     }
 
-    // Vérification de session active
     const matiereSession = sessionStorage.getItem('prof_auth_matiere');
     if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) { 
       debloquerPagePourMatiere(matiereSession); 
     }
 
-    // Initialisation de la langue au démarrage
     appliquerLangue(langueCourante);
   </script>
 </body>
