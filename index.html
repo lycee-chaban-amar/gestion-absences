@@ -100,7 +100,9 @@
     </div>
   </div>
 
+  <!-- ======================================================== -->
   <!-- ÉCRAN DE DÉVERROUILLAGE INSTITUTIONNEL -->
+  <!-- ======================================================== -->
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
     <div class="text-center pt-2 sm:pt-4 text-white animate-row max-w-lg w-full">
       <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-indigo-600/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 text-2xl shadow-xl backdrop-blur-md">
@@ -157,11 +159,28 @@
         </div>
 
         <div>
-          <input type="password" id="input-pin-prof" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" />
-          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2" data-i18n="pin_error">Code incorrect / رمز غير صحيح</p>
+          <input 
+            type="password" 
+            id="input-pin-prof" 
+            maxlength="4" 
+            placeholder="••••" 
+            autocomplete="off" 
+            inputmode="numeric" 
+            oninput="if(this.value.trim().length === 4) validerPinDirect();"
+            onkeydown="if(event.key === 'Enter') { event.preventDefault(); validerPinDirect(); }"
+            class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl focus:border-indigo-600 focus:bg-white outline-none transition" 
+          />
+          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
         </div>
 
-        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/30 transition cursor-pointer" data-i18n="pin_btn">Déverrouiller / الدخول</button>
+        <!-- BOUTON AVEC APPEL DIRECT onclick="validerPinDirect()" -->
+        <button 
+          id="btn-valider-pin-prof" 
+          type="button" 
+          onclick="validerPinDirect()" 
+          class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-indigo-600/30 transition cursor-pointer">
+          <span data-i18n="pin_btn">Déverrouiller / الدخول</span>
+        </button>
       </div>
       <p class="text-[11px] text-slate-400 mt-4" data-i18n="pin_footer">Chaque matière dispose de son propre code d'accès</p>
     </div>
@@ -192,11 +211,11 @@
           <span id="lang-label">العربية</span>
         </button>
 
-        <button id="btn-lock-prof" type="button" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-indigo-600 cursor-pointer">
+        <button id="btn-lock-prof" type="button" onclick="verrouillerSessionProf()" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full transition flex items-center gap-1.5 border border-indigo-600 cursor-pointer">
           <i class="fa-solid fa-lock text-amber-300"></i><span data-i18n="btn_lock">Verrouiller</span>
         </button>
 
-        <button id="btn-sync-offline" type="button" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition cursor-pointer">
+        <button id="btn-sync-offline" type="button" onclick="synchroniserAppelsEnAttente()" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition cursor-pointer">
           <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
           <span id="conn-text" data-i18n="conn_online">En ligne</span>
         </button>
@@ -291,7 +310,7 @@
           <p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p>
         </div>
         <div class="flex items-center gap-2 flex-wrap">
-          <button id="btn-tout-present" type="button" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-indigo-100 transition">
+          <button id="btn-tout-present" type="button" onclick="marquerTousPresents()" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-indigo-100 transition">
             <i class="fa-solid fa-check-double text-indigo-600"></i> <span data-i18n="btn_mark_all">Tout marquer présent</span>
           </button>
           <button id="btn-ouvrir-modal-eleve" type="button" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-emerald-100 transition active:scale-95">
@@ -333,31 +352,35 @@
     </div>
   </div>
 
-  <!-- SCRIPT JS -->
+  <!-- ======================================================== -->
+  <!-- SCRIPT JAVASCRIPT COMPLET ET SÉCURISÉ -->
+  <!-- ======================================================== -->
   <script>
+    // 1. TABLEAU DES CODES PAR MATIÈRE
     const CODES_MATIERES_BASE64 = {
-      "Mathématiques / رياضيات": "MTAwMQ==",
-      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",
-      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",
-      "Informatique / إعلام آلي": "MTAwNA==",
-      "Génie Civil / هندسة مدنية": "MjAwMQ==",
-      "Génie Électrique / هندسة كهربائية": "MjAwMg==",
-      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",
-      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",
-      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",
-      "Droit / قانون": "MjAwNg==",
-      "Langue Arabe / لغة عربية": "MzAwMQ==",
-      "Langue Française / فرنسية": "MzAwMg==",
-      "Langue Anglaise / إنجليزية": "MzAwMw==",
-      "Langue Allemande / ألمانية": "MzAwNA==",
-      "Langue Espagnole / إسبانية": "MzAwNQ==",
-      "Langue Amazighe / أمازيغية": "MzAwNg==",
-      "Philosophie / فلسفة": "MzAwNw==",
-      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==",
-      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",
-      "EPS / تربية بدنية": "NDAwMQ=="
+      "Mathématiques / رياضيات": "MTAwMQ==",           // 1001
+      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",   // 1002
+      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",   // 1003
+      "Informatique / إعلام آلي": "MTAwNA==",             // 1004
+      "Génie Civil / هندسة مدنية": "MjAwMQ==",             // 2001
+      "Génie Électrique / هندسة كهربائية": "MjAwMg==",     // 2002
+      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",     // 2003
+      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",    // 2004
+      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",    // 2005
+      "Droit / قانون": "MjAwNg==",                         // 2006
+      "Langue Arabe / لغة عربية": "MzAwMQ==",             // 3001
+      "Langue Française / فرنسية": "MzAwMg==",             // 3002
+      "Langue Anglaise / إنجليزية": "MzAwMw==",           // 3003
+      "Langue Allemande / ألمانية": "MzAwNA==",           // 3004
+      "Langue Espagnole / إسبانية": "MzAwNQ==",           // 3005
+      "Langue Amazighe / أمازيغية": "MzAwNg==",           // 3006
+      "Philosophie / فلسفة": "MzAwNw==",                  // 3007
+      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", // 3008
+      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",   // 3009
+      "EPS / تربية بدنية": "NDAwMQ=="                     // 4001
     };
 
+    // 2. DICTIONNAIRE MULTILINGUE
     const TRADUCTIONS = {
       fr: {
         lang_btn: "العربية",
@@ -390,7 +413,7 @@
         pin_title: "Espace Enseignant",
         pin_sub: "Sélectionnez votre matière et entrez le code secret",
         pin_error: "Code incorrect pour cette matière / رمز غير صحيح",
-        pin_btn: "Déverrouiller",
+        pin_btn: "Déverrouiller / الدخول",
         pin_footer: "Chaque matière dispose de son propre code d'accès",
         modal_add_title: "Élève manquant",
         modal_add_sub: "إضافة تلميذ غير مسجل في الفوج",
@@ -455,56 +478,22 @@
       }
     };
 
-    let langueCourante = localStorage.getItem('pref_langue_prof') || 'fr';
-
-    function appliquerLangue(lang) {
-      langueCourante = lang;
-      localStorage.setItem('pref_langue_prof', lang);
-
-      const htmlRoot = document.getElementById('html-root');
-      htmlRoot.setAttribute('lang', lang);
-      htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const cle = el.getAttribute('data-i18n');
-        if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) {
-          el.textContent = TRADUCTIONS[lang][cle];
-        }
-      });
-
-      const lblLang = document.getElementById('lang-label');
-      if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
-
-      const inputSearch = document.getElementById('input-search-eleve');
-      if (inputSearch) inputSearch.placeholder = TRADUCTIONS[lang].search_placeholder;
-
-      if (currentEleves.length > 0) {
-        afficherEleves();
-        mettreAJourCompteurs();
-      }
-      mettreAJourBadgeReseau();
-    }
-
-    function toggleLangue() {
-      const nouvelle = (langueCourante === 'fr') ? 'ar' : 'fr';
-      appliquerLangue(nouvelle);
-    }
-
+    // 3. INITIALISATION SUPABASE & VARIABLES GLOBALES
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    let langueCourante = localStorage.getItem('pref_langue_prof') || 'fr';
     let classesList = [], currentEleves = [], currentStatuts = {};
     let searchTermEleve = '';
     let seanceExistanteId = null;
-    let billetsMap = new Map(); // Stocke les billets numériques du jour
+    let billetsMap = new Map();
 
     const inputDateCours = document.getElementById('input-date-cours');
     const selectClasse = document.getElementById('select-classe');
     const selectMatiere = document.getElementById('select-matiere');
     const selectHoraire = document.getElementById('select-horaire');
     const elevesContainer = document.getElementById('eleves-container');
-    const btnValider = document.getElementById('btn-valider-appel');
     const btnValiderRapideTop = document.getElementById('btn-valider-rapide-top');
     const btnOuvrirModalEleve = document.getElementById('btn-ouvrir-modal-eleve');
     const searchContainer = document.getElementById('search-container');
@@ -517,12 +506,116 @@
       inputDateCours.value = new Date().toISOString().split('T')[0];
     }
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
+    // 4. FONCTIONS DE DÉVERROUILLAGE PAR MATIÈRE (DÉCLARÉES GLOBALEMENT DÈS LE DÉBUT)
+    window.debloquerPagePourMatiere = function(matiere) {
+      const pinScreen = document.getElementById('pin-screen-prof');
+      if (pinScreen) pinScreen.remove();
+      
+      sessionStorage.setItem('prof_auth_matiere', matiere);
+      
+      if (selectMatiere) {
+        selectMatiere.value = matiere;
+        selectMatiere.disabled = true;
+      }
+
+      initClasses();
+    };
+
+    window.validerPinDirect = function() {
+      const pinSelectMatiere = document.getElementById('pin-select-matiere');
+      const inputPin = document.getElementById('input-pin-prof');
+      const err = document.getElementById('pin-prof-error');
+      const card = document.getElementById('pin-card-prof');
+
+      if (!pinSelectMatiere || !inputPin) return;
+
+      const matiere = pinSelectMatiere.value;
+      const codeSaisi = inputPin.value.trim();
+
+      // Cas 1 : Aucune matière choisie
+      if (!matiere) {
+        if (err) {
+          err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى اختيار المادة أولاً من القائمة' : '⚠️ Veuillez d\'abord choisir votre matière';
+          err.classList.remove('hidden');
+        }
+        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
+        pinSelectMatiere.focus();
+        return;
+      }
+
+      // Cas 2 : Code PIN incomplet (moins de 4 chiffres)
+      if (codeSaisi.length < 4) {
+        if (err) {
+          err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى إدخال الرمز المكون من 4 أرقام' : '⚠️ Veuillez entrer les 4 chiffres du code';
+          err.classList.remove('hidden');
+        }
+        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
+        inputPin.focus();
+        return;
+      }
+
+      const codeAttenduBase64 = CODES_MATIERES_BASE64[matiere];
+
+      // Cas 3 : Vérification du code PIN
+      if (codeAttenduBase64 && codeSaisi === atob(codeAttenduBase64)) {
+        if (err) err.classList.add('hidden');
+        debloquerPagePourMatiere(matiere);
+      } else {
+        if (err) {
+          err.textContent = TRADUCTIONS[langueCourante].pin_error;
+          err.classList.remove('hidden');
+        }
+        if (card) { 
+          card.classList.remove('shake-error'); 
+          void card.offsetWidth; 
+          card.classList.add('shake-error'); 
+        }
+        inputPin.value = '';
+        inputPin.focus();
+      }
+    };
+
+    window.verrouillerSessionProf = function() {
+      sessionStorage.removeItem('prof_auth_matiere');
+      location.reload();
+    };
+
+    // 5. GESTION DE LA LANGUE
+    function appliquerLangue(lang) {
+      langueCourante = lang;
+      localStorage.setItem('pref_langue_prof', lang);
+
+      const htmlRoot = document.getElementById('html-root');
+      if (htmlRoot) {
+        htmlRoot.setAttribute('lang', lang);
+        htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      }
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const cle = el.getAttribute('data-i18n');
+        if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) {
+          el.textContent = TRADUCTIONS[lang][cle];
+        }
       });
+
+      const lblLang = document.getElementById('lang-label');
+      if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
+
+      if (inputSearchEleve) inputSearchEleve.placeholder = TRADUCTIONS[lang].search_placeholder;
+
+      if (currentEleves.length > 0) {
+        afficherEleves();
+        mettreAJourCompteurs();
+      }
+      mettreAJourBadgeReseau();
     }
 
+    window.toggleLangue = function() {
+      const nouvelle = (langueCourante === 'fr') ? 'ar' : 'fr';
+      appliquerLangue(nouvelle);
+    };
+
+    // 6. GESTION HORS-LIGNE
     function getQueueHorsLigne() {
       try {
         return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]');
@@ -539,6 +632,8 @@
     function mettreAJourBadgeReseau() {
       const dot = document.getElementById('conn-dot');
       const text = document.getElementById('conn-text');
+      if (!dot || !text) return;
+
       const queue = getQueueHorsLigne();
       const isOnline = navigator.onLine;
 
@@ -556,13 +651,13 @@
       }
     }
 
-    async function synchroniserAppelsEnAttente() {
+    window.synchroniserAppelsEnAttente = async function() {
       if (!navigator.onLine) return;
       const queue = getQueueHorsLigne();
       if (queue.length === 0) return;
 
       const btnSync = document.getElementById('btn-sync-offline');
-      btnSync.disabled = true;
+      if (btnSync) btnSync.disabled = true;
 
       let reussis = 0;
       const nouvelleQueue = [];
@@ -595,34 +690,27 @@
 
           reussis++;
         } catch (e) {
-          console.error("Échec sync :", e);
           nouvelleQueue.push(item);
         }
       }
 
       saveQueueHorsLigne(nouvelleQueue);
-      btnSync.disabled = false;
+      if (btnSync) btnSync.disabled = false;
 
       if (reussis > 0) {
         afficherToast(langueCourante === 'ar' ? 'تمت المزامنة بنجاح' : 'Synchronisation réussie', `${reussis} appel(s) transmis.`);
       }
-    }
+    };
 
     window.addEventListener('online', () => {
       mettreAJourBadgeReseau();
-      afficherToast(langueCourante === 'ar' ? 'عاد الاتصال' : 'Réseau rétabli', 'Synchronisation...');
       synchroniserAppelsEnAttente();
     });
-
-    window.addEventListener('offline', () => {
-      mettreAJourBadgeReseau();
-      afficherToast(langueCourante === 'ar' ? 'انقطع الاتصال' : 'Hors-ligne', 'Mode local activé.');
-    });
-
-    document.getElementById('btn-sync-offline').addEventListener('click', synchroniserAppelsEnAttente);
+    window.addEventListener('offline', mettreAJourBadgeReseau);
 
     function afficherToast(titre, msg) {
       const t = document.getElementById('toast-notification');
+      if (!t) return;
       document.getElementById('toast-titre').textContent = titre; 
       document.getElementById('toast-message').textContent = msg;
       t.classList.remove('-translate-y-24', 'opacity-0'); 
@@ -633,6 +721,7 @@
       }, 3500);
     }
 
+    // 7. CHARGEMENT DES CLASSES & ÉLÈVES
     async function initClasses() {
       const cacheClasses = localStorage.getItem('cache_classes');
       if (cacheClasses) {
@@ -703,7 +792,7 @@
       const heureDeb = t[0] + ':00';
 
       try {
-        const { data: seance, error } = await supabaseClient
+        const { data: seance } = await supabaseClient
           .from('seances')
           .select('id, pointages (eleve_id, statut)')
           .eq('classe_id', cid)
@@ -736,7 +825,6 @@
       }
     }
 
-    // CHARGEMENT DES ÉLÈVES ET DES BILLETS NUMÉRIQUES
     async function chargerEleves(cid) {
       if(!cid) {
         elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
@@ -766,7 +854,6 @@
 
       if (navigator.onLine) {
         try {
-          // Requête simultanée : Élèves de la classe + Billets actifs du jour
           const [elevesRes, billetsRes] = await Promise.all([
             supabaseClient.from('eleves').select('*').eq('classe_id', cid).eq('actif', true).order('nom'),
             supabaseClient.from('v_billets_actifs_jour').select('*')
@@ -777,10 +864,8 @@
             localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(elevesRes.data));
           }
 
-          // Remplir le dictionnaire des billets
           billetsMap = new Map();
           (billetsRes.data || []).forEach(b => billetsMap.set(b.eleve_id, b));
-
         } catch (err) {
           console.warn("Chargement depuis cache local :", err);
         }
@@ -854,10 +939,9 @@
         const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
         const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
 
-        // BADGE DU BILLET D'ENTRÉE NUMÉRIQUE
         const billet = billetsMap.get(e.id);
         const badgeBilletHtml = billet ? `
-          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm" title="${langueCourante === 'ar' ? 'رخصة دخول مسلمة من الإدارة' : 'Billet d\\'entrée accordé par l\\'administration'}">
+          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
             <i class="fa-solid fa-ticket text-emerald-600"></i>
             <span>${langueCourante === 'ar' ? 'رخصة دخول ' + (billet.heure_emission || '') : 'Billet ' + (billet.heure_emission || '')}</span>
           </span>
@@ -898,13 +982,11 @@
       mettreAJourCompteurs(); 
     };
     
-    if(document.getElementById('btn-tout-present')) {
-      document.getElementById('btn-tout-present').onclick = function(){ 
-        currentEleves.forEach(e => currentStatuts[e.id] = 'P'); 
-        afficherEleves(); 
-        mettreAJourCompteurs(); 
-      };
-    }
+    window.marquerTousPresents = function() {
+      currentEleves.forEach(e => currentStatuts[e.id] = 'P'); 
+      afficherEleves(); 
+      mettreAJourCompteurs(); 
+    };
 
     function mettreAJourCompteurs() {
       let p=0, a=0, r=0; 
@@ -1102,82 +1184,13 @@
     if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
     if(selectHoraire) selectHoraire.addEventListener('change', verifierEtChargerSeanceExistante);
 
-    const pinSelectMatiere = document.getElementById('pin-select-matiere');
-    const inputPin = document.getElementById('input-pin-prof');
-    const btnPin = document.getElementById('btn-valider-pin-prof');
-
-    function debloquerPagePourMatiere(matiere) {
-      const pinScreen = document.getElementById('pin-screen-prof');
-      if (pinScreen) pinScreen.remove();
-      
-      sessionStorage.setItem('prof_auth_matiere', matiere);
-      
-      if (selectMatiere) {
-        selectMatiere.value = matiere;
-        selectMatiere.disabled = true;
-      }
-
-      initClasses();
-    }
-
-    function validerPinDirect() {
-      const err = document.getElementById('pin-prof-error');
-      const card = document.getElementById('pin-card-prof');
-      const matiere = pinSelectMatiere.value;
-      const codeSaisi = inputPin.value.trim();
-
-      if (!matiere) {
-        alert(langueCourante === 'ar' ? 'يرجى اختيار مادتك أولاً من القائمة' : 'Veuillez d\'abord choisir votre matière dans la liste');
-        pinSelectMatiere.focus();
-        return;
-      }
-
-      if (codeSaisi.length < 4) return;
-
-      const codeAttenduBase64 = CODES_MATIERES_BASE64[matiere];
-
-      if (codeAttenduBase64 && codeSaisi === atob(codeAttenduBase64)) {
-        if (err) err.classList.add('hidden');
-        debloquerPagePourMatiere(matiere);
-      } else {
-        if (err) err.classList.remove('hidden');
-        if (card) { 
-          card.classList.remove('shake-error'); 
-          void card.offsetWidth; 
-          card.classList.add('shake-error'); 
-        }
-        inputPin.value = '';
-        inputPin.focus();
-      }
-    }
-
-    if (btnPin) btnPin.onclick = validerPinDirect;
-    if (inputPin) {
-      inputPin.addEventListener('input', function() { 
-        if (this.value.trim().length === 4) validerPinDirect(); 
-      });
-      inputPin.addEventListener('keydown', function(e) { 
-        if (e.key === 'Enter') { 
-          e.preventDefault(); 
-          validerPinDirect(); 
-        } 
-      });
-    }
-
-    const btnLock = document.getElementById('btn-lock-prof');
-    if (btnLock) {
-      btnLock.onclick = function() { 
-        sessionStorage.removeItem('prof_auth_matiere'); 
-        location.reload(); 
-      };
-    }
+    // 8. DÉMARRAGE AUTOMATIQUE
+    appliquerLangue(langueCourante);
 
     const matiereSession = sessionStorage.getItem('prof_auth_matiere');
     if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) { 
       debloquerPagePourMatiere(matiereSession); 
     }
-
-    appliquerLangue(langueCourante);
   </script>
 </body>
 </html>
