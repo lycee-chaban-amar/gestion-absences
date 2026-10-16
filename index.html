@@ -100,9 +100,7 @@
     </div>
   </div>
 
-  <!-- ======================================================== -->
   <!-- ÉCRAN DE DÉVERROUILLAGE INSTITUTIONNEL -->
-  <!-- ======================================================== -->
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
     <div class="text-center pt-2 sm:pt-4 text-white animate-row max-w-lg w-full">
       <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-indigo-600/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 text-2xl shadow-xl backdrop-blur-md">
@@ -173,7 +171,6 @@
           <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
         </div>
 
-        <!-- BOUTON AVEC APPEL DIRECT onclick="validerPinDirect()" -->
         <button 
           id="btn-valider-pin-prof" 
           type="button" 
@@ -352,35 +349,31 @@
     </div>
   </div>
 
-  <!-- ======================================================== -->
-  <!-- SCRIPT JAVASCRIPT COMPLET ET SÉCURISÉ -->
-  <!-- ======================================================== -->
+  <!-- SCRIPT JAVASCRIPT COMPLET -->
   <script>
-    // 1. TABLEAU DES CODES PAR MATIÈRE
     const CODES_MATIERES_BASE64 = {
-      "Mathématiques / رياضيات": "MTAwMQ==",           // 1001
-      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",   // 1002
-      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",   // 1003
-      "Informatique / إعلام آلي": "MTAwNA==",             // 1004
-      "Génie Civil / هندسة مدنية": "MjAwMQ==",             // 2001
-      "Génie Électrique / هندسة كهربائية": "MjAwMg==",     // 2002
-      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",     // 2003
-      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",    // 2004
-      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",    // 2005
-      "Droit / قانون": "MjAwNg==",                         // 2006
-      "Langue Arabe / لغة عربية": "MzAwMQ==",             // 3001
-      "Langue Française / فرنسية": "MzAwMg==",             // 3002
-      "Langue Anglaise / إنجليزية": "MzAwMw==",           // 3003
-      "Langue Allemande / ألمانية": "MzAwNA==",           // 3004
-      "Langue Espagnole / إسبانية": "MzAwNQ==",           // 3005
-      "Langue Amazighe / أمازيغية": "MzAwNg==",           // 3006
-      "Philosophie / فلسفة": "MzAwNw==",                  // 3007
-      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", // 3008
-      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",   // 3009
-      "EPS / تربية بدنية": "NDAwMQ=="                     // 4001
+      "Mathématiques / رياضيات": "MTAwMQ==",
+      "Sciences Naturelles / علوم الطبيعة": "MTAwMg==",
+      "Sciences Physiques / علوم فيزيائية": "MTAwMw==",
+      "Informatique / إعلام آلي": "MTAwNA==",
+      "Génie Civil / هندسة مدنية": "MjAwMQ==",
+      "Génie Électrique / هندسة كهربائية": "MjAwMg==",
+      "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==",
+      "Génie des Procédés / هندسة الطرائق": "MjAwNA==",
+      "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==",
+      "Droit / قانون": "MjAwNg==",
+      "Langue Arabe / لغة عربية": "MzAwMQ==",
+      "Langue Française / فرنسية": "MzAwMg==",
+      "Langue Anglaise / إنجليزية": "MzAwMw==",
+      "Langue Allemande / ألمانية": "MzAwNA==",
+      "Langue Espagnole / إسبانية": "MzAwNQ==",
+      "Langue Amazighe / أمازيغية": "MzAwNg==",
+      "Philosophie / فلسفة": "MzAwNw==",
+      "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==",
+      "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",
+      "EPS / تربية بدنية": "NDAwMQ=="
     };
 
-    // 2. DICTIONNAIRE MULTILINGUE
     const TRADUCTIONS = {
       fr: {
         lang_btn: "العربية",
@@ -478,7 +471,6 @@
       }
     };
 
-    // 3. INITIALISATION SUPABASE & VARIABLES GLOBALES
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -506,7 +498,6 @@
       inputDateCours.value = new Date().toISOString().split('T')[0];
     }
 
-    // 4. FONCTIONS DE DÉVERROUILLAGE PAR MATIÈRE (DÉCLARÉES GLOBALEMENT DÈS LE DÉBUT)
     window.debloquerPagePourMatiere = function(matiere) {
       const pinScreen = document.getElementById('pin-screen-prof');
       if (pinScreen) pinScreen.remove();
@@ -532,10 +523,9 @@
       const matiere = pinSelectMatiere.value;
       const codeSaisi = inputPin.value.trim();
 
-      // Cas 1 : Aucune matière choisie
       if (!matiere) {
         if (err) {
-          err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى اختيار المادة أولاً من القائمة' : '⚠️ Veuillez d\'abord choisir votre matière';
+          err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى اختيار المادة أولاً' : '⚠️ Veuillez d\'abord choisir votre matière';
           err.classList.remove('hidden');
         }
         if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
@@ -543,10 +533,9 @@
         return;
       }
 
-      // Cas 2 : Code PIN incomplet (moins de 4 chiffres)
       if (codeSaisi.length < 4) {
         if (err) {
-          err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى إدخال الرمز المكون من 4 أرقام' : '⚠️ Veuillez entrer les 4 chiffres du code';
+          err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى إدخال الرمز المكون من 4 أرقام' : '⚠️ Code à 4 chiffres requis';
           err.classList.remove('hidden');
         }
         if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
@@ -556,7 +545,6 @@
 
       const codeAttenduBase64 = CODES_MATIERES_BASE64[matiere];
 
-      // Cas 3 : Vérification du code PIN
       if (codeAttenduBase64 && codeSaisi === atob(codeAttenduBase64)) {
         if (err) err.classList.add('hidden');
         debloquerPagePourMatiere(matiere);
@@ -580,7 +568,6 @@
       location.reload();
     };
 
-    // 5. GESTION DE LA LANGUE
     function appliquerLangue(lang) {
       langueCourante = lang;
       localStorage.setItem('pref_langue_prof', lang);
@@ -615,7 +602,6 @@
       appliquerLangue(nouvelle);
     };
 
-    // 6. GESTION HORS-LIGNE
     function getQueueHorsLigne() {
       try {
         return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]');
@@ -721,7 +707,6 @@
       }, 3500);
     }
 
-    // 7. CHARGEMENT DES CLASSES & ÉLÈVES
     async function initClasses() {
       const cacheClasses = localStorage.getItem('cache_classes');
       if (cacheClasses) {
@@ -939,11 +924,14 @@
         const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
         const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
 
+        // OPTION 1 : BADGE PROFESSIONNEL "AUTORISÉ À ENTRER / مسموح له بالدخول"
         const billet = billetsMap.get(e.id);
         const badgeBilletHtml = billet ? `
-          <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm">
-            <i class="fa-solid fa-ticket text-emerald-600"></i>
-            <span>${langueCourante === 'ar' ? 'رخصة دخول ' + (billet.heure_emission || '') : 'Billet ' + (billet.heure_emission || '')}</span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm">
+            <i class="fa-solid fa-user-check text-emerald-600"></i>
+            <span>${langueCourante === 'ar' 
+              ? 'مسموح له بالدخول (' + (billet.heure_emission || '') + ')' 
+              : 'Autorisé à entrer (' + (billet.heure_emission || '') + ')'}</span>
           </span>
         ` : '';
 
@@ -1184,7 +1172,7 @@
     if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
     if(selectHoraire) selectHoraire.addEventListener('change', verifierEtChargerSeanceExistante);
 
-    // 8. DÉMARRAGE AUTOMATIQUE
+    // DÉMARRAGE AUTOMATIQUE
     appliquerLangue(langueCourante);
 
     const matiereSession = sessionStorage.getItem('prof_auth_matiere');
