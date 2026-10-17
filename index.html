@@ -16,7 +16,7 @@
   <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
@@ -914,6 +914,19 @@
         return;
       }
 
+      // Matières dont les cours se déroulent en arabe
+      const matieresArabophones = [
+        "Langue Arabe / لغة عربية",
+        "Philosophie / فلسفة",
+        "Histoire-Géographie / تاريخ وجغرافيا",
+        "Sciences Islamiques / علوم إسلامية",
+        "Droit / قانون",
+        "Gestion & Économie / تسيير واقتصاد"
+      ];
+      
+      const matiereActuelle = selectMatiere ? selectMatiere.value : "";
+      const estMatiereArabe = matieresArabophones.includes(matiereActuelle);
+
       listeFiltree.forEach((e) => {
         const indexOfficiel = currentEleves.findIndex(item => item.id === e.id) + 1;
         const row = document.createElement('div');
@@ -924,12 +937,12 @@
         const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
         const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
 
-        // OPTION 1 : BADGE PROFESSIONNEL "AUTORISÉ À ENTRER / مسموح له بالدخول"
+        // Affichage bilingue conditionnel du badge d'entrée
         const billet = billetsMap.get(e.id);
         const badgeBilletHtml = billet ? `
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm" dir="${estMatiereArabe ? 'rtl' : 'ltr'}">
             <i class="fa-solid fa-user-check text-emerald-600"></i>
-            <span>${langueCourante === 'ar' 
+            <span>${estMatiereArabe 
               ? 'مسموح له بالدخول (' + (billet.heure_emission || '') + ')' 
               : 'Autorisé à entrer (' + (billet.heure_emission || '') + ')'}</span>
           </span>
@@ -1172,7 +1185,7 @@
     if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
     if(selectHoraire) selectHoraire.addEventListener('change', verifierEtChargerSeanceExistante);
 
-    // DÉMARRAGE AUTOMATIQUE
+    // Initialisation
     appliquerLangue(langueCourante);
 
     const matiereSession = sessionStorage.getItem('prof_auth_matiere');
