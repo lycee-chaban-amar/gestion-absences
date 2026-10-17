@@ -46,7 +46,22 @@
   <div id="modal-transfert-global" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row"><div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4"><h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-user-minus text-rose-600"></i><span>Signaler un élève transféré</span></h3><button type="button" onclick="fermerModalTransfertGlobal()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="space-y-4 text-sm"><p class="text-xs text-slate-500">Sélectionnez la classe puis l'élève.</p><div><label class="block text-xs font-bold text-slate-600 mb-1">Classe / القسم</label><select id="transfert-select-classe" onchange="chargerElevesPourTransfert(this.value)" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none"><option value="">-- Choisir la division --</option></select></div><div><label class="block text-xs font-bold text-slate-600 mb-1">Élève / التلميذ</label><select id="transfert-select-eleve" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none"><option value="">-- Sélectionnez l'élève --</option></select></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100"><button type="button" onclick="fermerModalTransfertGlobal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Annuler</button><button type="button" onclick="confirmerTransfertGlobal()" class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"><i class="fa-solid fa-user-slash"></i><span>Retirer l'élève</span></button></div></div></div>
   <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row"><div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4"><h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-indigo-600"></i><span>Modifier l'enregistrement</span></h3><button type="button" onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><input type="hidden" id="edit-pointage-id" /><div class="space-y-4 text-sm"><div><label class="block text-xs font-bold text-slate-500 mb-1">Élève</label><div id="edit-eleve-nom" class="font-bold text-slate-800 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200"></div></div><div><label class="block text-xs font-bold text-slate-500 mb-1">Statut</label><select id="edit-statut" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 outline-none"><option value="P">✅ Présent</option><option value="A">❌ Absent</option><option value="R">⏳ Retard</option></select></div><div><label class="block text-xs font-bold text-slate-500 mb-1">Justification</label><div class="flex gap-4 mb-2"><label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold"><input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600" /> <span>Non justifié</span></label><label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700"><input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600" /> <span>Justifié</span></label></div><input type="text" id="edit-motif" placeholder="Motif / السبب..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs outline-none" /></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100"><button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Annuler</button><button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Enregistrer</button></div></div></div>
   <div id="modal-editer-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row"><div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4"><h3 class="text-base font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-user-pen text-amber-500"></i><span>Modifier l'identité de l'élève</span></h3><button type="button" onclick="fermerModalEditerEleve()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><input type="hidden" id="edit-student-id" /><div class="space-y-3.5 text-sm"><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold text-slate-600 mb-1">Nom (FR) *</label><input type="text" id="edit-student-nom" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none uppercase" /></div><div><label class="block text-xs font-bold text-slate-600 mb-1">Prénom (FR) *</label><input type="text" id="edit-student-prenom" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none capitalize" /></div></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-bold text-slate-600 mb-1">اللقب (بالعربية)</label><input type="text" id="edit-student-nom-ar" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none" /></div><div><label class="block text-xs font-bold text-slate-600 mb-1">الاسم (بالعربية)</label><input type="text" id="edit-student-prenom-ar" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold outline-none" /></div></div><div class="pt-3 border-t border-slate-100 flex flex-col gap-2"><label class="block text-xs font-bold text-slate-500">Statut scolaire / الوضعية المدرسية</label><div class="flex gap-2"><button type="button" onclick="marquerEleveTransfereDepuisModal()" class="flex-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Transféré</span></button><button type="button" onclick="supprimerEleveDefinitifDepuisModal()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"><i class="fa-solid fa-trash-can"></i><span>Supprimer</span></button></div></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100"><button type="button" onclick="fermerModalEditerEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Annuler</button><button type="button" onclick="enregistrerModificationEleve()" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Enregistrer</button></div></div></div>
-  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4"><div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform"><div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div><h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2><p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p><div class="space-y-4"><div><input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl outline-none" /><p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p></div><button type="button" id="btn-valider-pin" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg">Déverrouiller</button></div></div></div>
+  
+  <!-- ÉCRAN PIN -->
+  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
+      <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div>
+      <h2 class="text-xl font-extrabold text-slate-900">Espace Sécurisé</h2>
+      <p class="text-xs text-slate-500 mt-1 mb-6">ثانوية شعبان أعمر - يرجى إدخال الرمز السري</p>
+      <div class="space-y-4">
+        <div>
+          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl outline-none" />
+          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p>
+        </div>
+        <button type="button" id="btn-valider-pin" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg">Déverrouiller</button>
+      </div>
+    </div>
+  </div>
 
   <!-- HEADER -->
   <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
@@ -169,7 +184,7 @@
 
     if (filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
-    const PIN_MASQUE = "MjYyNg==";
+    const PIN_MASQUE = "MjYyNg=="; // Code : 2626
 
     function escapeHtml(s) {
       if (s === null || s === undefined) return '';
@@ -181,7 +196,67 @@
     }
 
     // ============================================================
-    // GESTION GLOBALE DES CLICS (Résistant aux redessins de DOM)
+    // GESTION DU PIN (Déverrouillage)
+    // ============================================================
+    function debloquerSuperviseur() {
+      const pinScreen = document.getElementById('pin-screen'); 
+      if (pinScreen) pinScreen.remove();
+      sessionStorage.setItem('superviseur_auth', 'true');
+      if (__appInit) return;
+      __appInit = true;
+      initialiserApplication();
+    }
+
+    function validerPinDirect() {
+      const input = document.getElementById('input-pin');
+      const err = document.getElementById('pin-error');
+      const card = document.getElementById('pin-card');
+      const val = input ? input.value.trim() : '';
+      
+      if (val === atob(PIN_MASQUE)) { 
+        if (err) err.classList.add('hidden'); 
+        debloquerSuperviseur(); 
+      } else { 
+        if (err) err.classList.remove('hidden'); 
+        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
+        if (input) { input.value = ''; input.focus(); } 
+      }
+    }
+
+    // Écouteur sur le bouton Déverrouiller
+    const btnValiderPin = document.getElementById('btn-valider-pin');
+    if (btnValiderPin) { 
+      btnValiderPin.addEventListener('click', function(e) {
+        e.preventDefault();
+        validerPinDirect(); 
+      }); 
+    }
+    
+    // Écouteur sur la touche Entrée
+    const inputPinSuperviseur = document.getElementById('input-pin');
+    if (inputPinSuperviseur) { 
+      inputPinSuperviseur.addEventListener('keydown', function(e) { 
+        if(e.key === 'Enter') { 
+          e.preventDefault(); 
+          validerPinDirect(); 
+        } 
+      }); 
+    }
+
+    const btnLockSup = document.getElementById('btn-lock');
+    if (btnLockSup) { 
+      btnLockSup.addEventListener('click', function() { 
+        sessionStorage.removeItem('superviseur_auth'); 
+        location.reload(); 
+      }); 
+    }
+
+    if (sessionStorage.getItem('superviseur_auth') === 'true') debloquerSuperviseur();
+
+    async function initialiserApplication() { await loadClassesBilingues(); await fetchDonnees(); }
+
+    // ============================================================
+    // GESTION GLOBALE DES CLICS (Boutons du tableau)
     // ============================================================
     document.addEventListener('click', function(e) {
       const btn = e.target.closest('[data-action]');
@@ -221,45 +296,6 @@
         if (pid) supprimerPointage(pid);
       }
     });
-
-    // ============================================================
-    // AUTH
-    // ============================================================
-    function debloquerSuperviseur() {
-      const pinScreen = document.getElementById('pin-screen'); 
-      if (pinScreen) pinScreen.remove();
-      sessionStorage.setItem('superviseur_auth', 'true');
-      if (__appInit) return;
-      __appInit = true;
-      initialiserApplication();
-    }
-
-    function validerPinDirect() {
-      const input = document.getElementById('input-pin');
-      const err = document.getElementById('pin-error');
-      const card = document.getElementById('pin-card');
-      const val = input ? input.value.trim() : '';
-      
-      if (val === atob(PIN_MASQUE)) { 
-        if (err) err.classList.add('hidden'); 
-        debloquerSuperviseur(); 
-      } else { 
-        if (err) err.classList.remove('hidden'); 
-        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
-        if (input) { input.value = ''; input.focus(); } 
-      }
-    }
-
-    const btnValiderPin = document.getElementById('btn-valider-pin');
-    if (btnValiderPin) { btnValiderPin.addEventListener('click', validerPinDirect); }
-    const inputPinSuperviseur = document.getElementById('input-pin');
-    if (inputPinSuperviseur) { inputPinSuperviseur.addEventListener('keydown', function(e) { if(e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } }); }
-    const btnLockSup = document.getElementById('btn-lock');
-    if (btnLockSup) { btnLockSup.addEventListener('click', function() { sessionStorage.removeItem('superviseur_auth'); location.reload(); }); }
-
-    if (sessionStorage.getItem('superviseur_auth') === 'true') debloquerSuperviseur();
-
-    async function initialiserApplication() { await loadClassesBilingues(); await fetchDonnees(); }
 
     // ============================================================
     // CLASSES
@@ -386,7 +422,6 @@
         const al = pt.en_alerte === true;
         const tot = pt.total_absences || 0;
         
-        // Fallback ID au cas où la vue utilise 'id' au lieu de 'pointage_id'
         const pid = pt.pointage_id || pt.id; 
         const eleveId = pt.eleve_id;
         const isChecked = pointagesSelectionnes.has(String(pid));
@@ -823,3 +858,41 @@
     // ============================================================
     if (btnExportExcel) {
       btnExportExcel.addEventListener('click', function() {
+        let sources = obtenirDonneesFiltrees();
+        if (pointagesSelectionnes.size > 0) {
+          sources = sources.filter(function(p) { return pointagesSelectionnes.has(String(p.pointage_id || p.id)); });
+        }
+        
+        const d = [];
+        sources.forEach(function(p, i) {
+          d.push({ 
+            "N°": i + 1, 
+            "Date": p.date_cours, 
+            "Division": p.classe_nom, 
+            "Nom": p.nom, 
+            "Prénom": p.prenom, 
+            "Matière": p.matiere, 
+            "Statut": p.statut === 'A' ? 'Absent' : (p.statut === 'R' ? 'Retard' : 'Présent'), 
+            "Justifié": p.justifie ? "OUI" : "NON", 
+            "Motif": p.motif_justification || '' 
+          });
+        });
+
+        if(d.length === 0) return;
+        const ws = XLSX.utils.json_to_sheet(d);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Registre"); 
+        XLSX.writeFile(wb, `Absences_${filtreDate.value}.xlsx`);
+      });
+    }
+
+    // ============================================================
+    // ÉVÉNEMENTS FILTRES
+    // ============================================================
+    if (filtreDate) filtreDate.addEventListener('change', fetchDonnees);
+    if (filtreClasse) filtreClasse.addEventListener('change', renderTableau);
+    if (filtreStatut) filtreStatut.addEventListener('change', renderTableau);
+    if (btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
+  </script>
+</body>
+</html>
