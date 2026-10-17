@@ -54,7 +54,7 @@
 <body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col transition-all">
 
   <!-- ========================================== -->
-  <!-- MODAL : FICHE INDIVIDUELLE / DOSSIER DISCIPLINAIRE -->
+  <!-- MODAL : FICHE INDIVIDUELLE / DOSSIER ÉLÈVE -->
   <!-- ========================================== -->
   <div id="modal-fiche-eleve" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row">
@@ -69,7 +69,7 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="lancerImpressionFicheEleve()" type="button" class="bg-indigo-600 hover:bg-indigo-750 text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer shadow-md flex items-center gap-1.5 transition">
+          <button onclick="lancerImpressionFicheEleve()" type="button" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer shadow-md flex items-center gap-1.5 transition">
             <i class="fa-solid fa-print"></i>
             <span data-i18n="btn_print_fiche">Imprimer Fiche / طباعة البطاقة</span>
           </button>
@@ -79,10 +79,9 @@
         </div>
       </div>
 
-      <!-- Corps de la modale / Aperçu -->
+      <!-- Corps de la modale / Fiche imprimable -->
       <div class="p-6 overflow-y-auto bg-slate-100 flex-1" dir="rtl">
         <div id="conteneur-fiche-eleve" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto font-sans text-black space-y-5">
-          <!-- Injecté dynamiquement par JavaScript -->
         </div>
       </div>
 
@@ -93,7 +92,7 @@
     </div>
   </div>
 
-  <!-- MODAL: APERÇU ET IMPRESSION DU RAPPORT JOURNALIER -->
+  <!-- MODAL : APERÇU ET IMPRESSION DU RAPPORT JOURNALIER -->
   <div id="modal-apercu-rapport" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto">
     <div class="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row">
       <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
@@ -105,7 +104,7 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="lancerImpressionRapport()" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer shadow-md flex items-center gap-1.5 transition">
+          <button onclick="lancerImpressionRapport()" type="button" class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer shadow-md flex items-center gap-1.5 transition">
             <i class="fa-solid fa-print"></i>
             <span data-i18n="btn_print_now">Imprimer (A4) / طباعة</span>
           </button>
@@ -122,7 +121,7 @@
     </div>
   </div>
 
-  <!-- MODAL: RETIRER UN ÉLÈVE TRANSFÉRÉ -->
+  <!-- MODAL : RETIRER UN ÉLÈVE TRANSFÉRÉ -->
   <div id="modal-transfert-global" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
@@ -151,7 +150,7 @@
     </div>
   </div>
 
-  <!-- MODAL: MODIFIER LE POINTAGE -->
+  <!-- MODAL : MODIFIER LE POINTAGE -->
   <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
@@ -185,7 +184,7 @@
     </div>
   </div>
 
-  <!-- MODAL: MODIFIER L'IDENTITÉ DE L'ÉLÈVE -->
+  <!-- MODAL : MODIFIER L'IDENTITÉ DE L'ÉLÈVE -->
   <div id="modal-editer-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-table-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
@@ -217,7 +216,7 @@
     </div>
   </div>
 
-  <!-- ÉCRAN PIN SÉCURISÉ -->
+  <!-- ÉCRAN PIN SÉCURISÉ 
   <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div id="pin-card" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div>
@@ -932,7 +931,7 @@
           <td class="py-3 px-3 text-center text-xs">${pt.justifie ? `<span class="text-emerald-700 bg-emerald-50 px-2 py-1 border border-emerald-200 rounded-lg font-bold">${labelJustifie}</span>` : `<span class="text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">${labelJustifie}</span>`}</td>
           <td class="py-3 px-3 text-center" onclick="event.stopPropagation()">
             <div class="flex items-center justify-center gap-1.5 flex-wrap">
-              <!-- BOUTON FICHE INDIVIDUELLE / DOSSIER ÉLÈVE -->
+              <!-- BOUTON FICHE INDIVIDUELLE (DOSSIER DISCIPLINAIRE) -->
               <button onclick="ouvrirFicheEleve('${pt.eleve_id}')" class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 p-2 rounded-lg cursor-pointer transition active:scale-95" title="${langueCourante === 'ar' ? 'ملف ومواظبة التلميذ' : 'Fiche individuelle & Dossier'}">
                 <i class="fa-solid fa-folder-open"></i>
               </button>
@@ -973,7 +972,7 @@
     }
 
     // ========================================================
-    // LOGIQUE DE LA FICHE INDIVIDUELLE (DOSSIER ÉLÈVE)
+    // LOGIQUE DE LA FICHE INDIVIDUELLE (CORRIGÉE SANS CREATED_AT)
     // ========================================================
     window.ouvrirFicheEleve = async (eleveId) => {
       const modal = document.getElementById('modal-fiche-eleve');
@@ -985,7 +984,7 @@
       modal.classList.add('flex');
 
       try {
-        // 1. Récupérer les infos de l'élève et sa classe
+        // 1. Récupération des informations de l'élève
         const { data: eleveData, error: errEl } = await supabaseClient
           .from('eleves')
           .select('*, classes (nom_court, nom_complet)')
@@ -994,12 +993,12 @@
 
         if (errEl) throw errEl;
 
-        // 2. Récupérer tout l'historique des pointages de cet élève
+        // 2. Récupération de l'historique sans colonne created_at
         const { data: pointagesData, error: errPt } = await supabaseClient
           .from('pointages')
-          .select('statut, justifie, motif_justification, created_at, seances (date_cours, heure_debut, matiere)')
+          .select('id, statut, justifie, motif_justification, seances (date_cours, heure_debut, matiere)')
           .eq('eleve_id', eleveId)
-          .order('created_at', { ascending: false });
+          .order('id', { ascending: false });
 
         if (errPt) throw errPt;
 
@@ -1008,7 +1007,6 @@
         const totalRet = historique.filter(p => p.statut === 'R').length;
         const estAlerte = eleveData.en_alerte === true;
 
-        // Regroupement par matière
         const absParMatiere = {};
         historique.forEach(p => {
           if (p.statut === 'A' && p.seances) {
@@ -1121,7 +1119,7 @@
     };
 
     // ========================================================
-    // SÉLECTION MULTIPLE & AUTRES ACTIONS
+    // SÉLECTION MULTIPLE & MODIFICATIONS
     // ========================================================
     window.toggleSelectAll = function(masterCheckbox) {
       const fData = obtenirDonneesFiltrees();
@@ -1361,7 +1359,7 @@
       setTimeout(() => document.body.classList.remove('print-rapport'), 1000);
     };
 
-    // Gestion Transfert / Suppression / Modification Élève
+    // Gestion Transfert / Modification Élève
     window.marquerEleveTransfereDepuisModal = async () => {
       const eleveId = document.getElementById('edit-student-id').value;
       if (!eleveId) return;
@@ -1499,6 +1497,44 @@
         await fetchDonnees();
       } catch (err) { alert(err.message); }
     };
+
+    const btnExportExcel = document.getElementById('btn-export-excel');
+    if(btnExportExcel) {
+      btnExportExcel.addEventListener('click', () => {
+        let sources = obtenirDonneesFiltrees();
+        if (pointagesSelectionnes.size > 0) {
+          sources = sources.filter(p => pointagesSelectionnes.has(String(p.pointage_id)));
+        }
+
+        const d = sources.map((p, i) => ({ 
+          "N° / الرقم": i + 1, 
+          "Date / التاريخ": p.date_cours, 
+          "Division / القسم": p.classe_nom, 
+          "Nom / اللقب": p.nom, 
+          "Prénom / الاسم": p.prenom, 
+          "اللقب AR": p.nom_ar || '', 
+          "الاسم AR": p.prenom_ar || '', 
+          "Matière / المادة": p.matiere,
+          "Statut / الحالة": p.statut === 'A' ? 'Absent/غائب' : (p.statut === 'R' ? 'Retard/تأخر' : 'Présent/حاضر'), 
+          "Cumul Abs / مجموع الغياب": p.total_absences || 0,
+          "Alerte (3j consécutifs) / إنذار": p.en_alerte ? "OUI (3 jours consécutifs) / نعم (3 أيام متتالية)" : "NON / لا",
+          "Justifié / مبرر": p.justifie ? "OUI / نعم" : "NON / لا",
+          "Motif / السبب": p.motif_justification || ''
+        }));
+        
+        if(d.length === 0) {
+          alert(langueCourante === 'ar' ? 'الجدول فارغ، لا توجد بيانات للتصدير.' : 'Le tableau est vide, rien à exporter !');
+          return;
+        }
+        
+        const ws = XLSX.utils.json_to_sheet(d);
+        ws['!cols'] = [{wch:6}, {wch:12}, {wch:14}, {wch:15}, {wch:15}, {wch:15}, {wch:15}, {wch:20}, {wch:15}, {wch:14}, {wch:22}, {wch:12}, {wch:20}];
+        
+        const wb = XLSX.utils.book_new(); 
+        XLSX.utils.book_append_sheet(wb, ws, "Registre_Absences"); 
+        XLSX.writeFile(wb, `Absences_Chaabane_Aamar_${filtreDate.value}.xlsx`);
+      });
+    }
 
     window.imprimerConvocation = (nom, prenom, nomAr, prenomAr, classe, tot) => {
       document.getElementById('convocation-details').innerHTML = `
