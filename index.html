@@ -229,6 +229,9 @@
   </div>
 
   <script>
+    // ============================================================
+    // CONSTANTES
+    // ============================================================
     const CODES_MATIERES_BASE64 = {
       "Mathématiques / رياضيات": "MTAwMQ==", "Sciences Naturelles / علوم الطبيعة": "MTAwMg==", "Sciences Physiques / علوم فيزيائية": "MTAwMw==", "Informatique / إعلام آلي": "MTAwNA==",
       "Génie Civil / هندسة مدنية": "MjAwMQ==", "Génie Électrique / هندسة كهربائية": "MjAwMg==", "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==", "Génie des Procédés / هندسة الطرائق": "MjAwNA==", "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==", "Droit / قانون": "MjAwNg==",
@@ -240,6 +243,9 @@
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // ============================================================
+    // ÉTAT GLOBAL
+    // ============================================================
     let langueCourante = localStorage.getItem('pref_langue_prof') || 'fr';
     let classesList = [];
     let currentEleves = [];
@@ -247,6 +253,8 @@
     let searchTermEleve = '';
     let seanceExistanteId = null;
     let billetsMap = new Map();
+    let billetsDate = null;          // FIX #2 : mémorise la date courante des billets
+    let chargerToken = 0;            // FIX #7 : anti race-condition sur changement de classe
 
     const inputDateCours = document.getElementById('input-date-cours');
     const selectClasse = document.getElementById('select-classe');
@@ -262,11 +270,24 @@
     const stickyFooterBar = document.getElementById('sticky-footer-bar');
     const btnRefreshProf = document.getElementById('btn-refresh-prof');
 
+    // FIX bonus : échappement HTML pour éviter le XSS via noms d'élèves
+    function escapeHtml(s) {
+      if (s === null || s === undefined) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     if (inputDateCours) {
       inputDateCours.value = new Date().toISOString().split('T')[0];
     }
 
-    // Gestion du PIN
+    // ============================================================
+    // AUTHENTIFICATION PIN
+    // ============================================================
     window.validerPinDirect = function() {
       const pinSelectMatiere = document.getElementById('pin-select-matiere');
       const inputPin = document.getElementById('input-pin-prof');
@@ -324,7 +345,9 @@
       location.reload();
     };
 
-    // Actualisation silencieuse (Temps Réel)
+    // ============================================================
+    // ACTUALISATION SILENCIEUSE (Temps Réel)
+    // ============================================================
     setInterval(rafraichirBilletsSilencieux, 60000);
     window.addEventListener('focus', rafraichirBilletsSilencieux);
 
@@ -337,19 +360,37 @@
       } catch (err) { console.warn(err); }
     }
 
+    // ------------------------------------------------------------
+    // FIX #2 : chaque billet porte sa date ; on ne préserve que les
+    // "Régularisé" de la MÊME date.
+    // FIX #3 : on garde TOUS les billets du jour (plus de fenêtre 60 min).
+    // ------------------------------------------------------------
     async function chargerBilletsActifs(dateCible) {
       if (!navigator.onLine) return;
-      const { data } = await supabaseClient.from('v_billets_actifs_jour').select('*').eq('date_billet', dateCible).eq('actif', true);
-      
+
+      // Si la date change, on repart d'une map propre
+      if (billetsDate !== dateCible) {
+        billetsMap = new Map();
+        billetsDate = dateCible;
+      }
+
+      const { data } = await supabaseClient
+        .from('v_billets_actifs_jour')
+        .select('*')
+        .eq('date_billet', dateCible)
+        .eq('actif', true);
+
       const maintenant = new Date();
       const minutesActuelles = maintenant.getHours() * 60 + maintenant.getMinutes();
       const aujourdhuiIso = maintenant.toISOString().split('T')[0];
-      
+
       const newBilletsMap = new Map();
-      
+
+      // Préservation des "Régularisé" de la même date uniquement
       billetsMap.forEach(function(v, k) {
-        if (v.heure_affichage === 'Régularisé' || v.heure_affichage === 'تمت التسوية') {
-           newBilletsMap.set(String(k), v);
+        const estReg = (v.heure_affichage === 'Régularisé' || v.heure_affichage === 'تمت التسوية');
+        if (estReg && v.date === dateCible) {
+          newBilletsMap.set(String(k), v);
         }
       });
 
@@ -360,9 +401,17 @@
           const parts = heureStr.split(':');
           const minutesEmission = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
           const diffMinutes = minutesActuelles - minutesEmission;
-          
-          if (dateCible !== aujourdhuiIso || (diffMinutes >= -5 && diffMinutes <= 60)) {
-            newBilletsMap.set(String(b.eleve_id), { motif: b.motif, heure_affichage: heureStr, heure_emission: heureStr });
+
+          // FIX #3 : plus de plafond à 60 min. On garde :
+          //  - tous les billets des autres dates (historique)
+          //  - tous les billets du jour déjà émis (au moins 5 min avant l'heure courante)
+          if (dateCible !== aujourdhuiIso || diffMinutes >= -5) {
+            newBilletsMap.set(String(b.eleve_id), {
+              motif: b.motif,
+              heure_affichage: heureStr,
+              heure_emission: heureStr,
+              date: dateCible
+            });
           }
         });
       }
@@ -375,6 +424,9 @@
       location.reload();
     }
 
+    // ============================================================
+    // FILE HORS-LIGNE
+    // ============================================================
     function getQueueHorsLigne() {
       try { return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]'); } catch (e) { return []; }
     }
@@ -445,6 +497,9 @@
       }, 3500);
     }
 
+    // ============================================================
+    // CLASSES
+    // ============================================================
     async function initClasses() {
       const cacheClasses = localStorage.getItem('cache_classes');
       if (cacheClasses) {
@@ -474,6 +529,11 @@
       ['1AS','2AS','3AS','AUTRE'].forEach(function(k) { if(groupes[k].children.length) selectClasse.appendChild(groupes[k]); });
     }
 
+    // ============================================================
+    // SÉANCE EXISTANTE
+    // FIX #4 : reset de seanceExistanteId en cas d'erreur réseau
+    // FIX bonus : on injecte la date dans billetsMap pour les "Régularisé"
+    // ============================================================
     async function verifierEtChargerSeanceExistante() {
       const cid = selectClasse.value;
       const mat = inputMatiereBloque ? inputMatiereBloque.value : '';
@@ -501,26 +561,41 @@
           seanceExistanteId = seance.id;
           if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
 
-          if (seance.pointages) { 
+          if (seance.pointages) {
             seance.pointages.forEach(function(pt) { 
               currentStatuts[pt.eleve_id] = pt.statut; 
               if (pt.justifie && pt.statut === 'P') {
-                 if (!billetsMap.has(String(pt.eleve_id))) {
-                    billetsMap.set(String(pt.eleve_id), { motif: pt.motif_justification, heure_affichage: (langueCourante==='ar' ? 'تمت التسوية' : 'Régularisé') });
-                 }
+                if (!billetsMap.has(String(pt.eleve_id))) {
+                  billetsMap.set(String(pt.eleve_id), {
+                    motif: pt.motif_justification,
+                    heure_affichage: (langueCourante === 'ar' ? 'تمت التسوية' : 'Régularisé'),
+                    date: dt
+                  });
+                }
               }
-            }); 
+            });
           }
           afficherEleves();
           mettreAJourCompteurs();
-        } else { 
+        } else {
           seanceExistanteId = null;
-          if (badgeModeSeance) badgeModeSeance.classList.add('hidden'); 
+          if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
         }
-      } catch (err) {}
+      } catch (err) {
+        // FIX #4 : en cas d'erreur, on N'ÉCRASE PAS la séance courante par erreur
+        seanceExistanteId = null;
+        if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
+        console.warn('verifierEtChargerSeanceExistante:', err);
+      }
     }
 
+    // ============================================================
+    // CHARGEMENT DES ÉLÈVES
+    // FIX #7 : token anti race-condition
+    // ============================================================
     async function chargerEleves(cid) {
+      const token = ++chargerToken;
+
       if(!cid) {
         elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><p class="text-sm">Veuillez choisir une division ci-dessus.</p></div>`;
         document.getElementById('stats-bar').classList.add('hidden');
@@ -545,17 +620,22 @@
       document.getElementById('classe-titre').textContent = sc ? `${sc.nom_court} (${sc.nom_complet})` : 'Classe';
 
       const cacheEleves = localStorage.getItem(`cache_eleves_${cid}`);
+      let elevesCharges = [];
       if (cacheEleves) {
-        try { currentEleves = JSON.parse(cacheEleves); } catch (e) {}
+        try { elevesCharges = JSON.parse(cacheEleves); } catch (e) {}
       }
 
       if (navigator.onLine) {
         try {
           const { data } = await supabaseClient.from('eleves').select('*').eq('classe_id', cid).eq('actif', true).order('nom');
-          if (data) { currentEleves = data; localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(data)); }
+          if (data) { elevesCharges = data; localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(data)); }
         } catch (err) {}
       }
 
+      // FIX #7 : abandon si une autre classe a été sélectionnée entre-temps
+      if (token !== chargerToken) return;
+
+      currentEleves = elevesCharges;
       document.getElementById('classe-effectif').textContent = `${currentEleves.length} inscrits`;
       currentStatuts = {};
       currentEleves.forEach(function(e) { currentStatuts[e.id] = 'P'; });
@@ -573,8 +653,14 @@
       if (searchContainer) searchContainer.classList.remove('hidden');
 
       await verifierEtChargerSeanceExistante();
+
+      // FIX #7 : re-vérifier après l'await
+      if (token !== chargerToken) return;
     }
 
+    // ============================================================
+    // RECHERCHE & AFFICHAGE
+    // ============================================================
     function filterEleves(terme) {
       searchTermEleve = (terme || '').trim().toLowerCase();
       if (btnClearSearch) {
@@ -639,7 +725,8 @@
             }
         }
 
-        const badgeBilletHtml = billet ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm" dir="${estMatiereArabe ? 'rtl' : 'ltr'}"><i class="fa-solid fa-user-check text-emerald-600"></i><span>${texteBadge}</span></span>` : '';
+        // FIX bonus : escapeHtml sur les noms et les badges
+        const badgeBilletHtml = billet ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm" dir="${estMatiereArabe ? 'rtl' : 'ltr'}"><i class="fa-solid fa-user-check text-emerald-600"></i><span>${escapeHtml(texteBadge)}</span></span>` : '';
         const tagNouveau = e.est_nouveau ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Nouveau</span>` : '';
 
         const classP = st === 'P' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50';
@@ -650,8 +737,8 @@
           <div class="flex items-center gap-3.5 w-full sm:w-auto">
             <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">${indexOfficiel}</span>
             <div class="truncate flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-slate-900">${nomPrincipal}</span> 
-              <span class="text-xs text-slate-500 font-bold">${nomSecondaire}</span>
+              <span class="font-bold text-slate-900">${escapeHtml(nomPrincipal)}</span> 
+              <span class="text-xs text-slate-500 font-bold">${escapeHtml(nomSecondaire)}</span>
               ${badgeBilletHtml} ${tagNouveau}
             </div>
           </div>
@@ -690,10 +777,17 @@
       if (document.getElementById('sticky-absents')) document.getElementById('sticky-absents').textContent = a;
     }
 
+    // ============================================================
+    // AJOUT ÉLÈVE MANQUANT
+    // FIX #1 : lecture des champs arabes
+    // FIX #6 : garde offline explicite
+    // ============================================================
     window.ouvrirModalNouvelEleve = function() {
       if (!selectClasse.value) return;
       document.getElementById('add-eleve-nom').value = '';
       document.getElementById('add-eleve-prenom').value = '';
+      document.getElementById('add-eleve-nom-ar').value = '';
+      document.getElementById('add-eleve-prenom-ar').value = '';
       document.getElementById('modal-nouvel-eleve').classList.remove('hidden');
       document.getElementById('modal-nouvel-eleve').classList.add('flex');
     };
@@ -704,14 +798,33 @@
     };
 
     window.confirmerAjoutEleve = async function() {
+      // FIX #6 : garde offline
+      if (!navigator.onLine) {
+        alert((langueCourante === 'ar')
+          ? 'الاتصال بالإنترنت مطلوب لإضافة تلميذ جديد.'
+          : 'Connexion Internet requise pour ajouter un élève.');
+        return;
+      }
+
       const cid = selectClasse.value;
       const nom = document.getElementById('add-eleve-nom').value.trim().toUpperCase();
       const prenom = document.getElementById('add-eleve-prenom').value.trim();
+      // FIX #1 : lecture des champs arabes
+      const nomAr = document.getElementById('add-eleve-nom-ar').value.trim();
+      const prenomAr = document.getElementById('add-eleve-prenom-ar').value.trim();
       
       if (!nom || !prenom) return;
 
       try {
-        const { data, error } = await supabaseClient.from('eleves').insert({ classe_id: parseInt(cid, 10), nom: nom, prenom: prenom, matricule: 'TEMP-'+Date.now(), actif: true }).select().single();
+        const { data, error } = await supabaseClient.from('eleves').insert({
+          classe_id: parseInt(cid, 10),
+          nom: nom,
+          prenom: prenom,
+          nom_ar: nomAr || null,
+          prenom_ar: prenomAr || null,
+          matricule: 'TEMP-' + Date.now(),
+          actif: true
+        }).select().single();
         if (error) throw error;
         data.est_nouveau = true;
         currentEleves.push(data);
@@ -722,14 +835,26 @@
       } catch (err) { alert(err.message); }
     };
 
+    // ============================================================
+    // VALIDATION DE L'APPEL
+    // FIX #5 : préserve les <span id="lbl-..."> dans les innerHTML
+    // FIX bonus : garde t[0] horaire
+    // ============================================================
     window.declencherValidationAppel = async function() {
       if(!selectClasse.value || currentEleves.length === 0) return;
+
+      // FIX bonus : vérifier que l'horaire est bien renseigné
+      const horaireVal = selectHoraire ? selectHoraire.value : '';
+      if (!horaireVal || horaireVal.indexOf('-') === -1) {
+        alert((langueCourante === 'ar') ? 'يرجى اختيار التوقيت أولاً' : 'Veuillez sélectionner un horaire.');
+        return;
+      }
       
       const btnSticky = document.getElementById('btn-valider-appel');
       if(btnSticky) { btnSticky.disabled = true; btnSticky.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Traitement...`; }
       if (btnValiderRapideTop) btnValiderRapideTop.disabled = true;
 
-      const t = selectHoraire.value.split('-');
+      const t = horaireVal.split('-');
       const dateChoisie = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
       
       const donneesAppel = {
@@ -747,8 +872,15 @@
         queue.push(donneesAppel);
         saveQueueHorsLigne(queue);
         afficherToast('Enregistré hors-ligne', 'Synchronisation au retour du réseau.');
-        if (btnSticky) { btnSticky.disabled = false; btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Valider`; }
-        if (btnValiderRapideTop) btnValiderRapideTop.disabled = false;
+        // FIX #5 : restaurer le span i18n
+        if (btnSticky) {
+          btnSticky.disabled = false;
+          btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span id="lbl-btn-val-big">Valider et transmettre l'appel</span>`;
+        }
+        if (btnValiderRapideTop) {
+          btnValiderRapideTop.disabled = false;
+          btnValiderRapideTop.innerHTML = `<i class="fa-solid fa-paper-plane mr-1"></i> <span id="lbl-btn-val">Valider</span>`;
+        }
         return;
       }
 
@@ -807,15 +939,28 @@
         saveQueueHorsLigne(queue);
         afficherToast('Sauvegardé hors-ligne', 'Réseau instable : appel sécurisé localement.');
       } finally { 
-        if (btnSticky) { btnSticky.disabled = false; btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Valider`; }
-        if (btnValiderRapideTop) btnValiderRapideTop.disabled = false;
+        // FIX #5 : restaurer les spans i18n
+        if (btnSticky) {
+          btnSticky.disabled = false;
+          btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span id="lbl-btn-val-big">Valider et transmettre l'appel</span>`;
+        }
+        if (btnValiderRapideTop) {
+          btnValiderRapideTop.disabled = false;
+          btnValiderRapideTop.innerHTML = `<i class="fa-solid fa-paper-plane mr-1"></i> <span id="lbl-btn-val">Valider</span>`;
+        }
       }
     };
 
+    // ============================================================
+    // ÉVÉNEMENTS
+    // ============================================================
     if(selectClasse) selectClasse.addEventListener('change', function(e) { chargerEleves(e.target.value); });
     if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
     if(selectHoraire) selectHoraire.addEventListener('change', verifierEtChargerSeanceExistante);
 
+    // ============================================================
+    // DÉMARRAGE
+    // ============================================================
     const matiereSession = sessionStorage.getItem('prof_auth_matiere');
     if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) debloquerPagePourMatiere(matiereSession);
   </script>
