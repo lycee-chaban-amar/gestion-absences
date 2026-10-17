@@ -310,9 +310,16 @@
           <button id="btn-tout-present" type="button" onclick="marquerTousPresents()" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-indigo-100 transition">
             <i class="fa-solid fa-check-double text-indigo-600"></i> <span data-i18n="btn_mark_all">Tout marquer présent</span>
           </button>
+          
           <button id="btn-ouvrir-modal-eleve" type="button" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-emerald-100 transition active:scale-95">
             <i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> <span data-i18n="btn_add_missing">Élève manquant ?</span>
           </button>
+
+          <!-- NOUVEAU BOUTON ACTUALISER -->
+          <button id="btn-refresh-prof" type="button" onclick="rafraichirBillets()" class="hidden text-xs font-bold text-slate-700 bg-white border border-slate-300 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-slate-50 transition active:scale-95 shadow-sm">
+            <i class="fa-solid fa-arrows-rotate mr-1 text-indigo-600"></i> <span data-i18n="btn_refresh">Actualiser</span>
+          </button>
+
           <button id="btn-valider-rapide-top" type="button" onclick="declencherValidationAppel()" class="hidden text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl cursor-pointer transition active:scale-95 shadow-sm">
             <i class="fa-solid fa-paper-plane mr-1"></i> <span data-i18n="btn_validate_quick">Valider</span>
           </button>
@@ -395,6 +402,7 @@
         default_classe_title: "Sélectionnez une classe",
         btn_mark_all: "Tout marquer présent",
         btn_add_missing: "Élève manquant ?",
+        btn_refresh: "Actualiser",
         btn_validate_quick: "Valider",
         prompt_select_classe: "Veuillez choisir une division ci-dessus pour afficher la liste des élèves.",
         btn_submit_call: "Valider et transmettre l'appel",
@@ -442,6 +450,7 @@
         default_classe_title: "يرجى اختيار القسم أولاً",
         btn_mark_all: "تعليم الجميع كحاضرين",
         btn_add_missing: "تلميذ غير مسجل ؟",
+        btn_refresh: "تحديث القائمة",
         btn_validate_quick: "تأكيد",
         prompt_select_classe: "يرجى اختيار الفوج التربوي من القائمة أعلاه لعرض قائمة التلاميذ.",
         btn_submit_call: "تأكيد وإرسال ورقة الغياب إلى الاستشارة التربوية",
@@ -493,6 +502,7 @@
     const btnClearSearch = document.getElementById('btn-clear-search');
     const badgeModeSeance = document.getElementById('badge-mode-seance');
     const stickyFooterBar = document.getElementById('sticky-footer-bar');
+    const btnRefreshProf = document.getElementById('btn-refresh-prof');
 
     if (inputDateCours) {
       inputDateCours.value = new Date().toISOString().split('T')[0];
@@ -817,7 +827,8 @@
         document.getElementById('btn-tout-present').classList.add('hidden');
         if (btnValiderRapideTop) btnValiderRapideTop.classList.add('hidden');
         if (stickyFooterBar) stickyFooterBar.classList.add('hidden');
-        btnOuvrirModalEleve.classList.add('hidden');
+        if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.add('hidden');
+        if (btnRefreshProf) btnRefreshProf.classList.add('hidden');
         if (searchContainer) searchContainer.classList.add('hidden');
         if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
         clearSearchEleve();
@@ -868,11 +879,37 @@
       document.getElementById('btn-tout-present').classList.remove('hidden');
       if (btnValiderRapideTop) btnValiderRapideTop.classList.remove('hidden');
       if (stickyFooterBar) stickyFooterBar.classList.remove('hidden');
-      btnOuvrirModalEleve.classList.remove('hidden');
+      if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.remove('hidden');
+      if (btnRefreshProf) btnRefreshProf.classList.remove('hidden');
       if (searchContainer) searchContainer.classList.remove('hidden');
 
       await verifierEtChargerSeanceExistante();
     }
+
+    // NOUVELLE FONCTION POUR ACTUALISER LES BILLETS SANS PERDRE LES SAISIES
+    window.rafraichirBillets = async function() {
+      const cid = selectClasse.value;
+      if (!cid || !navigator.onLine) return;
+
+      const btnRefresh = document.getElementById('btn-refresh-prof');
+      if (btnRefresh) btnRefresh.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1 text-indigo-600"></i> ...`;
+
+      try {
+        const { data, error } = await supabaseClient.from('v_billets_actifs_jour').select('*');
+        if (error) throw error;
+
+        billetsMap.clear();
+        (data || []).forEach(b => billetsMap.set(b.eleve_id, b));
+
+        afficherEleves(); // Met à jour les badges visuellement
+      } catch (err) {
+        console.error("Erreur actualisation billets:", err);
+      } finally {
+        if (btnRefresh) {
+          btnRefresh.innerHTML = `<i class="fa-solid fa-arrows-rotate mr-1 text-indigo-600"></i> <span data-i18n="btn_refresh">${TRADUCTIONS[langueCourante].btn_refresh}</span>`;
+        }
+      }
+    };
 
     function filterEleves(terme) {
       searchTermEleve = (terme || '').trim().toLowerCase();
