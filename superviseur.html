@@ -388,8 +388,12 @@
         const pid = pt.pointage_id || pt.id, eleveId = pt.eleve_id;
         const isChecked = pointagesSelectionnes.has(String(pid));
         
+        // LOGIQUE : Si un élève a une justification administrative, il est considéré comme Absent (Justifié)
+        const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
+        const isAbsent = pt.statut === 'A' || isJustifiedAbsence;
+
         let stHtml = '';
-        if (pt.statut === 'A') stHtml = `<span class="bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-xmark"></i> Absent</span>`;
+        if (isAbsent) stHtml = `<span class="bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-xmark"></i> Absent</span>`;
         else if (pt.statut === 'R') stHtml = `<span class="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-clock"></i> Retard</span>`;
         else stHtml = `<span class="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-user-check"></i> Présent</span>`;
 
@@ -425,13 +429,13 @@
           <td class="py-3 px-3 text-center"><span class="px-2 py-1 rounded-lg font-black text-xs ${al ? 'bg-rose-200 dark:bg-rose-900/50 text-rose-900 dark:text-rose-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}">${tot}</span></td>
           <td class="py-3 px-3 text-center">${stHtml}</td>
           <td class="py-3 px-3 text-center text-xs">
-            ${pt.statut === 'P' 
+            ${isAbsent || pt.statut === 'R'
               ? (pt.justifie 
-                  ? `<span class="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/50 px-2 py-1 border border-emerald-200 dark:border-emerald-700 rounded-lg font-bold">${escapeHtml(pt.motif_justification || 'Régularisé')}</span>` 
-                  : `<span class="text-emerald-600 dark:text-emerald-400 font-bold px-2 py-1">Présent</span>`)
-              : (pt.justifie 
                   ? `<span class="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/50 px-2 py-1 border border-emerald-200 dark:border-emerald-700 rounded-lg font-bold">${escapeHtml(pt.motif_justification || 'Justifié')}</span>` 
                   : `<span class="text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded-lg font-bold">Non justifié</span>`)
+              : (pt.justifie 
+                  ? `<span class="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/50 px-2 py-1 border border-emerald-200 dark:border-emerald-700 rounded-lg font-bold">${escapeHtml(pt.motif_justification || 'Régularisé')}</span>` 
+                  : `<span class="text-emerald-600 dark:text-emerald-400 font-bold px-2 py-1">Présent</span>`)
             }
           </td>
           <td class="py-3 px-3 text-center">
@@ -479,7 +483,8 @@
 
       let p=0, a=0, r=0; const parClasse = {};
       vuePointages.filter(pt => !pt.archive).forEach(pt => {
-        if(pt.statut==='A') { a++; parClasse[pt.classe_nom] = (parClasse[pt.classe_nom]||0)+1; }
+        const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
+        if(pt.statut==='A' || isJustifiedAbsence) { a++; parClasse[pt.classe_nom] = (parClasse[pt.classe_nom]||0)+1; }
         else if(pt.statut==='R') r++;
         else if(pt.statut==='P') p++;
       });
@@ -512,15 +517,20 @@
       content.innerHTML = '<div class="text-center py-4 text-indigo-500"><i class="fa-solid fa-spinner fa-spin"></i></div>';
       document.getElementById('modal-mini-hist').classList.remove('hidden'); document.getElementById('modal-mini-hist').classList.add('flex');
 
-      const { data } = await supabaseClient.from('pointages').select('statut, justifie, seances(date_cours, matiere)').eq('eleve_id', eleveId).eq('archive', false).order('id', { ascending: false }).limit(5);
+      const { data } = await supabaseClient.from('pointages').select('statut, justifie, motif_justification, seances(date_cours, matiere)').eq('eleve_id', eleveId).eq('archive', false).order('id', { ascending: false }).limit(5);
 
       if(!data || data.length === 0) { content.innerHTML = '<p class="text-center text-slate-400">Aucune absence enregistrée.</p>'; return; }
 
       let html = '<ul class="space-y-2 border-l-2 border-indigo-200 dark:border-indigo-700 ml-2 pl-3">';
       data.forEach(p => {
+        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+        const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+        
+        let color = 'text-emerald-600', label = 'Présent';
+        if (isAbsent) { color = 'text-rose-600 dark:text-rose-400'; label = 'Absent'; }
+        else if (p.statut === 'R') { color = 'text-amber-600 dark:text-amber-400'; label = 'Retard'; }
+
         const date = p.seances?.date_cours || '--', mat = p.seances?.matiere || '--';
-        const color = p.statut === 'A' ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400';
-        const label = p.statut === 'A' ? 'Absent' : 'Retard';
         html += `<li class="relative text-xs"><span class="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-indigo-400 dark:bg-indigo-500"></span><span class="font-bold text-slate-800 dark:text-white">${date}</span> - ${mat}<br><span class="${color} font-bold">${label}</span> ${p.justifie ? '<span class="text-emerald-500">(Justifié)</span>' : ''}</li>`;
       });
       content.innerHTML = html + '</ul>';
@@ -566,7 +576,8 @@
       const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
       const motif = prompt('Motif :', 'Accord administration'); if (motif === null) return;
       try {
-        await supabaseClient.from('pointages').update({ justifie: true, motif_justification: motif || 'Justifié' }).in('id', ids);
+        // Forcer le statut à 'A' (Absent) lors de la justification pour respecter la logique
+        await supabaseClient.from('pointages').update({ statut: 'A', justifie: true, motif_justification: motif || 'Justifié' }).in('id', ids);
         const nouveauxBillets = [];
         for (const id of ids) {
           const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(id));
@@ -628,10 +639,21 @@
         const { data: el } = await supabaseClient.from('eleves').select('*, classes (nom_court, nom_complet)').eq('id', eleveId).single();
         const { data: pts } = await supabaseClient.from('pointages').select('id, statut, justifie, motif_justification, seances (date_cours, heure_debut, matiere)').eq('eleve_id', eleveId).eq('archive', false).order('id', { ascending: false });
         const h = pts || []; let totalAbs = 0, totalRet = 0;
-        h.forEach(p => { if(p.statut === 'A') totalAbs++; if(p.statut === 'R') totalRet++; });
+        
+        h.forEach(p => { 
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          if(p.statut === 'A' || isJustifiedAbsence) totalAbs++; 
+          if(p.statut === 'R') totalRet++; 
+        });
         
         const absParMatiere = {};
-        h.forEach(p => { if (p.statut === 'A' && p.seances) { const mat = p.seances.matiere || 'Inconnue'; absParMatiere[mat] = (absParMatiere[mat] || 0) + 1; } });
+        h.forEach(p => { 
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          if ((p.statut === 'A' || isJustifiedAbsence) && p.seances) { 
+            const mat = p.seances.matiere || 'Inconnue'; 
+            absParMatiere[mat] = (absParMatiere[mat] || 0) + 1; 
+          } 
+        });
         
         let matHtml = '';
         if (Object.keys(absParMatiere).length > 0) {
@@ -641,15 +663,21 @@
         }
 
         let histHtml = h.length === 0 ? `<tr><td colspan="4" class="p-4 text-center font-bold text-slate-500">لا توجد أي غيابات مسجلة.</td></tr>` : h.map(p => {
+           const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+           const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+           
            const dt = (p.seances && p.seances.date_cours) ? p.seances.date_cours : '--', mat = (p.seances && p.seances.matiere) ? p.seances.matiere : '--';
            const hr = (p.seances && p.seances.heure_debut && p.seances.heure_debut.length >= 5) ? p.seances.heure_debut.substring(0,5) : '--';
-           let stC = '', stT = 'حاضر'; if (p.statut === 'A') { stC = 'text-rose-700'; stT = 'غياب'; } else if (p.statut === 'R') { stC = 'text-amber-700'; stT = 'تأخر'; }
+           
+           let stC = '', stT = 'حاضر'; 
+           if (isAbsent) { stC = 'text-rose-700'; stT = 'غياب'; } 
+           else if (p.statut === 'R') { stC = 'text-amber-700'; stT = 'تأخر'; }
            
            let just = '';
-           if (p.statut === 'P') {
-             just = p.justifie ? (p.motif_justification || 'تسوية') : 'حاضر';
-           } else {
+           if (isAbsent || p.statut === 'R') {
              just = p.justifie ? (p.motif_justification || 'مبرر') : 'غير مبرر';
+           } else {
+             just = p.justifie ? (p.motif_justification || 'تسوية') : 'حاضر';
            }
 
            return `<tr><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-center text-slate-700 dark:text-slate-300" dir="ltr">${escapeHtml(dt)}</td><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-slate-700 dark:text-slate-300">${escapeHtml(mat)} (${hr})</td><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-center font-bold ${stC}">${stT}</td><td class="p-2 text-center text-slate-700 dark:text-slate-300">${escapeHtml(just)}</td></tr>`;
@@ -696,22 +724,34 @@
     // ============================================================
     function construireHtmlRapportComplet() {
       const clsChoisie = filtreClasse ? filtreClasse.value : 'ALL';
-      const incidents = vuePointages.filter(p => { if (clsChoisie !== 'ALL' && String(p.classe_id) !== String(clsChoisie)) return false; return p.statut === 'A' || p.statut === 'R' || (p.statut === 'P' && p.justifie); });
-      const statC = {}; incidents.forEach(p => { if(!statC[p.classe_nom]) statC[p.classe_nom] = {a:0, r:0}; if(p.statut === 'A') statC[p.classe_nom].a++; else if(p.statut === 'R') statC[p.classe_nom].r++; });
+      const incidents = vuePointages.filter(p => { 
+        if (clsChoisie !== 'ALL' && String(p.classe_id) !== String(clsChoisie)) return false; 
+        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+        return p.statut === 'A' || p.statut === 'R' || isJustifiedAbsence; 
+      });
+      const statC = {}; incidents.forEach(p => { 
+        if(!statC[p.classe_nom]) statC[p.classe_nom] = {a:0, r:0}; 
+        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+        if(p.statut === 'A' || isJustifiedAbsence) statC[p.classe_nom].a++; 
+        else if(p.statut === 'R') statC[p.classe_nom].r++; 
+      });
       
       let clsHtml = Object.keys(statC).length > 0 ? `<div class="mb-4"><h4 class="font-black text-xs mb-1.5">توزيع الغيابات حسب الأقسام :</h4><div class="grid grid-cols-4 gap-2">${Object.keys(statC).map(c => `<div class="border border-black p-1.5 rounded text-center text-[11px] bg-slate-50"><div class="font-bold border-b border-black pb-0.5 mb-1" dir="ltr">${c}</div><div class="flex justify-around text-xs"><span class="text-rose-700 font-bold">غ: ${statC[c].a}</span><span class="text-amber-700 font-bold">ت: ${statC[c].r}</span></div></div>`).join('')}</div></div>` : '';
       
       let incHtml = incidents.length === 0 ? `<tr><td colspan="6" class="p-4 text-center font-bold">لم تُسجل أي غيابات.</td></tr>` : incidents.map((p, i) => {
+        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+        const isAbsent = p.statut === 'A' || isJustifiedAbsence;
         const h = (p.heure_debut && p.heure_debut.length >= 5) ? p.heure_debut.substring(0,5) : '';
+        
         let stC = 'text-emerald-700', stT = 'حاضر (مُسجّل)'; 
-        if (p.statut === 'A') { stC = 'text-rose-700'; stT = 'غياب'; } 
+        if (isAbsent) { stC = 'text-rose-700'; stT = 'غياب'; } 
         else if (p.statut === 'R') { stC = 'text-amber-700'; stT = 'تأخر'; }
         
         let just = '';
-        if (p.statut === 'P') {
-          just = p.justifie ? (p.motif_justification || 'تسوية') : 'حاضر';
-        } else {
+        if (isAbsent || p.statut === 'R') {
           just = p.justifie ? (p.motif_justification || 'مبرر') : 'غير مبرر';
+        } else {
+          just = p.justifie ? (p.motif_justification || 'تسوية') : 'حاضر';
         }
 
         return `<tr class="bg-white"><td class="border-l border-black p-1.5 text-center">${i + 1}</td><td class="border-l border-black p-1.5 font-bold">${escapeHtml(p.nom_ar || p.nom)} ${escapeHtml(p.prenom_ar || p.prenom)}</td><td class="border-l border-black p-1.5 text-center font-bold" dir="ltr">${escapeHtml(p.classe_nom)}</td><td class="border-l border-black p-1.5 text-center" dir="ltr">${escapeHtml(p.matiere)}<br>${h}</td><td class="border-l border-black p-1.5 text-center font-bold ${stC}">${stT}</td><td class="p-1.5 text-center text-[11px]">${escapeHtml(just)}</td></tr>`;
@@ -748,7 +788,15 @@
         let sources = obtenirDonneesFiltrees();
         if (pointagesSelectionnes.size > 0) sources = sources.filter(p => pointagesSelectionnes.has(String(p.pointage_id || p.id)));
         if(sources.length === 0) return;
-        const d = sources.map((p, i) => ({ "N°": i + 1, "Date": p.date_cours, "Division": p.classe_nom, "Nom": p.nom, "Prénom": p.prenom, "Matière": p.matiere, "Statut": p.statut === 'A' ? 'Absent' : (p.statut === 'R' ? 'Retard' : 'Présent'), "Justifié": p.justifie ? "OUI" : "NON", "Motif": p.motif_justification || '' }));
+        const d = sources.map((p, i) => {
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+          return { 
+            "N°": i + 1, "Date": p.date_cours, "Division": p.classe_nom, "Nom": p.nom, "Prénom": p.prenom, "Matière": p.matiere, 
+            "Statut": isAbsent ? 'Absent' : (p.statut === 'R' ? 'Retard' : 'Présent'), 
+            "Justifié": p.justifie ? "OUI" : "NON", "Motif": p.motif_justification || '' 
+          };
+        });
         const ws = XLSX.utils.json_to_sheet(d), wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Registre"); XLSX.writeFile(wb, `Absences_${filtreDate.value}.xlsx`);
       });
