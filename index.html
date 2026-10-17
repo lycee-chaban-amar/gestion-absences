@@ -229,7 +229,7 @@
           <i class="fa-solid fa-sliders text-indigo-600"></i> <span data-i18n="sec_params">Paramètres du Cours</span>
         </h2>
         <span id="badge-mode-seance" class="hidden text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
-          <i class="fa-solid fa-clock-rotate-left mr-1"></i> <span data-i18n="tag_mode_edit">Modification d'une séance passée</span>
+          <i class="fa-solid fa-clock-rotate-left mr-1"></i> <span data-i18n="tag_mode_edit">Séance existante (Mode modification)</span>
         </span>
       </div>
 
@@ -315,6 +315,11 @@
             <i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> <span data-i18n="btn_add_missing">Élève manquant ?</span>
           </button>
 
+          <!-- BOUTON ACTUALISER -->
+          <button id="btn-refresh-prof" type="button" onclick="rafraichirBillets()" class="hidden text-xs font-bold text-slate-700 bg-white border border-slate-300 px-3.5 py-2 rounded-xl cursor-pointer hover:bg-slate-50 transition active:scale-95 shadow-sm">
+            <i class="fa-solid fa-arrows-rotate mr-1 text-indigo-600"></i> <span data-i18n="btn_refresh">Actualiser</span>
+          </button>
+
           <button id="btn-valider-rapide-top" type="button" onclick="declencherValidationAppel()" class="hidden text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl cursor-pointer transition active:scale-95 shadow-sm">
             <i class="fa-solid fa-paper-plane mr-1"></i> <span data-i18n="btn_validate_quick">Valider</span>
           </button>
@@ -351,7 +356,7 @@
     </div>
   </div>
 
-  <!-- SCRIPT JAVASCRIPT COMPLET AVEC CONSERVATION DE L'HISTORIQUE -->
+  <!-- SCRIPT JAVASCRIPT COMPLET -->
   <script>
     const CODES_MATIERES_BASE64 = {
       "Mathématiques / رياضيات": "MTAwMQ==",
@@ -397,6 +402,7 @@
         default_classe_title: "Sélectionnez une classe",
         btn_mark_all: "Tout marquer présent",
         btn_add_missing: "Élève manquant ?",
+        btn_refresh: "Actualiser",
         btn_validate_quick: "Valider",
         prompt_select_classe: "Veuillez choisir une division ci-dessus pour afficher la liste des élèves.",
         btn_submit_call: "Valider et transmettre l'appel",
@@ -444,6 +450,7 @@
         default_classe_title: "يرجى اختيار القسم أولاً",
         btn_mark_all: "تعليم الجميع كحاضرين",
         btn_add_missing: "تلميذ غير مسجل ؟",
+        btn_refresh: "تحديث القائمة",
         btn_validate_quick: "تأكيد",
         prompt_select_classe: "يرجى اختيار الفوج التربوي من القائمة أعلاه لعرض قائمة التلاميذ.",
         btn_submit_call: "تأكيد وإرسال ورقة الغياب إلى الاستشارة التربوية",
@@ -495,16 +502,62 @@
     const btnClearSearch = document.getElementById('btn-clear-search');
     const badgeModeSeance = document.getElementById('badge-mode-seance');
     const stickyFooterBar = document.getElementById('sticky-footer-bar');
+    const btnRefreshProf = document.getElementById('btn-refresh-prof');
 
     if (inputDateCours) {
       inputDateCours.value = new Date().toISOString().split('T')[0];
     }
 
+    // Fonction utilitaire pour charger les billets valides (< 60 minutes) côté navigateur
+    async function chargerBilletsActifs(dateCible) {
+      if (!navigator.onLine) return;
+      const dt = dateCible || (inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0]);
+      
+      const { data, error } = await supabaseClient
+        .from('billets_entree')
+        .select('*')
+        .eq('date_billet', dt)
+        .eq('actif', true);
+
+      if (error) {
+        console.warn("Erreur lecture billets_entree:", error);
+        return;
+      }
+
+      billetsMap.clear();
+      const maintenant = new Date();
+      const minutesActuelles = maintenant.getHours() * 60 + maintenant.getMinutes();
+      const aujourdhuiIso = maintenant.toISOString().split('T')[0];
+
+      (data || []).forEach(b => {
+        const heureStr = (b.heure_emission || '').substring(0, 5);
+        if (!heureStr) return;
+
+        const parts = heureStr.split(':');
+        const minutesEmission = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+        const diffMinutes = minutesActuelles - minutesEmission;
+
+        // Si c'est aujourd'hui, le billet est valide pendant 60 minutes (avec tolérance de 5 min)
+        if (dt !== aujourdhuiIso || (diffMinutes >= -5 && diffMinutes <= 60)) {
+          billetsMap.set(String(b.eleve_id), {
+            ...b,
+            heure_affichage: heureStr
+          });
+        }
+      });
+    }
+
     window.debloquerPagePourMatiere = function(matiere) {
       const pinScreen = document.getElementById('pin-screen-prof');
       if (pinScreen) pinScreen.remove();
+      
       sessionStorage.setItem('prof_auth_matiere', matiere);
-      if (selectMatiere) { selectMatiere.value = matiere; selectMatiere.disabled = true; }
+      
+      if (selectMatiere) {
+        selectMatiere.value = matiere;
+        selectMatiere.disabled = true;
+      }
+
       initClasses();
     };
 
@@ -513,33 +566,49 @@
       const inputPin = document.getElementById('input-pin-prof');
       const err = document.getElementById('pin-prof-error');
       const card = document.getElementById('pin-card-prof');
+
       if (!pinSelectMatiere || !inputPin) return;
 
       const matiere = pinSelectMatiere.value;
       const codeSaisi = inputPin.value.trim();
 
       if (!matiere) {
-        if (err) { err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى اختيار المادة أولاً' : '⚠️ Veuillez d\'abord choisir votre matière'; err.classList.remove('hidden'); }
+        if (err) {
+          err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى اختيار المادة أولاً' : '⚠️ Veuillez d\'abord choisir votre matière';
+          err.classList.remove('hidden');
+        }
         if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
         pinSelectMatiere.focus();
         return;
       }
 
       if (codeSaisi.length < 4) {
-        if (err) { err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى إدخال الرمز المكون من 4 أرقام' : '⚠️ Code à 4 chiffres requis'; err.classList.remove('hidden'); }
+        if (err) {
+          err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى إدخال الرمز المكون من 4 أرقام' : '⚠️ Code à 4 chiffres requis';
+          err.classList.remove('hidden');
+        }
         if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
         inputPin.focus();
         return;
       }
 
       const codeAttenduBase64 = CODES_MATIERES_BASE64[matiere];
+
       if (codeAttenduBase64 && codeSaisi === atob(codeAttenduBase64)) {
         if (err) err.classList.add('hidden');
         debloquerPagePourMatiere(matiere);
       } else {
-        if (err) { err.textContent = TRADUCTIONS[langueCourante].pin_error; err.classList.remove('hidden'); }
-        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
-        inputPin.value = ''; inputPin.focus();
+        if (err) {
+          err.textContent = TRADUCTIONS[langueCourante].pin_error;
+          err.classList.remove('hidden');
+        }
+        if (card) { 
+          card.classList.remove('shake-error'); 
+          void card.offsetWidth; 
+          card.classList.add('shake-error'); 
+        }
+        inputPin.value = '';
+        inputPin.focus();
       }
     };
 
@@ -551,25 +620,43 @@
     function appliquerLangue(lang) {
       langueCourante = lang;
       localStorage.setItem('pref_langue_prof', lang);
+
       const htmlRoot = document.getElementById('html-root');
-      if (htmlRoot) { htmlRoot.setAttribute('lang', lang); htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr'); }
+      if (htmlRoot) {
+        htmlRoot.setAttribute('lang', lang);
+        htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+      }
+
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const cle = el.getAttribute('data-i18n');
-        if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) el.textContent = TRADUCTIONS[lang][cle];
+        if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) {
+          el.textContent = TRADUCTIONS[lang][cle];
+        }
       });
+
       const lblLang = document.getElementById('lang-label');
       if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
+
       if (inputSearchEleve) inputSearchEleve.placeholder = TRADUCTIONS[lang].search_placeholder;
-      if (currentEleves.length > 0) { afficherEleves(); mettreAJourCompteurs(); }
+
+      if (currentEleves.length > 0) {
+        afficherEleves();
+        mettreAJourCompteurs();
+      }
       mettreAJourBadgeReseau();
     }
 
     window.toggleLangue = function() {
-      appliquerLangue((langueCourante === 'fr') ? 'ar' : 'fr');
+      const nouvelle = (langueCourante === 'fr') ? 'ar' : 'fr';
+      appliquerLangue(nouvelle);
     };
 
     function getQueueHorsLigne() {
-      try { return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]'); } catch (e) { return []; }
+      try {
+        return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]');
+      } catch (e) {
+        return [];
+      }
     }
 
     function saveQueueHorsLigne(queue) {
@@ -581,13 +668,18 @@
       const dot = document.getElementById('conn-dot');
       const text = document.getElementById('conn-text');
       if (!dot || !text) return;
+
       const queue = getQueueHorsLigne();
-      if (!navigator.onLine) {
+      const isOnline = navigator.onLine;
+
+      if (!isOnline) {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-        text.textContent = queue.length > 0 ? `Hors-ligne (${queue.length} en attente)` : TRADUCTIONS[langueCourante].conn_offline;
+        text.textContent = queue.length > 0 
+          ? (langueCourante === 'ar' ? `غير متصل (${queue.length} معلق)` : `Hors-ligne (${queue.length} en attente)`) 
+          : TRADUCTIONS[langueCourante].conn_offline;
       } else if (queue.length > 0) {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce';
-        text.textContent = `Synchroniser (${queue.length})`;
+        text.textContent = (langueCourante === 'ar' ? `مزامنة (${queue.length})` : `Synchroniser (${queue.length})`);
       } else {
         dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
         text.textContent = TRADUCTIONS[langueCourante].conn_online;
@@ -598,25 +690,57 @@
       if (!navigator.onLine) return;
       const queue = getQueueHorsLigne();
       if (queue.length === 0) return;
+
+      const btnSync = document.getElementById('btn-sync-offline');
+      if (btnSync) btnSync.disabled = true;
+
       let reussis = 0;
       const nouvelleQueue = [];
+
       for (const item of queue) {
         try {
-          const { data: seance, error: errS } = await supabaseClient.from('seances').insert({
-            classe_id: item.classe_id, matiere: item.matiere, date_cours: item.date_cours, heure_debut: item.heure_debut, heure_fin: item.heure_fin, appel_valide: true
-          }).select().single();
+          const { data: seance, error: errS } = await supabaseClient
+            .from('seances')
+            .insert({
+              classe_id: item.classe_id,
+              matiere: item.matiere,
+              date_cours: item.date_cours,
+              heure_debut: item.heure_debut,
+              heure_fin: item.heure_fin,
+              appel_valide: true
+            })
+            .select()
+            .single();
+
           if (errS) throw errS;
-          const pointages = item.pointages.map(pt => ({ seance_id: seance.id, eleve_id: pt.eleve_id, statut: pt.statut, justifie: pt.justifie, motif_justification: pt.motif_justification }));
+
+          const pointages = item.pointages.map(pt => ({
+            seance_id: seance.id,
+            eleve_id: pt.eleve_id,
+            statut: pt.statut
+          }));
+
           const { error: errP } = await supabaseClient.from('pointages').insert(pointages);
           if (errP) throw errP;
+
           reussis++;
-        } catch (e) { nouvelleQueue.push(item); }
+        } catch (e) {
+          nouvelleQueue.push(item);
+        }
       }
+
       saveQueueHorsLigne(nouvelleQueue);
-      if (reussis > 0) afficherToast('Synchronisation réussie', `${reussis} appel(s) transmis.`);
+      if (btnSync) btnSync.disabled = false;
+
+      if (reussis > 0) {
+        afficherToast(langueCourante === 'ar' ? 'تمت المزامنة بنجاح' : 'Synchronisation réussie', `${reussis} appel(s) transmis.`);
+      }
     };
 
-    window.addEventListener('online', () => { mettreAJourBadgeReseau(); synchroniserAppelsEnAttente(); });
+    window.addEventListener('online', () => {
+      mettreAJourBadgeReseau();
+      synchroniserAppelsEnAttente();
+    });
     window.addEventListener('offline', mettreAJourBadgeReseau);
 
     function afficherToast(titre, msg) {
@@ -624,18 +748,34 @@
       if (!t) return;
       document.getElementById('toast-titre').textContent = titre; 
       document.getElementById('toast-message').textContent = msg;
-      t.classList.remove('-translate-y-24', 'opacity-0'); t.classList.add('translate-y-0', 'opacity-100');
-      setTimeout(() => { t.classList.add('-translate-y-24', 'opacity-0'); t.classList.remove('translate-y-0', 'opacity-100'); }, 3500);
+      t.classList.remove('-translate-y-24', 'opacity-0'); 
+      t.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => { 
+        t.classList.add('-translate-y-24', 'opacity-0'); 
+        t.classList.remove('translate-y-0', 'opacity-100'); 
+      }, 3500);
     }
 
     async function initClasses() {
       const cacheClasses = localStorage.getItem('cache_classes');
-      if (cacheClasses) { try { classesList = JSON.parse(cacheClasses); remplirSelectClasses(classesList); } catch (e) {} }
+      if (cacheClasses) {
+        try {
+          classesList = JSON.parse(cacheClasses);
+          remplirSelectClasses(classesList);
+        } catch (e) {}
+      }
+
       if (navigator.onLine) {
         try {
-          const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
-          if (data) { classesList = data; localStorage.setItem('cache_classes', JSON.stringify(data)); remplirSelectClasses(classesList); }
-        } catch (err) {}
+          const { data, error } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
+          if (!error && data) {
+            classesList = data;
+            localStorage.setItem('cache_classes', JSON.stringify(data));
+            remplirSelectClasses(classesList);
+          }
+        } catch (err) {
+          console.warn("Classes chargées depuis le cache local.");
+        }
       }
       mettreAJourBadgeReseau();
     }
@@ -643,79 +783,192 @@
     function remplirSelectClasses(liste) {
       if (!selectClasse) return;
       selectClasse.innerHTML = `<option value="">${TRADUCTIONS[langueCourante].opt_classe_default}</option>`;
-      const groupes = { '1AS': document.createElement('optgroup'), '2AS': document.createElement('optgroup'), '3AS': document.createElement('optgroup'), 'AUTRE': document.createElement('optgroup') };
-      groupes['1AS'].label = "1ère Année"; groupes['2AS'].label = "2ème Année"; groupes['3AS'].label = "3ème Année (Bac)"; groupes['AUTRE'].label = "Autres";
+      
+      const groupes = { 
+        '1AS': document.createElement('optgroup'), 
+        '2AS': document.createElement('optgroup'), 
+        '3AS': document.createElement('optgroup'), 
+        'AUTRE': document.createElement('optgroup') 
+      };
+      groupes['1AS'].label = (langueCourante === 'ar') ? "السنة الأولى ثانوي (1AS)" : "1ère Année Secondaire"; 
+      groupes['2AS'].label = (langueCourante === 'ar') ? "السنة الثانية ثانوي (2AS)" : "2ème Année Secondaire"; 
+      groupes['3AS'].label = (langueCourante === 'ar') ? "السنة الثالثة ثانوي - بكالوريا (3AS)" : "3ème Année (Bac)"; 
+      groupes['AUTRE'].label = (langueCourante === 'ar') ? "أفواج أخرى" : "Autres divisions";
+      
       liste.forEach(cls => {
-        const o = document.createElement('option'); o.value = cls.id; o.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+        const o = document.createElement('option'); 
+        o.value = cls.id; 
+        o.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
         if(cls.nom_court.startsWith('1AS')) groupes['1AS'].appendChild(o);
         else if(cls.nom_court.startsWith('2AS')) groupes['2AS'].appendChild(o);
         else if(cls.nom_court.startsWith('3AS')) groupes['3AS'].appendChild(o);
         else groupes['AUTRE'].appendChild(o);
       });
-      ['1AS','2AS','3AS','AUTRE'].forEach(k => { if(groupes[k].children.length) selectClasse.appendChild(groupes[k]); });
+      
+      ['1AS','2AS','3AS','AUTRE'].forEach(k => { 
+        if(groupes[k].children.length) selectClasse.appendChild(groupes[k]); 
+      });
     }
 
     async function verifierEtChargerSeanceExistante() {
-      const cid = selectClasse.value, mat = selectMatiere.value, dt = inputDateCours ? inputDateCours.value : '', hor = selectHoraire.value;
-      if (!cid || !mat || !dt || !hor || !navigator.onLine) { seanceExistanteId = null; if (badgeModeSeance) badgeModeSeance.classList.add('hidden'); return; }
-      const t = hor.split('-'), heureDeb = t[0] + ':00';
+      const cid = selectClasse.value;
+      const mat = selectMatiere.value;
+      const dt = inputDateCours ? inputDateCours.value : '';
+      const hor = selectHoraire.value;
+
+      if (!cid || !mat || !dt || !hor || !navigator.onLine) {
+        seanceExistanteId = null;
+        if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
+        return;
+      }
+
+      const t = hor.split('-');
+      const heureDeb = t[0] + ':00';
+
       try {
-        const { data: seance } = await supabaseClient.from('seances').select('id, pointages (eleve_id, statut)').eq('classe_id', cid).eq('matiere', mat).eq('date_cours', dt).eq('heure_debut', heureDeb).maybeSingle();
+        await chargerBilletsActifs(dt);
+
+        const { data: seance } = await supabaseClient
+          .from('seances')
+          .select('id, pointages (eleve_id, statut)')
+          .eq('classe_id', cid)
+          .eq('matiere', mat)
+          .eq('date_cours', dt)
+          .eq('heure_debut', heureDeb)
+          .maybeSingle();
+
         if (seance) {
           seanceExistanteId = seance.id;
           if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
-          if (seance.pointages) { seance.pointages.forEach(pt => { currentStatuts[pt.eleve_id] = pt.statut; }); afficherEleves(); mettreAJourCompteurs(); }
-        } else { seanceExistanteId = null; if (badgeModeSeance) badgeModeSeance.classList.add('hidden'); }
-      } catch (err) {}
+
+          if (seance.pointages && seance.pointages.length > 0) {
+            seance.pointages.forEach(pt => {
+              currentStatuts[pt.eleve_id] = pt.statut;
+            });
+          }
+        } else {
+          seanceExistanteId = null;
+          if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
+        }
+        afficherEleves();
+        mettreAJourCompteurs();
+      } catch (err) {
+        console.warn("Vérification séance passée :", err);
+      }
     }
 
     async function chargerEleves(cid) {
       if(!cid) {
-        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
-        document.getElementById('stats-bar').classList.add('hidden'); btnOuvrirModalEleve.classList.add('hidden');
-        if (searchContainer) searchContainer.classList.add('hidden'); return;
+        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
+        document.getElementById('stats-bar').classList.add('hidden'); 
+        document.getElementById('btn-tout-present').classList.add('hidden');
+        if (btnValiderRapideTop) btnValiderRapideTop.classList.add('hidden');
+        if (stickyFooterBar) stickyFooterBar.classList.add('hidden');
+        if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.add('hidden');
+        if (btnRefreshProf) btnRefreshProf.classList.add('hidden');
+        if (searchContainer) searchContainer.classList.add('hidden');
+        if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
+        clearSearchEleve();
+        seanceExistanteId = null;
+        return;
       }
+      
       elevesContainer.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
+      
       const sc = classesList.find(c => c.id == cid);
       document.getElementById('classe-titre').textContent = sc ? `${sc.nom_court} (${sc.nom_complet})` : 'Classe';
+
       const cacheEleves = localStorage.getItem(`cache_eleves_${cid}`);
-      if (cacheEleves) { try { currentEleves = JSON.parse(cacheEleves); } catch (e) {} }
+      if (cacheEleves) {
+        try {
+          currentEleves = JSON.parse(cacheEleves);
+        } catch (e) {}
+      }
+
       if (navigator.onLine) {
         try {
-          const [elevesRes, billetsRes] = await Promise.all([
+          const dt = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
+          const [elevesRes] = await Promise.all([
             supabaseClient.from('eleves').select('*').eq('classe_id', cid).eq('actif', true).order('nom'),
-            supabaseClient.from('v_billets_actifs_jour').select('*')
+            chargerBilletsActifs(dt)
           ]);
-          if (elevesRes.data) { currentEleves = elevesRes.data; localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(elevesRes.data)); }
-          billetsMap = new Map(); (billetsRes.data || []).forEach(b => billetsMap.set(b.eleve_id, b));
-        } catch (err) {}
+
+          if (!elevesRes.error && elevesRes.data) {
+            currentEleves = elevesRes.data;
+            localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(elevesRes.data));
+          }
+        } catch (err) {
+          console.warn("Chargement depuis cache local :", err);
+        }
       }
-      document.getElementById('classe-effectif').textContent = `${currentEleves.length} inscrits`;
-      currentStatuts = {}; currentEleves.forEach(e => currentStatuts[e.id] = 'P');
-      clearSearchEleve(); afficherEleves(); mettreAJourCompteurs();
+
+      document.getElementById('classe-effectif').textContent = `${currentEleves.length} ${TRADUCTIONS[langueCourante].registered_count}`;
+      currentStatuts = {}; 
+      currentEleves.forEach(e => currentStatuts[e.id] = 'P');
+      
+      clearSearchEleve();
+      afficherEleves();
+      mettreAJourCompteurs();
+      
       document.getElementById('stats-bar').classList.remove('hidden'); 
       document.getElementById('btn-tout-present').classList.remove('hidden');
       if (btnValiderRapideTop) btnValiderRapideTop.classList.remove('hidden');
       if (stickyFooterBar) stickyFooterBar.classList.remove('hidden');
-      btnOuvrirModalEleve.classList.remove('hidden'); if (searchContainer) searchContainer.classList.remove('hidden');
+      if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.remove('hidden');
+      if (btnRefreshProf) btnRefreshProf.classList.remove('hidden');
+      if (searchContainer) searchContainer.classList.remove('hidden');
+
       await verifierEtChargerSeanceExistante();
     }
 
+    // BOUTON ACTUALISER : Recharge les billets actifs sans perdre les pointages en cours
+    window.rafraichirBillets = async function() {
+      const cid = selectClasse.value;
+      if (!cid || !navigator.onLine) return;
+
+      const btnRefresh = document.getElementById('btn-refresh-prof');
+      if (btnRefresh) btnRefresh.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1 text-indigo-600"></i> ...`;
+
+      try {
+        const dt = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
+        await chargerBilletsActifs(dt);
+        afficherEleves();
+        afficherToast(
+          langueCourante === 'ar' ? 'تم التحديث' : 'Liste actualisée',
+          langueCourante === 'ar' ? 'تم تحديث رخص الدخول بنجاح.' : 'Les autorisations d\'entrée ont été mises à jour.'
+        );
+      } catch (err) {
+        console.error("Erreur actualisation billets:", err);
+      } finally {
+        if (btnRefresh) {
+          btnRefresh.innerHTML = `<i class="fa-solid fa-arrows-rotate mr-1 text-indigo-600"></i> <span data-i18n="btn_refresh">${TRADUCTIONS[langueCourante].btn_refresh}</span>`;
+        }
+      }
+    };
+
     function filterEleves(terme) {
       searchTermEleve = (terme || '').trim().toLowerCase();
-      if (btnClearSearch) { if (searchTermEleve.length > 0) btnClearSearch.classList.remove('hidden'); else btnClearSearch.classList.add('hidden'); }
+      if (btnClearSearch) {
+        if (searchTermEleve.length > 0) btnClearSearch.classList.remove('hidden');
+        else btnClearSearch.classList.add('hidden');
+      }
       afficherEleves();
     }
 
     window.clearSearchEleve = function() {
-      if (inputSearchEleve) inputSearchEleve.value = ''; searchTermEleve = '';
-      if (btnClearSearch) btnClearSearch.classList.add('hidden'); afficherEleves();
+      if (inputSearchEleve) inputSearchEleve.value = '';
+      searchTermEleve = '';
+      if (btnClearSearch) btnClearSearch.classList.add('hidden');
+      afficherEleves();
     };
 
-    if (inputSearchEleve) inputSearchEleve.addEventListener('input', (e) => filterEleves(e.target.value));
+    if (inputSearchEleve) {
+      inputSearchEleve.addEventListener('input', (e) => filterEleves(e.target.value));
+    }
 
     function afficherEleves() {
       elevesContainer.innerHTML = '';
+
       const listeFiltree = currentEleves.filter(e => {
         if (!searchTermEleve) return true;
         const nomFr = `${e.nom || ''} ${e.prenom || ''}`.toLowerCase();
@@ -724,26 +977,52 @@
       });
 
       if (listeFiltree.length === 0) {
-        elevesContainer.innerHTML = `<div class="py-10 text-center text-slate-400"><p class="text-sm font-semibold">${TRADUCTIONS[langueCourante].no_search_result}</p></div>`;
+        elevesContainer.innerHTML = `
+          <div class="py-10 text-center text-slate-400">
+            <i class="fa-solid fa-user-slash text-2xl text-slate-300 mb-2 block"></i>
+            <p class="text-sm font-semibold">${TRADUCTIONS[langueCourante].no_search_result}</p>
+          </div>
+        `;
         return;
       }
 
-      const matieresArabophones = ["Langue Arabe / لغة عربية", "Philosophie / فلسفة", "Histoire-Géographie / تاريخ وجغرافيا", "Sciences Islamiques / علوم إسلامية", "Droit / قانون", "Gestion & Économie / تسيير واقتصاد"];
-      const estMatiereArabe = matieresArabophones.includes(selectMatiere ? selectMatiere.value : "");
+      // Détection de la matière (arabophone vs francophone)
+      const matieresArabophones = [
+        "Langue Arabe / لغة عربية",
+        "Philosophie / فلسفة",
+        "Histoire-Géographie / تاريخ وجغرافيا",
+        "Sciences Islamiques / علوم إسلامية",
+        "Droit / قانون",
+        "Gestion & Économie / تسيير واقتصاد"
+      ];
+      
+      const matiereChoisie = (selectMatiere && selectMatiere.value) 
+        ? selectMatiere.value 
+        : (sessionStorage.getItem('prof_auth_matiere') || "");
+        
+      const estMatiereArabe = matieresArabophones.includes(matiereChoisie);
 
       listeFiltree.forEach((e) => {
         const indexOfficiel = currentEleves.findIndex(item => item.id === e.id) + 1;
         const row = document.createElement('div');
         const st = currentStatuts[e.id] || 'P';
+
         row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 hover:bg-slate-50/80 transition`;
+        
         const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
         const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
 
-        const billet = billetsMap.get(e.id);
+        // Correspondance forcée en String pour garantir l'affichage du badge
+        const billet = billetsMap.get(String(e.id));
+        const heureBillet = billet ? (billet.heure_affichage || (billet.heure_emission || '').substring(0, 5)) : '';
+        const texteBadge = estMatiereArabe 
+          ? `مسموح له بالدخول (${heureBillet})` 
+          : `Autorisé à entrer (${heureBillet})`;
+
         const badgeBilletHtml = billet ? `
           <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm" dir="${estMatiereArabe ? 'rtl' : 'ltr'}">
             <i class="fa-solid fa-user-check text-emerald-600"></i>
-            <span>${estMatiereArabe ? 'مسموح له بالدخول (' + (billet.heure_emission || '') + ')' : 'Autorisé à entrer (' + (billet.heure_emission || '') + ')'}</span>
+            <span>${texteBadge}</span>
           </span>
         ` : '';
 
@@ -754,17 +1033,21 @@
               <span class="font-bold text-slate-900">${nomPrincipal}</span> 
               <span class="text-xs text-slate-500 font-bold">${nomSecondaire}</span>
               ${badgeBilletHtml}
+              ${e.est_nouveau ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">${TRADUCTIONS[langueCourante].tag_added_session}</span>` : ''}
             </div>
           </div>
           <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
-            <button type="button" onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='P' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50'}">
-              <i class="fa-solid fa-check"></i><span>${TRADUCTIONS[langueCourante].btn_present}</span>
+            <button type="button" onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='P' ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/30' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700'}">
+              <i class="fa-solid fa-check"></i>
+              <span>${TRADUCTIONS[langueCourante].btn_present}</span>
             </button>
-            <button type="button" onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='A' ? 'bg-rose-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-rose-50'}">
-              <i class="fa-solid fa-xmark"></i><span>${TRADUCTIONS[langueCourante].btn_absent}</span>
+            <button type="button" onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='A' ? 'bg-rose-600 text-white shadow-md ring-2 ring-rose-500/30' : 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-700'}">
+              <i class="fa-solid fa-xmark"></i>
+              <span>${TRADUCTIONS[langueCourante].btn_absent}</span>
             </button>
-            <button type="button" onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='R' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-amber-50'}">
-              <i class="fa-solid fa-clock"></i><span>${TRADUCTIONS[langueCourante].btn_retard}</span>
+            <button type="button" onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${st==='R' ? 'bg-amber-500 text-white shadow-md ring-2 ring-amber-500/30' : 'bg-slate-100 text-slate-600 hover:bg-amber-50 hover:text-amber-700'}">
+              <i class="fa-solid fa-clock"></i>
+              <span>${TRADUCTIONS[langueCourante].btn_retard}</span>
             </button>
           </div>
         `;
@@ -772,92 +1055,221 @@
       });
     }
 
-    window.changerStatut = function(id, st) { currentStatuts[id] = st; afficherEleves(); mettreAJourCompteurs(); };
-    window.marquerTousPresents = function() { currentEleves.forEach(e => currentStatuts[e.id] = 'P'); afficherEleves(); mettreAJourCompteurs(); };
+    window.changerStatut = function(id, st) { 
+      currentStatuts[id] = st; 
+      afficherEleves(); 
+      mettreAJourCompteurs(); 
+    };
+    
+    window.marquerTousPresents = function() {
+      currentEleves.forEach(e => currentStatuts[e.id] = 'P'); 
+      afficherEleves(); 
+      mettreAJourCompteurs(); 
+    };
 
     function mettreAJourCompteurs() {
-      let p=0, a=0, r=0; Object.values(currentStatuts).forEach(s => { if(s==='P') p++; else if(s==='A') a++; else r++; });
-      document.getElementById('count-presents').textContent = p; document.getElementById('count-absents').textContent = a; document.getElementById('count-retards').textContent = r;
-      if (document.getElementById('sticky-presents')) document.getElementById('sticky-presents').textContent = p;
-      if (document.getElementById('sticky-absents')) document.getElementById('sticky-absents').textContent = a;
+      let p=0, a=0, r=0; 
+      Object.values(currentStatuts).forEach(s => { if(s==='P') p++; else if(s==='A') a++; else r++; });
+      document.getElementById('count-presents').textContent = p; 
+      document.getElementById('count-absents').textContent = a; 
+      document.getElementById('count-retards').textContent = r;
+
+      const stickyP = document.getElementById('sticky-presents');
+      const stickyA = document.getElementById('sticky-absents');
+      if (stickyP) stickyP.textContent = p;
+      if (stickyA) stickyA.textContent = a;
     }
 
     window.ouvrirModalNouvelEleve = function() {
-      if (!selectClasse.value) return;
-      document.getElementById('add-eleve-nom').value = ''; document.getElementById('add-eleve-prenom').value = '';
-      const modal = document.getElementById('modal-nouvel-eleve'); modal.classList.remove('hidden'); modal.classList.add('flex');
+      const cid = selectClasse.value;
+      if (!cid) {
+        afficherToast(langueCourante === 'ar' ? 'تنبيه' : 'Attention', TRADUCTIONS[langueCourante].prompt_select_classe);
+        return;
+      }
+      document.getElementById('add-eleve-nom').value = '';
+      document.getElementById('add-eleve-prenom').value = '';
+      document.getElementById('add-eleve-nom-ar').value = '';
+      document.getElementById('add-eleve-prenom-ar').value = '';
+      const modal = document.getElementById('modal-nouvel-eleve');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.getElementById('add-eleve-nom').focus();
     };
-    window.fermerModalNouvelEleve = function() { document.getElementById('modal-nouvel-eleve').classList.add('hidden'); document.getElementById('modal-nouvel-eleve').classList.remove('flex'); };
+
+    window.fermerModalNouvelEleve = function() {
+      const modal = document.getElementById('modal-nouvel-eleve');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    };
 
     window.confirmerAjoutEleve = async function() {
-      const cid = selectClasse.value, nom = document.getElementById('add-eleve-nom').value.trim().toUpperCase(), prenom = document.getElementById('add-eleve-prenom').value.trim();
-      if (!nom || !prenom) return;
-      try {
-        const { data, error } = await supabaseClient.from('eleves').insert({ classe_id: parseInt(cid, 10), nom, prenom, matricule: 'TEMP-'+Date.now(), actif: true }).select().single();
-        if (error) throw error;
-        currentEleves.push(data); currentStatuts[data.id] = 'P';
-        afficherEleves(); mettreAJourCompteurs(); fermerModalNouvelEleve();
-      } catch (err) { alert(err.message); }
-    };
+      const cid = selectClasse.value;
+      const nom = document.getElementById('add-eleve-nom').value.trim().toUpperCase();
+      const prenom = document.getElementById('add-eleve-prenom').value.trim();
+      const nomAr = document.getElementById('add-eleve-nom-ar').value.trim();
+      const prenomAr = document.getElementById('add-eleve-prenom-ar').value.trim();
 
-    // CORRECTION MAJEURE : PRÉSERVATION DE L'HISTORIQUE ET DES JUSTIFICATIONS LORS DE LA VALIDATION DE L'APPEL
-    window.declencherValidationAppel = async function() {
-      if(!selectClasse.value || currentEleves.length === 0) return;
-      const t = selectHoraire.value.split('-'), dateChoisie = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
-      const donneesAppel = {
-        classe_id: selectClasse.value, matiere: selectMatiere.value, date_cours: dateChoisie,
-        heure_debut: t[0] + ':00', heure_fin: t[1] + ':00',
-        pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' }))
+      if (!nom || !prenom) {
+        alert(langueCourante === 'ar' ? 'يرجى إدخال اللقب والاسم بالحروف اللاتينية.' : 'Le Nom et le Prénom (FR) sont obligatoires.');
+        return;
+      }
+
+      const btnConfirmer = document.getElementById('btn-confirmer-ajout-eleve');
+      btnConfirmer.disabled = true;
+      btnConfirmer.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`;
+
+      const matriculeAuto = 'TEMP-' + Date.now().toString().slice(-6);
+
+      const nouvelEleveData = {
+        classe_id: parseInt(cid, 10),
+        nom: nom,
+        prenom: prenom,
+        nom_ar: nomAr || null,
+        prenom_ar: prenomAr || null,
+        matricule: matriculeAuto,
+        actif: true
       };
 
       try {
+        let insertedEleve = null;
+
+        if (navigator.onLine) {
+          const { data, error } = await supabaseClient
+            .from('eleves')
+            .insert(nouvelEleveData)
+            .select()
+            .single();
+
+          if (error) throw error;
+          insertedEleve = data;
+        } else {
+          insertedEleve = {
+            id: Date.now(),
+            ...nouvelEleveData,
+            est_nouveau: true
+          };
+        }
+
+        insertedEleve.est_nouveau = true;
+        currentEleves.push(insertedEleve);
+        currentStatuts[insertedEleve.id] = 'P';
+
+        localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(currentEleves));
+
+        document.getElementById('classe-effectif').textContent = `${currentEleves.length} ${TRADUCTIONS[langueCourante].registered_count}`;
+        clearSearchEleve();
+        afficherEleves();
+        mettreAJourCompteurs();
+        fermerModalNouvelEleve();
+
+        afficherToast(langueCourante === 'ar' ? 'تمت إضافة التلميذ' : 'Élève ajouté', `${nom} ${prenom}`);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        btnConfirmer.disabled = false;
+        btnConfirmer.innerHTML = `<i class="fa-solid fa-plus"></i> <span>${TRADUCTIONS[langueCourante].btn_confirm_add}</span>`;
+      }
+    };
+
+    window.declencherValidationAppel = async function() {
+      if(!selectClasse.value || currentEleves.length === 0) {
+        afficherToast(langueCourante === 'ar' ? 'خطأ' : 'Erreur', TRADUCTIONS[langueCourante].prompt_select_classe);
+        return;
+      }
+
+      const btnSticky = document.getElementById('btn-valider-appel');
+      if (btnSticky) {
+        btnSticky.disabled = true;
+        btnSticky.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Traitement...`;
+      }
+      if (btnValiderRapideTop) btnValiderRapideTop.disabled = true;
+
+      const t = selectHoraire.value.split('-');
+      const dateChoisie = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
+
+      const donneesAppel = {
+        classe_id: selectClasse.value,
+        matiere: selectMatiere.value,
+        date_cours: dateChoisie,
+        heure_debut: t[0] + ':00',
+        heure_fin: t[1] + ':00',
+        pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' }))
+      };
+
+      if (!navigator.onLine) {
+        const queue = getQueueHorsLigne();
+        queue.push(donneesAppel);
+        saveQueueHorsLigne(queue);
+        afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Enregistré hors-ligne', 'Synchronisation dès le retour du réseau.');
+        if (btnSticky) {
+          btnSticky.disabled = false;
+          btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`;
+        }
+        if (btnValiderRapideTop) btnValiderRapideTop.disabled = false;
+        return;
+      }
+
+      try {
         let seanceId = seanceExistanteId;
-        let anciensPointagesMap = new Map();
 
         if (!seanceId) {
           const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ 
-            classe_id: donneesAppel.classe_id, matiere: donneesAppel.matiere, date_cours: donneesAppel.date_cours, 
-            heure_debut: donneesAppel.heure_debut, heure_fin: donneesAppel.heure_fin, appel_valide: true 
+            classe_id: donneesAppel.classe_id, 
+            matiere: donneesAppel.matiere, 
+            date_cours: donneesAppel.date_cours, 
+            heure_debut: donneesAppel.heure_debut, 
+            heure_fin: donneesAppel.heure_fin, 
+            appel_valide: true 
           }).select().single();
-          if(e1) throw e1; seanceId = s.id;
-        } else {
-          // Récupérer l'historique pour préserver les justifications du superviseur
-          const { data: anciensPts } = await supabaseClient.from('pointages').select('eleve_id, statut, justifie, motif_justification').eq('seance_id', seanceId);
-          (anciensPts || []).forEach(ap => anciensPointagesMap.set(String(ap.eleve_id), ap));
+          
+          if(e1) throw e1;
+          seanceId = s.id;
         }
 
         await supabaseClient.from('pointages').delete().eq('seance_id', seanceId);
 
-        const pts = donneesAppel.pointages.map(p => {
-          const ancien = anciensPointagesMap.get(String(p.eleve_id));
-          const aUnBillet = billetsMap.has(p.eleve_id);
-          let justifieConserve = ancien ? ancien.justifie : false;
-          let motifConserve = ancien ? ancien.motif_justification : null;
-
-          // Si l'élève était absent/retard ou a reçu un billet et qu'il est maintenant présent, on conserve sa trace avec justification
-          if (p.statut === 'P' && ((ancien && (ancien.statut === 'A' || ancien.statut === 'R')) || aUnBillet)) {
-            justifieConserve = true;
-            if (!motifConserve) motifConserve = 'Régularisé (Entré en cours)';
-          }
-
-          return { seance_id: seanceId, eleve_id: p.eleve_id, statut: p.statut, justifie: justifieConserve, motif_justification: motifConserve };
-        });
+        const pts = donneesAppel.pointages.map(p => ({
+          seance_id: seanceId,
+          eleve_id: p.eleve_id,
+          statut: p.statut
+        }));
 
         const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
         if(e2) throw e2;
+        
         seanceExistanteId = seanceId;
         if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
-        afficherToast('Succès', 'Appel enregistré et synchronisé avec succès !');
-      } catch(e) { alert("Erreur d'enregistrement : " + e.message); }
-    };
 
+        afficherToast(
+          langueCourante === 'ar' ? 'تم تسجيل الحضور' : 'Succès',
+          langueCourante === 'ar' ? 'تم حفظ ورقة الحضور وتحديث السجل بنجاح.' : 'Appel enregistré et synchronisé avec succès !'
+        );
+      } catch(e) { 
+        console.warn("Échec réseau :", e);
+        const queue = getQueueHorsLigne();
+        queue.push(donneesAppel);
+        saveQueueHorsLigne(queue);
+        afficherToast(langueCourante === 'ar' ? 'تم الحفظ محلياً' : 'Sauvegardé hors-ligne', 'Réseau instable : appel sécurisé.');
+      } finally { 
+        if (btnSticky) {
+          btnSticky.disabled = false;
+          btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span>${TRADUCTIONS[langueCourante].btn_submit_call}</span>`;
+        }
+        if (btnValiderRapideTop) btnValiderRapideTop.disabled = false;
+      }
+    };
+    
     if(selectClasse) selectClasse.addEventListener('change', (e) => chargerEleves(e.target.value));
     if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
     if(selectHoraire) selectHoraire.addEventListener('change', verifierEtChargerSeanceExistante);
 
+    // Initialisation
     appliquerLangue(langueCourante);
+
     const matiereSession = sessionStorage.getItem('prof_auth_matiere');
-    if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) debloquerPagePourMatiere(matiereSession);
+    if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) { 
+      debloquerPagePourMatiere(matiereSession); 
+    }
   </script>
 </body>
 </html>
