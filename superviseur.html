@@ -30,6 +30,9 @@
     @keyframes alertPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }
     .badge-alerte-rouge { animation: alertPulse 1.4s infinite ease-in-out; }
 
+    @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+    .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
+
     @media print {
       body * { visibility: hidden !important; }
       body.print-rapport #zone-impression-rapport, body.print-rapport #zone-impression-rapport * { visibility: visible !important; }
@@ -357,6 +360,7 @@
     const btnRefresh = document.getElementById('btn-refresh');
     const iconRefresh = document.getElementById('icon-refresh');
     const checkAllMaster = document.getElementById('checkbox-select-all');
+    const btnExportExcel = document.getElementById('btn-export-excel'); // CORRECTION ICI
 
     if(filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
@@ -449,7 +453,6 @@
       finally { if(iconRefresh) iconRefresh.classList.remove('fa-spin'); }
     }
 
-    // CORRECTION CRITIQUE : Conserve la trace des élèves entrés en cours (statut P avec justification ou régularisation)
     function obtenirDonneesFiltrees() {
       const cl = filtreClasse ? filtreClasse.value : 'ALL';
       const st = filtreStatut ? filtreStatut.value : 'A_R';
