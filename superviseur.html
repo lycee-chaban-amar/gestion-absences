@@ -45,7 +45,8 @@
       .page-break { page-break-before: always; }
     }
     
-    .print-table th, .print-table td { border: 1px solid black; padding: 4px 8px; text-align: center; font-size: 12px; }
+    .print-table { border-collapse: collapse; table-layout: fixed; width: 100%; font-size: 11px; }
+    .print-table th, .print-table td { border: 1px solid black; padding: 4px 2px; text-align: center; word-wrap: break-word; overflow-wrap: break-word; }
     .print-table th { background-color: #f3f4f6; font-weight: bold; }
     .print-kpi-box { border: 2px solid black; padding: 5px 15px; font-weight: bold; font-size: 14px; }
   </style>
@@ -847,7 +848,7 @@
     };
 
     // ============================================================
-    // CONSTRUCTION DU NOUVEAU RAPPORT (2 PAGES) - SANS TABLEAU HORAIRE
+    // CONSTRUCTION DU NOUVEAU RAPPORT (2 PAGES) - CORRIGÉ
     // ============================================================
     function construireHtmlRapportComplet() {
       const d = filtreDate.value;
@@ -857,7 +858,7 @@
       
       const clsChoisie = filtreClasse ? filtreClasse.value : 'ALL';
       
-      // --- TRAITEMENT PAGE 1 (Élèves) ---
+      // --- PAGE 1 ---
       const incidents = vuePointages.filter(p => { 
         if (clsChoisie !== 'ALL' && String(p.classe_id) !== String(clsChoisie)) return false; 
         const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
@@ -893,13 +894,13 @@
           <div class="print-kpi-box text-center w-1/4">التأخرات : ${currentKpis.total_retards || 0}</div>
           <div class="print-kpi-box text-center w-1/4">نسبة الحضور : ${currentKpis.taux_presence || 0}%</div>
         </div>
-        <table class="w-full text-right border-collapse border-2 border-black print-table mb-8">
+        <table class="border-collapse border border-black print-table mb-8">
           <thead><tr class="bg-gray-100"><th class="w-10">الرقم</th><th>اللقب والاسم</th><th>القسم</th><th>المادة والتوقيت</th><th>الحالة</th><th>التبرير / التأشيرة</th></tr></thead>
           <tbody class="divide-y divide-black">${incHtml}</tbody>
         </table>
       `;
 
-      // --- TRAITEMENT PAGE 2 (Conseiller d'éducation) ---
+      // --- PAGE 2 ---
       const classes1AS = classesCache.filter(c => c.nom_court.startsWith('1AS'));
       const classes2AS = classesCache.filter(c => c.nom_court.startsWith('2AS'));
       const classes3AS = classesCache.filter(c => c.nom_court.startsWith('3AS'));
@@ -966,20 +967,28 @@
           </div>
         </div>
 
-        <div class="flex gap-4 mb-6">
-          <div class="w-2/3">
-            <table class="w-full text-center border-collapse border border-black print-table">
+        <div class="flex justify-between items-start gap-2 mb-6 w-full" dir="rtl">
+          <!-- Tableau de gauche (68%) -->
+          <div class="w-[68%] flex-shrink-0">
+            <table class="print-table">
               <thead>
-                <tr class="bg-gray-100"><th rowspan="2" class="w-1/4">السنة</th><th rowspan="2" class="w-1/4">الأفواج</th><th colspan="9">الغيابات</th><th rowspan="2" class="w-1/12">المجموع</th></tr>
-                <tr class="bg-gray-100"><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th></tr>
+                <tr class="bg-gray-100">
+                  <th rowspan="2" class="w-[15%]">السنة</th>
+                  <th rowspan="2" class="w-[15%]">الأفواج</th>
+                  <th colspan="9">الغيابات</th>
+                  <th rowspan="2" class="w-[10%]">المجموع</th>
+                </tr>
+                <tr class="bg-gray-100">
+                  <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+                </tr>
               </thead>
               <tbody>${rowsNiveaux}</tbody>
             </table>
           </div>
-          
-          <!-- TABLEAU PERSONNEL (VIDE POUR REMPLISSAGE MANUEL) -->
-          <div class="w-1/3 flex flex-col gap-4">
-            <table class="w-full text-center border-collapse border border-black print-table">
+
+          <!-- Tableau de droite (30%) -->
+          <div class="w-[30%] flex-shrink-0 flex flex-col gap-4">
+            <table class="print-table">
               <thead><tr class="bg-gray-100"><th colspan="2">غيابات وتأخرات المساعدين التربويين</th></tr></thead>
               <tbody>
                 <tr><td class="font-bold w-1/2">الفترة الصباحية</td><td></td></tr>
@@ -987,7 +996,7 @@
               </tbody>
             </table>
             
-            <table class="w-full text-center border-collapse border border-black print-table">
+            <table class="print-table">
               <thead><tr class="bg-gray-100"><th colspan="4">الخدمة</th></tr><tr class="bg-gray-100"><th>البيان</th><th>تلميذ</th><th>أساتذة</th><th>مساعدون</th></tr></thead>
               <tbody>
                 <tr><td class="font-bold">الحاضرون</td><td></td><td></td><td></td></tr>
