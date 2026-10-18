@@ -4,15 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Feuille d'Appel - ثانوية شعبان أعمر أوقاس</title>
-  
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#1e1b4b">
   
-  <!-- Tailwind CSS & Supabase SDK -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- Fonts & Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
@@ -20,7 +17,6 @@
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     button, select, input { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
     button:active { transform: scale(0.96); }
-
     @keyframes slideUpFade { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
     .animate-row { animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
@@ -28,210 +24,156 @@
     #toast-notification { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col transition-all pb-28">
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-all pb-28">
 
-  <!-- TOAST NOTIFICATION -->
   <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
     <div class="bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md">
       <div id="toast-icon" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base"><i class="fa-solid fa-check"></i></div>
-      <div>
-        <h4 class="text-sm font-bold text-white" id="toast-titre">Opération réussie</h4>
-        <p class="text-xs text-slate-300" id="toast-message">Les données ont été envoyées.</p>
-      </div>
+      <div><h4 class="text-sm font-bold text-white" id="toast-titre">Opération réussie</h4><p class="text-xs text-slate-300" id="toast-message">Les données ont été envoyées.</p></div>
     </div>
   </div>
 
-  <!-- MODAL NOUVEL ÉLÈVE -->
   <div id="modal-nouvel-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 animate-row">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-        <div class="flex items-center gap-2 text-indigo-700">
-          <div class="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-lg"><i class="fa-solid fa-user-plus"></i></div>
-          <div><h3 class="text-base font-bold text-slate-900 leading-tight">Élève manquant</h3><p class="text-xs text-slate-500">إضافة تلميذ غير مسجل في الفوج</p></div>
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-row">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+        <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-slate-700 flex items-center justify-center text-lg"><i class="fa-solid fa-user-plus"></i></div>
+          <div><h3 class="text-base font-bold text-slate-900 dark:text-white leading-tight" data-i18n="modal_add_title">Élève manquant</h3></div>
         </div>
-        <button onclick="fermerModalNouvelEleve()" class="text-slate-400 hover:text-slate-600 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button type="button" onclick="fermerModalNouvelEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <div class="space-y-3.5 text-sm">
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="block text-xs font-bold text-slate-600 mb-1">Nom (FR) *</label><input type="text" id="add-eleve-nom" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold uppercase" /></div>
-          <div><label class="block text-xs font-bold text-slate-600 mb-1">Prénom (FR) *</label><input type="text" id="add-eleve-prenom" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold capitalize" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-i18n="lbl_nom">Nom (FR) *</label><input type="text" id="add-eleve-nom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none uppercase" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-i18n="lbl_prenom">Prénom (FR) *</label><input type="text" id="add-eleve-prenom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none capitalize" /></div>
         </div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="block text-xs font-bold text-slate-600 mb-1">اللقب (بالعربية)</label><input type="text" id="add-eleve-nom-ar" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold" /></div>
-          <div><label class="block text-xs font-bold text-slate-600 mb-1">الاسم (بالعربية)</label><input type="text" id="add-eleve-prenom-ar" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">اللقب (AR)</label><input type="text" id="add-eleve-nom-ar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">الاسم (AR)</label><input type="text" id="add-eleve-prenom-ar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none" /></div>
         </div>
       </div>
-      <div class="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100">
-        <button onclick="fermerModalNouvelEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100">Annuler</button>
-        <button id="btn-confirmer-ajout-eleve" onclick="confirmerAjoutEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> Ajouter</button>
+      <div class="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100 dark:border-slate-700">
+        <button type="button" onclick="fermerModalNouvelEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-i18n="btn_cancel">Annuler</button>
+        <button type="button" onclick="confirmerAjoutEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> <span data-i18n="btn_add">Ajouter</span></button>
       </div>
     </div>
   </div>
 
-  <!-- ÉCRAN DE DÉVERROUILLAGE INSTITUTIONNEL -->
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
     <div class="text-center pt-2 sm:pt-4 text-white animate-row max-w-lg w-full">
       <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-indigo-600/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 text-2xl shadow-xl"><i class="fa-solid fa-graduation-cap"></i></div>
-      <p class="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-300">الجمهورية الجزائرية الديمقراطية الشعبية</p>
-      <p class="text-[10px] sm:text-[11px] text-slate-400">وزارة التربية الوطنية • مديرية التربية لولاية بجاية</p>
       <h1 class="text-lg sm:text-2xl font-black text-indigo-300 mt-1 tracking-tight">ثانوية شعبان أعمر — أوقاس</h1>
     </div>
-
-    <div id="pin-card-prof" class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 my-4 animate-row">
-      <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner"><i class="fa-solid fa-chalkboard-user"></i></div>
-      <h2 class="text-xl font-extrabold text-slate-900" id="lbl-espace-prof">Espace Enseignant</h2>
-      <p class="text-xs text-slate-500 mt-1 mb-5" id="lbl-pin-desc">Sélectionnez votre matière et entrez le code secret</p>
-      
+    <div id="pin-card-prof" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 dark:border-slate-700 my-4 animate-row">
+      <div class="w-14 h-14 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner"><i class="fa-solid fa-chalkboard-user"></i></div>
+      <h2 class="text-xl font-extrabold text-slate-900 dark:text-white" data-i18n="pin_title">Espace Enseignant</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-5" data-i18n="pin_sub">Sélectionnez votre matière</p>
       <div class="space-y-4">
         <div class="text-left">
-          <label class="block text-xs font-bold text-slate-600 mb-1">Matière / المادة *</label>
-          <select id="pin-select-matiere" class="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 outline-none">
-            <option value="">-- Choisir la matière / اختر المادة --</option>
-            <optgroup label="📚 Scientifiques / علمية">
-              <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
-              <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
-              <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
-              <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
-            </optgroup>
-            <optgroup label="⚙️ Techniques & Économie / تقنية واقتصاد">
-              <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
-              <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
-              <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
-              <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
-              <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
-              <option value="Droit / قانون">قانون / Droit</option>
-            </optgroup>
-            <optgroup label="📖 Littéraires & Langues / آداب ولغات">
-              <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
-              <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
-              <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
-              <option value="Langue Allemande / ألمانية">ألمانية / Langue Allemande</option>
-              <option value="Langue Espagnole / إسبانية">إسبانية / Langue Espagnole</option>
-              <option value="Langue Amazighe / أمازيغية">أمازيغية / Tamazight</option>
-              <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
-              <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
-              <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
-            </optgroup>
-            <optgroup label="🏃 Sport / رياضة">
-              <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
-            </optgroup>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-i18n="lbl_matiere">Matière *</label>
+          <select id="pin-select-matiere" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-white outline-none">
+            <option value="">-- Choisir / اختر / Choose --</option>
+            <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
+            <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
+            <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
+            <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
+            <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
+            <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
+            <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
+            <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
+            <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
+            <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
+            <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
           </select>
         </div>
         <div>
-          <input type="password" id="input-pin-prof" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 border-2 border-slate-300 rounded-2xl outline-none" />
-          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز غير صحيح</p>
+          <!-- MODIFICATION : type="tel" pour voir les chiffres et oninput pour valider auto -->
+          <input type="tel" id="input-pin-prof" maxlength="4" placeholder="1234" autocomplete="off" inputmode="numeric" 
+                 oninput="if(this.value.trim().length === 4) validerPinDirect();"
+                 class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" />
+          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2" data-i18n="pin_error">Code incorrect</p>
         </div>
-        <button id="btn-valider-pin-prof" type="button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg">Déverrouiller / الدخول</button>
+        <button type="button" id="btn-valider-pin-prof" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg" data-i18n="pin_btn">Déverrouiller</button>
       </div>
     </div>
-
     <div class="text-center pb-2 sm:pb-4 text-xs text-slate-400 space-y-2.5 animate-row max-w-sm w-full">
-      <a href="superviseur.html" class="inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white px-5 py-2.5 rounded-2xl border border-slate-700 transition w-full sm:w-auto">
-        <i class="fa-solid fa-shield-halved text-indigo-400"></i><span class="font-bold">Administration / الإدارة</span>
-      </a>
+      <a href="superviseur.html" class="inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white px-5 py-2.5 rounded-2xl border border-slate-700 transition w-full sm:w-auto"><i class="fa-solid fa-shield-halved text-indigo-400"></i><span class="font-bold" data-i18n="admin_space">Administration</span></a>
     </div>
   </div>
 
-  <!-- HEADER PRINCIPAL -->
-  <header class="bg-indigo-700 text-white shadow-md">
+  <header class="bg-indigo-700 dark:bg-slate-950 text-white shadow-md border-b dark:border-slate-800 transition-colors">
     <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
-        <div>
-          <h1 class="text-xl font-bold tracking-tight">Feuille d'Appel Numérique</h1>
-          <p class="text-xs text-indigo-200">ثانوية شعبان أعمر أوقاس - تسجيل الحضور والغياب</p>
-        </div>
+        <div><h1 class="text-xl font-bold tracking-tight" data-i18n="header_title">Feuille d'Appel</h1><p class="text-xs text-indigo-200 dark:text-slate-400" data-i18n="header_sub">ثانوية شعبان أعمر أوقاس</p></div>
       </div>
       <div class="flex items-center gap-2 flex-wrap justify-end">
-        <button onclick="toggleLangue()" class="text-xs font-bold bg-white/10 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/20"><i class="fa-solid fa-globe text-amber-300"></i><span id="lang-label">العربية</span></button>
-        <button onclick="verrouillerSessionProf()" class="text-xs font-semibold text-indigo-100 bg-indigo-800/80 px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-indigo-600"><i class="fa-solid fa-lock text-amber-300"></i><span>Verrouiller</span></button>
-        <button onclick="synchroniserAppelsEnAttente()" class="flex items-center gap-2 bg-indigo-800/80 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600">
-          <span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span><span id="conn-text">En ligne</span>
-        </button>
+        <button type="button" onclick="toggleLangue()" class="text-xs font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/20 transition"><i class="fa-solid fa-globe text-amber-300"></i><span id="lang-label">العربية</span></button>
+        <button type="button" onclick="toggleDarkMode()" id="btn-darkmode" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full border border-indigo-600 flex items-center gap-1.5 transition"><i class="fa-solid fa-moon text-amber-300" id="icon-darkmode"></i></button>
+        <button type="button" onclick="verrouillerSessionProf()" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full border border-indigo-600 flex items-center gap-1.5 transition"><i class="fa-solid fa-lock text-amber-300"></i><span data-i18n="btn_lock">Verrouiller</span></button>
+        <button type="button" onclick="synchroniserAppelsEnAttente()" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition"><span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span><span id="conn-text" data-i18n="conn_online">En ligne</span></button>
       </div>
     </div>
   </header>
 
-  <!-- CONTENU PRINCIPAL DE L'APPEL -->
   <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
-
-    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
       <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-2"><i class="fa-solid fa-sliders text-indigo-600"></i> <span id="lbl-params">Paramètres du Cours</span></h2>
-        <span id="badge-mode-seance" class="hidden text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200"><i class="fa-solid fa-clock-rotate-left mr-1"></i> <span id="lbl-mode">Modification d'une séance passée</span></span>
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-sliders text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="sec_params">Paramètres du Cours</span></h2>
+        <span id="badge-mode-seance" class="hidden text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200"><i class="fa-solid fa-clock-rotate-left mr-1"></i> <span data-i18n="tag_mode_edit">Modification</span></span>
       </div>
-
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div><label class="block text-sm font-medium text-slate-700 mb-1">Date / التاريخ</label><input type="date" id="input-date-cours" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold outline-none" /></div>
+        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" data-i18n="lbl_date">Date</label><input type="date" id="input-date-cours" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 dark:text-white outline-none" /></div>
+        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" data-i18n="lbl_classe">Classe</label><select id="select-classe" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white outline-none"><option value="">-- Choisir / اختر --</option></select></div>
+        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" data-i18n="lbl_matiere">Matière</label><input type="text" id="input-matiere-bloque" readonly class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-900 dark:text-indigo-300 cursor-not-allowed outline-none" /></div>
+        
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Classe / القسم</label>
-          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none"><option value="">-- Choisir la division / اختر الفوج --</option></select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Matière / المادة</label>
-          <input type="text" id="input-matiere-bloque" readonly class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-900 cursor-not-allowed outline-none" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Séance / التوقيت</label>
-          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none">
-            <optgroup label="☀️ Matin / الصباح"><option value="08:00-09:00">08:00 - 09:00</option><option value="09:00-10:00">09:00 - 10:00</option><option value="10:00-11:00">10:00 - 11:00</option><option value="11:00-12:00">11:00 - 12:00</option></optgroup>
-            <optgroup label="🌤️ Après-midi / المساء"><option value="13:00-14:00">13:00 - 14:00</option><option value="14:00-15:00">14:00 - 15:00</option><option value="15:00-16:00">15:00 - 16:00</option><option value="16:00-17:00">16:00 - 17:00</option></optgroup>
-          </select>
+          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Séance / التوقيت (Auto)</label>
+          <input type="text" id="input-horaire-auto" readonly class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-900 dark:text-indigo-300 cursor-not-allowed outline-none" value="Calcul..." />
         </div>
       </div>
     </div>
 
     <div id="stats-bar" class="hidden grid grid-cols-3 gap-3">
-      <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-emerald-700 uppercase" id="lbl-pres">Présents</span><span id="count-presents" class="text-3xl font-extrabold text-emerald-600 mt-1 block">0</span></div>
-      <div class="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-rose-700 uppercase" id="lbl-abs">Absents</span><span id="count-absents" class="text-3xl font-extrabold text-rose-600 mt-1 block">0</span></div>
-      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-amber-700 uppercase" id="lbl-ret">Retards</span><span id="count-retards" class="text-3xl font-extrabold text-amber-600 mt-1 block">0</span></div>
+      <div class="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase" data-i18n="kpi_presents">Présents</span><span id="count-presents" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">0</span></div>
+      <div class="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-rose-700 dark:text-rose-400 uppercase" data-i18n="kpi_absents">Absents</span><span id="count-absents" class="text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-1 block">0</span></div>
+      <div class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase" data-i18n="kpi_retards">Retards</span><span id="count-retards" class="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-1 block">0</span></div>
     </div>
 
-    <!-- Registre des élèves -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/70">
-        <div>
-          <h2 class="text-lg font-bold text-slate-800" id="classe-titre">Sélectionnez une classe</h2>
-          <p class="text-xs text-slate-500 font-medium" id="classe-effectif">0 élève chargé</p>
-        </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+      <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/70 dark:bg-slate-800/50">
+        <div><h2 class="text-lg font-bold text-slate-800 dark:text-white" id="classe-titre" data-i18n="default_classe_title">Sélectionnez une classe</h2><p class="text-xs text-slate-500 dark:text-slate-400 font-medium" id="classe-effectif">0</p></div>
         <div class="flex items-center gap-2 flex-wrap">
-          <button id="btn-tout-present" type="button" onclick="marquerTousPresents()" class="hidden text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl"><i class="fa-solid fa-check-double text-indigo-600"></i> <span id="lbl-btn-all">Tout marquer présent</span></button>
-          <button id="btn-ouvrir-modal-eleve" type="button" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl"><i class="fa-solid fa-user-plus text-emerald-600 mr-1"></i> <span id="lbl-btn-add">Élève manquant ?</span></button>
-          <button id="btn-refresh-prof" type="button" onclick="rafraichirBilletsSilencieux()" class="hidden text-xs font-bold text-slate-700 bg-white border border-slate-300 px-3.5 py-2 rounded-xl shadow-sm"><i class="fa-solid fa-arrows-rotate mr-1 text-indigo-600"></i> <span id="lbl-btn-ref">Actualiser</span></button>
-          <button id="btn-valider-rapide-top" type="button" onclick="declencherValidationAppel()" class="hidden text-xs font-bold text-white bg-indigo-600 px-3.5 py-2 rounded-xl shadow-sm"><i class="fa-solid fa-paper-plane mr-1"></i> <span id="lbl-btn-val">Valider</span></button>
+          <button type="button" id="btn-tout-present" onclick="marquerTousPresents()" class="hidden text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-700 px-3.5 py-2 rounded-xl"><i class="fa-solid fa-check-double text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="btn_mark_all">Tout présent</span></button>
+          <button type="button" id="btn-ouvrir-modal-eleve" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-700 px-3.5 py-2 rounded-xl"><i class="fa-solid fa-user-plus text-emerald-600 dark:text-emerald-400 mr-1"></i> <span data-i18n="btn_add_missing">Élève manquant ?</span></button>
+          <button type="button" id="btn-refresh-prof" onclick="rafraichirBilletsSilencieux()" class="hidden text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3.5 py-2 rounded-xl shadow-sm"><i class="fa-solid fa-arrows-rotate mr-1 text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="btn_refresh">Actualiser</span></button>
+          <button type="button" id="btn-valider-rapide-top" onclick="declencherValidationAppel()" class="hidden text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl shadow-sm"><i class="fa-solid fa-paper-plane mr-1"></i> <span data-i18n="btn_validate_quick">Valider</span></button>
         </div>
       </div>
-
-      <div id="search-container" class="hidden p-3 sm:px-5 bg-slate-50/50 border-b border-slate-200">
+      <div id="search-container" class="hidden p-3 sm:px-5 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
         <div class="relative">
-          <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-slate-400"><i class="fa-solid fa-magnifying-glass text-sm text-indigo-500"></i></div>
-          <input type="text" id="input-search-eleve" placeholder="Rechercher par nom ou prénom..." autocomplete="off" class="w-full bg-white border border-slate-300 rounded-xl ps-10 pe-10 py-2.5 text-xs sm:text-sm font-medium outline-none" />
-          <button id="btn-clear-search" onclick="clearSearchEleve()" type="button" class="hidden absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400"><i class="fa-solid fa-circle-xmark text-base"></i></button>
+          <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-sm text-indigo-500"></i></div>
+          <input type="text" id="input-search-eleve" placeholder="Rechercher..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl ps-10 py-2.5 text-xs sm:text-sm font-medium text-slate-800 dark:text-white outline-none" />
+          <button type="button" id="btn-clear-search" onclick="clearSearchEleve()" class="hidden absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400"><i class="fa-solid fa-circle-xmark text-base"></i></button>
         </div>
       </div>
-
-      <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 min-h-[180px]">
-        <div class="py-12 text-center text-slate-400"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm" id="lbl-prompt">Veuillez choisir une division ci-dessus.</p></div>
+      <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 dark:divide-slate-700 min-h-[180px]">
+        <div class="py-12 text-center text-slate-400 dark:text-slate-500"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm" data-i18n="prompt_select_classe">Veuillez choisir une division.</p></div>
       </div>
     </div>
   </main>
 
-  <div id="sticky-footer-bar" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-2xl p-3 sm:py-3.5">
+  <div id="sticky-footer-bar" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 shadow-2xl p-3 sm:py-3.5 transition-all">
     <div class="max-w-5xl mx-auto flex items-center justify-between gap-3 px-2 sm:px-4">
       <div class="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-bold">
-        <span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">Présents: <b id="sticky-presents" class="text-emerald-600">0</b></span>
-        <span class="text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">Absents: <b id="sticky-absents" class="text-rose-600">0</b></span>
+        <span class="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-700"><span data-i18n="kpi_presents">Présents</span>: <b id="sticky-presents" class="text-emerald-600 dark:text-emerald-400">0</b></span>
+        <span class="text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-700"><span data-i18n="kpi_absents">Absents</span>: <b id="sticky-absents" class="text-rose-600 dark:text-rose-400">0</b></span>
       </div>
-      <button id="btn-valider-appel" type="button" onclick="declencherValidationAppel()" class="bg-indigo-600 text-white font-extrabold text-sm sm:text-base py-2.5 sm:py-3 px-5 sm:px-8 rounded-xl shadow-lg flex items-center gap-2">
-        <i class="fa-solid fa-paper-plane"></i> <span id="lbl-btn-val-big">Valider et transmettre l'appel</span>
-      </button>
+      <button type="button" id="btn-valider-appel" onclick="declencherValidationAppel()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm sm:text-base py-2.5 sm:py-3 px-5 sm:px-8 rounded-xl shadow-lg flex items-center gap-2"><i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_call">Valider l'appel</span></button>
     </div>
   </div>
 
   <script>
-    // ============================================================
-    // CONSTANTES
-    // ============================================================
     const CODES_MATIERES_BASE64 = {
       "Mathématiques / رياضيات": "MTAwMQ==", "Sciences Naturelles / علوم الطبيعة": "MTAwMg==", "Sciences Physiques / علوم فيزيائية": "MTAwMw==", "Informatique / إعلام آلي": "MTAwNA==",
       "Génie Civil / هندسة مدنية": "MjAwMQ==", "Génie Électrique / هندسة كهربائية": "MjAwMg==", "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==", "Génie des Procédés / هندسة الطرائق": "MjAwNA==", "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==", "Droit / قانون": "MjAwNg==",
@@ -239,27 +181,60 @@
       "EPS / تربية بدنية": "NDAwMQ=="
     };
 
+    const TRADUCTIONS = {
+      fr: {
+        lang_btn: "العربية", header_title: "Feuille d'Appel", header_sub: "ثانوية شعبان أعمر أوقاس", btn_lock: "Verrouiller", conn_online: "En ligne", conn_offline: "Hors-ligne",
+        sec_params: "Paramètres", lbl_date: "Date", lbl_classe: "Classe", lbl_matiere: "Matière", lbl_horaire: "Séance",
+        kpi_presents: "Présents", kpi_absents: "Absents", kpi_retards: "Retards", default_classe_title: "Sélectionnez une classe",
+        btn_mark_all: "Tout présent", btn_add_missing: "Élève manquant ?", btn_validate_quick: "Valider", btn_refresh: "Actualiser",
+        prompt_select_classe: "Veuillez choisir une division.", btn_submit_call: "Valider l'appel", tag_mode_edit: "Séance existante",
+        pin_title: "Espace Enseignant", pin_sub: "Sélectionnez votre matière", pin_error: "Code incorrect", pin_btn: "Déverrouiller", admin_space: "Administration",
+        modal_add_title: "Élève manquant", lbl_nom: "Nom (FR) *", lbl_prenom: "Prénom (FR) *", btn_cancel: "Annuler", btn_add: "Ajouter",
+        btn_present: "Présent", btn_absent: "Absent", btn_retard: "Retard", no_search_result: "Aucun élève trouvé."
+      },
+      ar: {
+        lang_btn: "English", header_title: "ورقة الحضور والغياب", header_sub: "ثانوية شعبان أعمر أوقاس", btn_lock: "قفل الشاشة", conn_online: "متصل", conn_offline: "غير متصل",
+        sec_params: "بيانات الحصة", lbl_date: "التاريخ", lbl_classe: "القسم", lbl_matiere: "المادة", lbl_horaire: "التوقيت",
+        kpi_presents: "الحاضرون", kpi_absents: "الغائبون", kpi_retards: "المتأخرون", default_classe_title: "اختر القسم",
+        btn_mark_all: "تعليم الجميع كحاضرين", btn_add_missing: "تلميذ غير مسجل ؟", btn_validate_quick: "تأكيد", btn_refresh: "تحديث",
+        prompt_select_classe: "يرجى اختيار الفوج التربوي.", btn_submit_call: "تأكيد وإرسال", tag_mode_edit: "وضع التعديل",
+        pin_title: "فضاء الأستاذ", pin_sub: "اختر مادتك", pin_error: "رمز غير صحيح", pin_btn: "الدخول", admin_space: "الإدارة",
+        modal_add_title: "تسجيل تلميذ", lbl_nom: "اللقب (لاتيني) *", lbl_prenom: "الاسم (لاتيني) *", btn_cancel: "إلغاء", btn_add: "إضافة",
+        btn_present: "حاضر", btn_absent: "غائب", btn_retard: "متأخر", no_search_result: "لا يوجد أي تلميذ."
+      },
+      en: {
+        lang_btn: "Français", header_title: "Digital Attendance", header_sub: "Chaabane Aamar High School", btn_lock: "Lock", conn_online: "Online", conn_offline: "Offline",
+        sec_params: "Course Settings", lbl_date: "Date", lbl_classe: "Class", lbl_matiere: "Subject", lbl_horaire: "Time Slot",
+        kpi_presents: "Present", kpi_absents: "Absent", kpi_retards: "Late", default_classe_title: "Select a class",
+        btn_mark_all: "Mark all present", btn_add_missing: "Missing student?", btn_validate_quick: "Submit", btn_refresh: "Refresh",
+        prompt_select_classe: "Please select a class.", btn_submit_call: "Submit Attendance", tag_mode_edit: "Existing session",
+        pin_title: "Teacher Area", pin_sub: "Select your subject", pin_error: "Incorrect code", pin_btn: "Unlock", admin_space: "Administration",
+        modal_add_title: "Missing Student", lbl_nom: "Last Name *", lbl_prenom: "First Name *", btn_cancel: "Cancel", btn_add: "Add",
+        btn_present: "Present", btn_absent: "Absent", btn_retard: "Late", no_search_result: "No student found."
+      }
+    };
+
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // SÉCURISATION DE L'INITIALISATION SUPABASE
+    let supabaseClient = null;
+    try {
+      if (typeof supabase !== 'undefined') {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } else {
+        console.error("Supabase n'a pas pu charger (AdBlock ou réseau).");
+      }
+    } catch(e) { console.error(e); }
 
-    // ============================================================
-    // ÉTAT GLOBAL
-    // ============================================================
     let langueCourante = localStorage.getItem('pref_langue_prof') || 'fr';
-    let classesList = [];
-    let currentEleves = [];
-    let currentStatuts = {};
-    let searchTermEleve = '';
-    let seanceExistanteId = null;
-    let billetsMap = new Map();
-    let billetsDate = null;          // FIX #2 : mémorise la date courante des billets
-    let chargerToken = 0;            // FIX #7 : anti race-condition sur changement de classe
+    let classesList = [], currentEleves = [], currentStatuts = {}, searchTermEleve = '', seanceExistanteId = null;
+    let billetsMap = new Map(), billetsDate = null, chargerToken = 0;
 
     const inputDateCours = document.getElementById('input-date-cours');
     const selectClasse = document.getElementById('select-classe');
     const inputMatiereBloque = document.getElementById('input-matiere-bloque');
-    const selectHoraire = document.getElementById('select-horaire');
+    const inputHoraireAuto = document.getElementById('input-horaire-auto');
     const elevesContainer = document.getElementById('eleves-container');
     const btnValiderRapideTop = document.getElementById('btn-valider-rapide-top');
     const btnOuvrirModalEleve = document.getElementById('btn-ouvrir-modal-eleve');
@@ -270,24 +245,82 @@
     const stickyFooterBar = document.getElementById('sticky-footer-bar');
     const btnRefreshProf = document.getElementById('btn-refresh-prof');
 
-    // FIX bonus : échappement HTML pour éviter le XSS via noms d'élèves
-    function escapeHtml(s) {
-      if (s === null || s === undefined) return '';
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+    if (inputDateCours) inputDateCours.value = new Date().toISOString().split('T')[0];
+
+    function obtenirHoraireActuel() {
+        const maintenant = new Date();
+        const heure = maintenant.getHours();
+        
+        const creneaux = [
+            { debut: 8, fin: 9, label: "08:00 - 09:00" },
+            { debut: 9, fin: 10, label: "09:00 - 10:00" },
+            { debut: 10, fin: 11, label: "10:00 - 11:00" },
+            { debut: 11, fin: 12, label: "11:00 - 12:00" },
+            { debut: 13, fin: 14, label: "13:00 - 14:00" },
+            { debut: 14, fin: 15, label: "14:00 - 15:00" },
+            { debut: 15, fin: 16, label: "15:00 - 16:00" },
+            { debut: 16, fin: 17, label: "16:00 - 17:00" }
+        ];
+        
+        let creneauActuel = creneaux[0];
+        for (let i = 0; i < creneaux.length; i++) {
+            if (heure >= creneaux[i].debut) {
+                creneauActuel = creneaux[i];
+            }
+        }
+        
+        const strD = String(creneauActuel.debut).padStart(2, '0');
+        const strF = String(creneauActuel.fin).padStart(2, '0');
+        
+        return { 
+            debut: `${strD}:00:00`, 
+            fin: `${strF}:00:00`,
+            affichage: creneauActuel.label
+        };
     }
 
-    if (inputDateCours) {
-      inputDateCours.value = new Date().toISOString().split('T')[0];
+    function actualiserHeureAuto() {
+        if (inputHoraireAuto) {
+            const horaire = obtenirHoraireActuel();
+            inputHoraireAuto.value = horaire.affichage;
+        }
     }
+    setInterval(actualiserHeureAuto, 60000);
+    actualiserHeureAuto();
 
-    // ============================================================
-    // AUTHENTIFICATION PIN
-    // ============================================================
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateDarkModeIcon(isDark);
+    }
+    function updateDarkModeIcon(isDark) {
+      const icon = document.getElementById('icon-darkmode');
+      if (icon) icon.className = isDark ? 'fa-solid fa-sun text-amber-300' : 'fa-solid fa-moon text-amber-300';
+    }
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark'); updateDarkModeIcon(true);
+    } else { updateDarkModeIcon(false); }
+
+    function appliquerLangue(lang) {
+      langueCourante = lang;
+      localStorage.setItem('pref_langue_prof', lang);
+      const htmlRoot = document.getElementById('html-root');
+      if (htmlRoot) { htmlRoot.setAttribute('lang', lang); htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr'); }
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const cle = el.getAttribute('data-i18n');
+        if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) el.textContent = TRADUCTIONS[lang][cle];
+      });
+      const lblLang = document.getElementById('lang-label');
+      if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
+      if (currentEleves.length > 0) afficherEleves();
+    }
+    window.toggleLangue = function() {
+      const langs = ['fr', 'ar', 'en'];
+      let nextIdx = (langs.indexOf(langueCourante) + 1) % 3;
+      appliquerLangue(langs[nextIdx]);
+    };
+
+    // --- LOGIQUE PIN ---
     window.validerPinDirect = function() {
       const pinSelectMatiere = document.getElementById('pin-select-matiere');
       const inputPin = document.getElementById('input-pin-prof');
@@ -303,6 +336,7 @@
         if (err) { err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى اختيار المادة أولاً' : '⚠️ Veuillez choisir votre matière'; err.classList.remove('hidden'); }
         return;
       }
+
       if (codeSaisi.length < 4) return;
 
       const codeAttenduBase64 = CODES_MATIERES_BASE64[matiere];
@@ -318,20 +352,6 @@
       }
     };
 
-    const btnValiderPinProf = document.getElementById('btn-valider-pin-prof');
-    if (btnValiderPinProf) {
-      btnValiderPinProf.addEventListener('click', validerPinDirect);
-    }
-    const inputPinProfEl = document.getElementById('input-pin-prof');
-    if (inputPinProfEl) {
-      inputPinProfEl.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); }
-      });
-      inputPinProfEl.addEventListener('input', function() {
-        if (this.value.trim().length === 4) validerPinDirect();
-      });
-    }
-
     window.debloquerPagePourMatiere = function(matiere) {
       const pinScreen = document.getElementById('pin-screen-prof');
       if (pinScreen) pinScreen.remove();
@@ -345,624 +365,286 @@
       location.reload();
     };
 
-    // ============================================================
-    // ACTUALISATION SILENCIEUSE (Temps Réel)
-    // ============================================================
-    setInterval(rafraichirBilletsSilencieux, 60000);
-    window.addEventListener('focus', rafraichirBilletsSilencieux);
-
-    async function rafraichirBilletsSilencieux() {
-      if (!selectClasse || !selectClasse.value || !navigator.onLine) return;
-      try {
-        const dt = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
-        await chargerBilletsActifs(dt);
-        afficherEleves();
-      } catch (err) { console.warn(err); }
-    }
-
-    // ------------------------------------------------------------
-    // FIX #2 : chaque billet porte sa date ; on ne préserve que les
-    // "Régularisé" de la MÊME date.
-    // FIX #3 : on garde TOUS les billets du jour (plus de fenêtre 60 min).
-    // ------------------------------------------------------------
-    async function chargerBilletsActifs(dateCible) {
-      if (!navigator.onLine) return;
-
-      // Si la date change, on repart d'une map propre
-      if (billetsDate !== dateCible) {
-        billetsMap = new Map();
-        billetsDate = dateCible;
-      }
-
-      const { data } = await supabaseClient
-        .from('v_billets_actifs_jour')
-        .select('*')
-        .eq('date_billet', dateCible)
-        .eq('actif', true);
-
-      const maintenant = new Date();
-      const minutesActuelles = maintenant.getHours() * 60 + maintenant.getMinutes();
-      const aujourdhuiIso = maintenant.toISOString().split('T')[0];
-
-      const newBilletsMap = new Map();
-
-      // Préservation des "Régularisé" de la même date uniquement
-      billetsMap.forEach(function(v, k) {
-        const estReg = (v.heure_affichage === 'Régularisé' || v.heure_affichage === 'تمت التسوية');
-        if (estReg && v.date === dateCible) {
-          newBilletsMap.set(String(k), v);
-        }
-      });
-
-      if (data) {
-        data.forEach(function(b) {
-          const heureStr = b.heure_emission ? b.heure_emission.substring(0, 5) : '';
-          if (!heureStr) return;
-          const parts = heureStr.split(':');
-          const minutesEmission = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-          const diffMinutes = minutesActuelles - minutesEmission;
-
-          // FIX #3 : plus de plafond à 60 min. On garde :
-          //  - tous les billets des autres dates (historique)
-          //  - tous les billets du jour déjà émis (au moins 5 min avant l'heure courante)
-          if (dateCible !== aujourdhuiIso || diffMinutes >= -5) {
-            newBilletsMap.set(String(b.eleve_id), {
-              motif: b.motif,
-              heure_affichage: heureStr,
-              heure_emission: heureStr,
-              date: dateCible
-            });
-          }
-        });
-      }
-      billetsMap = newBilletsMap;
-    }
-
-    function toggleLangue() {
-      langueCourante = (langueCourante === 'fr') ? 'ar' : 'fr';
-      localStorage.setItem('pref_langue_prof', langueCourante);
-      location.reload();
-    }
-
-    // ============================================================
-    // FILE HORS-LIGNE
-    // ============================================================
-    function getQueueHorsLigne() {
-      try { return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]'); } catch (e) { return []; }
-    }
-    function saveQueueHorsLigne(queue) {
-      localStorage.setItem('offline_appels_queue', JSON.stringify(queue));
-      mettreAJourBadgeReseau();
-    }
-
+    function getQueueHorsLigne() { try { return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]'); } catch (e) { return []; } }
+    function saveQueueHorsLigne(queue) { localStorage.setItem('offline_appels_queue', JSON.stringify(queue)); mettreAJourBadgeReseau(); }
     function mettreAJourBadgeReseau() {
-      const dot = document.getElementById('conn-dot');
-      const text = document.getElementById('conn-text');
+      const dot = document.getElementById('conn-dot'), text = document.getElementById('conn-text');
       if (!dot || !text) return;
       const queue = getQueueHorsLigne();
-      if (!navigator.onLine) {
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-        text.textContent = queue.length > 0 ? `Hors-ligne (${queue.length})` : 'Hors-ligne';
-      } else if (queue.length > 0) {
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce';
-        text.textContent = `Sync (${queue.length})`;
-      } else {
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
-        text.textContent = 'En ligne';
-      }
+      if (!navigator.onLine) { dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500'; text.textContent = `Hors-ligne (${queue.length})`; }
+      else if (queue.length > 0) { dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce'; text.textContent = `Sync (${queue.length})`; }
+      else { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse'; text.textContent = TRADUCTIONS[langueCourante].conn_online; }
     }
-
     window.synchroniserAppelsEnAttente = async function() {
-      if (!navigator.onLine) return;
-      const queue = getQueueHorsLigne();
-      if (queue.length === 0) return;
-      let reussis = 0;
-      const nouvelleQueue = [];
+      if (!navigator.onLine || !supabaseClient) return; const queue = getQueueHorsLigne(); if (!queue.length) return;
+      let reussis = 0; const newQueue = [];
       for (const item of queue) {
         try {
           let sid = item.seance_id;
           if (!sid) {
-             const { data: seance, error: errS } = await supabaseClient.from('seances').insert({ classe_id: item.classe_id, matiere: item.matiere, date_cours: item.date_cours, heure_debut: item.heure_debut, heure_fin: item.heure_fin, appel_valide: true }).select().single();
-             if (errS) throw errS;
-             sid = seance.id;
+             const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ classe_id: item.classe_id, matiere: item.matiere, date_cours: item.date_cours, heure_debut: item.heure_debut, heure_fin: item.heure_fin, appel_valide: true }).select().single();
+             if (e1) throw e1; sid = s.id;
           }
           await supabaseClient.from('pointages').delete().eq('seance_id', sid);
-          const pointages = item.pointages.map(function(pt) {
-            return { seance_id: sid, eleve_id: pt.eleve_id, statut: pt.statut, justifie: pt.justifie, motif_justification: pt.motif_justification };
-          });
-          const { error: errP } = await supabaseClient.from('pointages').insert(pointages);
-          if (errP) throw errP;
-          reussis++;
-        } catch (e) {
-          nouvelleQueue.push(item);
-        }
+          const pts = item.pointages.map(pt => ({ seance_id: sid, eleve_id: pt.eleve_id, statut: pt.statut, justifie: pt.justifie, motif_justification: pt.motif_justification }));
+          const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
+          if (e2) throw e2; reussis++;
+        } catch (e) { newQueue.push(item); }
       }
-      saveQueueHorsLigne(nouvelleQueue);
+      saveQueueHorsLigne(newQueue);
       if (reussis > 0) afficherToast('Succès', `${reussis} appel(s) transmis.`);
     };
-
-    window.addEventListener('online', function() { mettreAJourBadgeReseau(); synchroniserAppelsEnAttente(); });
+    window.addEventListener('online', () => { mettreAJourBadgeReseau(); synchroniserAppelsEnAttente(); });
     window.addEventListener('offline', mettreAJourBadgeReseau);
 
     function afficherToast(titre, msg) {
-      const t = document.getElementById('toast-notification');
-      if (!t) return;
-      document.getElementById('toast-titre').textContent = titre; 
-      document.getElementById('toast-message').textContent = msg;
-      t.classList.remove('-translate-y-24', 'opacity-0'); 
-      t.classList.add('translate-y-0', 'opacity-100');
-      setTimeout(function() { 
-        t.classList.add('-translate-y-24', 'opacity-0'); 
-        t.classList.remove('translate-y-0', 'opacity-100'); 
-      }, 3500);
+      const t = document.getElementById('toast-notification'); if (!t) return;
+      document.getElementById('toast-titre').textContent = titre; document.getElementById('toast-message').textContent = msg;
+      t.classList.remove('-translate-y-24', 'opacity-0'); t.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => { t.classList.add('-translate-y-24', 'opacity-0'); t.classList.remove('translate-y-0', 'opacity-100'); }, 3500);
     }
 
-    // ============================================================
-    // CLASSES
-    // ============================================================
     async function initClasses() {
-      const cacheClasses = localStorage.getItem('cache_classes');
-      if (cacheClasses) {
-        try { classesList = JSON.parse(cacheClasses); remplirSelectClasses(classesList); } catch (e) {}
-      }
-      if (navigator.onLine) {
-        try {
-          const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
-          if (data) { classesList = data; localStorage.setItem('cache_classes', JSON.stringify(data)); remplirSelectClasses(classesList); }
-        } catch (err) {}
+      const cache = localStorage.getItem('cache_classes');
+      if (cache) { try { classesList = JSON.parse(cache); remplirSelectClasses(classesList); } catch(e){} }
+      if (navigator.onLine && supabaseClient) {
+        try { const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court'); if (data) { classesList = data; localStorage.setItem('cache_classes', JSON.stringify(data)); remplirSelectClasses(classesList); } } catch (e) {}
       }
       mettreAJourBadgeReseau();
     }
-
     function remplirSelectClasses(liste) {
       if (!selectClasse) return;
-      selectClasse.innerHTML = `<option value="">-- Choisir la division / اختر الفوج --</option>`;
-      const groupes = { '1AS': document.createElement('optgroup'), '2AS': document.createElement('optgroup'), '3AS': document.createElement('optgroup'), 'AUTRE': document.createElement('optgroup') };
-      groupes['1AS'].label = "1ère Année"; groupes['2AS'].label = "2ème Année"; groupes['3AS'].label = "3ème Année"; groupes['AUTRE'].label = "Autres";
-      liste.forEach(function(cls) {
+      selectClasse.innerHTML = `<option value="">-- ${TRADUCTIONS[langueCourante].lbl_classe} --</option>`;
+      const g = { '1AS': document.createElement('optgroup'), '2AS': document.createElement('optgroup'), '3AS': document.createElement('optgroup'), 'AUTRE': document.createElement('optgroup') };
+      g['1AS'].label = "1ère Année"; g['2AS'].label = "2ème Année"; g['3AS'].label = "3ème Année"; g['AUTRE'].label = "Autres";
+      liste.forEach(cls => {
         const o = document.createElement('option'); o.value = cls.id; o.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
-        if(cls.nom_court.startsWith('1AS')) groupes['1AS'].appendChild(o);
-        else if(cls.nom_court.startsWith('2AS')) groupes['2AS'].appendChild(o);
-        else if(cls.nom_court.startsWith('3AS')) groupes['3AS'].appendChild(o);
-        else groupes['AUTRE'].appendChild(o);
+        if(cls.nom_court.startsWith('1AS')) g['1AS'].appendChild(o); else if(cls.nom_court.startsWith('2AS')) g['2AS'].appendChild(o); else if(cls.nom_court.startsWith('3AS')) g['3AS'].appendChild(o); else g['AUTRE'].appendChild(o);
       });
-      ['1AS','2AS','3AS','AUTRE'].forEach(function(k) { if(groupes[k].children.length) selectClasse.appendChild(groupes[k]); });
+      ['1AS','2AS','3AS','AUTRE'].forEach(k => { if(g[k].children.length) selectClasse.appendChild(g[k]); });
     }
 
-    // ============================================================
-    // SÉANCE EXISTANTE
-    // FIX #4 : reset de seanceExistanteId en cas d'erreur réseau
-    // FIX bonus : on injecte la date dans billetsMap pour les "Régularisé"
-    // ============================================================
-    async function verifierEtChargerSeanceExistante() {
-      const cid = selectClasse.value;
-      const mat = inputMatiereBloque ? inputMatiereBloque.value : '';
-      const dt = inputDateCours ? inputDateCours.value : '';
-      const hor = selectHoraire.value;
-
-      if (!cid || !mat || !dt || !hor || !navigator.onLine) {
-        seanceExistanteId = null;
-        if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
-        return;
+    async function chargerBilletsActifs(dateCible) {
+      if (!navigator.onLine || !supabaseClient) return;
+      if (billetsDate !== dateCible) { billetsMap = new Map(); billetsDate = dateCible; }
+      const { data } = await supabaseClient.from('v_billets_actifs_jour').select('*').eq('date_billet', dateCible).eq('actif', true);
+      const maintenant = new Date(); const minutesActuelles = maintenant.getHours() * 60 + maintenant.getMinutes();
+      const aujourdhuiIso = maintenant.toISOString().split('T')[0];
+      const newMap = new Map();
+      billetsMap.forEach((v, k) => { if ((v.heure_affichage === 'Régularisé' || v.heure_affichage === 'تمت التسوية') && v.date === dateCible) newMap.set(String(k), v); });
+      if (data) {
+        data.forEach(b => {
+          const h = b.heure_emission ? b.heure_emission.substring(0, 5) : '';
+          if (!h) return;
+          const parts = h.split(':'); const mEm = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+          if (dateCible !== aujourdhuiIso || (minutesActuelles - mEm) >= -5) {
+            newMap.set(String(b.eleve_id), { motif: b.motif, heure_affichage: h, heure_emission: h, date: dateCible });
+          }
+        });
       }
+      billetsMap = newMap;
+    }
 
-      const t = hor.split('-');
-      const heureDeb = t[0] + ':00';
+    async function rafraichirBilletsSilencieux() {
+      if (!selectClasse || !selectClasse.value || !navigator.onLine) return;
+      try { const dt = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0]; await chargerBilletsActifs(dt); afficherEleves(); } catch (err) {}
+    }
+    setInterval(rafraichirBilletsSilencieux, 60000);
+    window.addEventListener('focus', rafraichirBilletsSilencieux);
 
+    async function verifierEtChargerSeanceExistante() {
+      const cid = selectClasse.value, mat = inputMatiereBloque.value, dt = inputDateCours ? inputDateCours.value : '';
+      const horaireAuto = obtenirHoraireActuel();
+      const heureDeb = horaireAuto.debut;
+
+      if (!cid || !mat || !dt || !navigator.onLine || !supabaseClient) { seanceExistanteId = null; if(badgeModeSeance) badgeModeSeance.classList.add('hidden'); return; }
+      
       try {
         await chargerBilletsActifs(dt);
-
-        const { data: seance } = await supabaseClient
-          .from('seances')
-          .select('id, pointages (eleve_id, statut, justifie, motif_justification)')
-          .eq('classe_id', cid).eq('matiere', mat).eq('date_cours', dt).eq('heure_debut', heureDeb).maybeSingle();
-
+        const { data: seance } = await supabaseClient.from('seances').select('id, pointages (eleve_id, statut, justifie, motif_justification)').eq('classe_id', cid).eq('matiere', mat).eq('date_cours', dt).eq('heure_debut', heureDeb).maybeSingle();
         if (seance) {
-          seanceExistanteId = seance.id;
-          if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
-
+          seanceExistanteId = seance.id; if(badgeModeSeance) badgeModeSeance.classList.remove('hidden');
           if (seance.pointages) {
-            seance.pointages.forEach(function(pt) { 
-              currentStatuts[pt.eleve_id] = pt.statut; 
-              if (pt.justifie && pt.statut === 'P') {
-                if (!billetsMap.has(String(pt.eleve_id))) {
-                  billetsMap.set(String(pt.eleve_id), {
-                    motif: pt.motif_justification,
-                    heure_affichage: (langueCourante === 'ar' ? 'تمت التسوية' : 'Régularisé'),
-                    date: dt
-                  });
-                }
+            seance.pointages.forEach(pt => {
+              currentStatuts[pt.eleve_id] = pt.statut;
+              if (pt.justifie && pt.statut === 'P' && !billetsMap.has(String(pt.eleve_id))) {
+                billetsMap.set(String(pt.eleve_id), { motif: pt.motif_justification, heure_affichage: (langueCourante==='ar'?'تمت التسوية':'Régularisé'), date: dt });
               }
             });
           }
-          afficherEleves();
-          mettreAJourCompteurs();
-        } else {
-          seanceExistanteId = null;
-          if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
-        }
-      } catch (err) {
-        // FIX #4 : en cas d'erreur, on N'ÉCRASE PAS la séance courante par erreur
-        seanceExistanteId = null;
-        if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
-        console.warn('verifierEtChargerSeanceExistante:', err);
-      }
+          afficherEleves(); mettreAJourCompteurs();
+        } else { seanceExistanteId = null; if(badgeModeSeance) badgeModeSeance.classList.add('hidden'); }
+      } catch (err) { seanceExistanteId = null; if(badgeModeSeance) badgeModeSeance.classList.add('hidden'); }
     }
 
-    // ============================================================
-    // CHARGEMENT DES ÉLÈVES
-    // FIX #7 : token anti race-condition
-    // ============================================================
     async function chargerEleves(cid) {
       const token = ++chargerToken;
-
       if(!cid) {
-        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><p class="text-sm">Veuillez choisir une division ci-dessus.</p></div>`;
-        document.getElementById('stats-bar').classList.add('hidden');
-        document.getElementById('btn-tout-present').classList.add('hidden');
-        if (btnValiderRapideTop) btnValiderRapideTop.classList.add('hidden');
-        if (stickyFooterBar) stickyFooterBar.classList.add('hidden');
-        if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.add('hidden');
-        if (btnRefreshProf) btnRefreshProf.classList.add('hidden');
-        if (searchContainer) searchContainer.classList.add('hidden');
-        if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
-        clearSearchEleve();
-        seanceExistanteId = null;
-        return;
+        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
+        document.getElementById('stats-bar').classList.add('hidden'); document.getElementById('btn-tout-present').classList.add('hidden');
+        if (btnValiderRapideTop) btnValiderRapideTop.classList.add('hidden'); if (stickyFooterBar) stickyFooterBar.classList.add('hidden');
+        if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.add('hidden'); if (btnRefreshProf) btnRefreshProf.classList.add('hidden');
+        if (searchContainer) searchContainer.classList.add('hidden'); if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
+        clearSearchEleve(); seanceExistanteId = null; return;
       }
-      
-      elevesContainer.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
-      
-      let sc = null;
-      for (let i = 0; i < classesList.length; i++) {
-        if (classesList[i].id == cid) { sc = classesList[i]; break; }
-      }
+      elevesContainer.innerHTML = `<div class="py-12 text-center text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
+      let sc = classesList.find(c => c.id == cid);
       document.getElementById('classe-titre').textContent = sc ? `${sc.nom_court} (${sc.nom_complet})` : 'Classe';
-
-      const cacheEleves = localStorage.getItem(`cache_eleves_${cid}`);
-      let elevesCharges = [];
-      if (cacheEleves) {
-        try { elevesCharges = JSON.parse(cacheEleves); } catch (e) {}
+      
+      const cache = localStorage.getItem(`cache_eleves_${cid}`); let elevesCharges = [];
+      if (cache) { try { elevesCharges = JSON.parse(cache); } catch(e){} }
+      if (navigator.onLine && supabaseClient) {
+        try { const { data } = await supabaseClient.from('eleves').select('*').eq('classe_id', cid).eq('actif', true).order('nom'); if (data) { elevesCharges = data; localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(data)); } } catch (e) {}
       }
-
-      if (navigator.onLine) {
-        try {
-          const { data } = await supabaseClient.from('eleves').select('*').eq('classe_id', cid).eq('actif', true).order('nom');
-          if (data) { elevesCharges = data; localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(data)); }
-        } catch (err) {}
-      }
-
-      // FIX #7 : abandon si une autre classe a été sélectionnée entre-temps
       if (token !== chargerToken) return;
-
       currentEleves = elevesCharges;
       document.getElementById('classe-effectif').textContent = `${currentEleves.length} inscrits`;
-      currentStatuts = {};
-      currentEleves.forEach(function(e) { currentStatuts[e.id] = 'P'; });
-      
-      clearSearchEleve();
-      afficherEleves();
-      mettreAJourCompteurs();
-      
-      document.getElementById('stats-bar').classList.remove('hidden');
-      document.getElementById('btn-tout-present').classList.remove('hidden');
-      if (btnValiderRapideTop) btnValiderRapideTop.classList.remove('hidden');
-      if (stickyFooterBar) stickyFooterBar.classList.remove('hidden');
-      if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.remove('hidden');
-      if (btnRefreshProf) btnRefreshProf.classList.remove('hidden');
+      currentStatuts = {}; currentEleves.forEach(e => currentStatuts[e.id] = 'P');
+      clearSearchEleve(); afficherEleves(); mettreAJourCompteurs();
+      document.getElementById('stats-bar').classList.remove('hidden'); document.getElementById('btn-tout-present').classList.remove('hidden');
+      if (btnValiderRapideTop) btnValiderRapideTop.classList.remove('hidden'); if (stickyFooterBar) stickyFooterBar.classList.remove('hidden');
+      if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.remove('hidden'); if (btnRefreshProf) btnRefreshProf.classList.remove('hidden');
       if (searchContainer) searchContainer.classList.remove('hidden');
-
       await verifierEtChargerSeanceExistante();
-
-      // FIX #7 : re-vérifier après l'await
-      if (token !== chargerToken) return;
     }
 
-    // ============================================================
-    // RECHERCHE & AFFICHAGE
-    // ============================================================
     function filterEleves(terme) {
       searchTermEleve = (terme || '').trim().toLowerCase();
-      if (btnClearSearch) {
-        if (searchTermEleve.length > 0) btnClearSearch.classList.remove('hidden');
-        else btnClearSearch.classList.add('hidden');
-      }
+      if (btnClearSearch) { if (searchTermEleve.length > 0) btnClearSearch.classList.remove('hidden'); else btnClearSearch.classList.add('hidden'); }
       afficherEleves();
     }
-
-    window.clearSearchEleve = function() {
-      if (inputSearchEleve) inputSearchEleve.value = '';
-      searchTermEleve = '';
-      if (btnClearSearch) btnClearSearch.classList.add('hidden');
-      afficherEleves();
-    };
-
-    if (inputSearchEleve) {
-      inputSearchEleve.addEventListener('input', function(e) { filterEleves(e.target.value); });
-    }
+    window.clearSearchEleve = function() { if (inputSearchEleve) inputSearchEleve.value = ''; searchTermEleve = ''; if (btnClearSearch) btnClearSearch.classList.add('hidden'); afficherEleves(); };
+    if (inputSearchEleve) inputSearchEleve.addEventListener('input', e => filterEleves(e.target.value));
 
     function afficherEleves() {
       elevesContainer.innerHTML = '';
-
-      const listeFiltree = currentEleves.filter(function(e) {
+      const listeFiltree = currentEleves.filter(e => {
         if (!searchTermEleve) return true;
-        const nomFr = `${e.nom || ''} ${e.prenom || ''}`.toLowerCase();
-        const nomAr = `${e.nom_ar || ''} ${e.prenom_ar || ''}`.toLowerCase();
-        return nomFr.includes(searchTermEleve) || nomAr.includes(searchTermEleve);
+        return `${e.nom || ''} ${e.prenom || ''} ${e.nom_ar || ''} ${e.prenom_ar || ''}`.toLowerCase().includes(searchTermEleve);
       });
+      if (listeFiltree.length === 0) { elevesContainer.innerHTML = `<div class="py-10 text-center text-slate-400"><p class="text-sm font-semibold">${TRADUCTIONS[langueCourante].no_search_result}</p></div>`; return; }
+      
+      const matieresArabe = ["Langue Arabe / لغة عربية", "Philosophie / فلسفة", "Histoire-Géographie / تاريخ وجغرافيا", "Sciences Islamiques / علوم إسلامية", "Droit / قانون", "Gestion & Économie / تسيير واقتصاد"];
+      const estMatArabe = matieresArabe.includes(inputMatiereBloque.value);
 
-      if (listeFiltree.length === 0) {
-        elevesContainer.innerHTML = `<div class="py-10 text-center text-slate-400"><p class="text-sm font-semibold">Aucun élève trouvé.</p></div>`;
-        return;
-      }
-
-      const matieresArabophones = ["Langue Arabe / لغة عربية", "Philosophie / فلسفة", "Histoire-Géographie / تاريخ وجغرافيا", "Sciences Islamiques / علوم إسلامية", "Droit / قانون", "Gestion & Économie / تسيير واقتصاد"];
-      const matiereChoisie = inputMatiereBloque ? inputMatiereBloque.value : "";
-      const estMatiereArabe = matieresArabophones.includes(matiereChoisie);
-
-      listeFiltree.forEach(function(e) {
-        let indexOfficiel = 1;
-        for (let i = 0; i < currentEleves.length; i++) {
-          if (currentEleves[i].id === e.id) { indexOfficiel = i + 1; break; }
+      listeFiltree.forEach((e) => {
+        const index = currentEleves.findIndex(x => x.id === e.id) + 1;
+        const st = currentStatuts[e.id] || 'P';
+        const nomPr = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
+        const nomSec = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
+        
+        const billet = billetsMap.get(String(e.id));
+        let txtBadge = "";
+        if (billet) {
+           const h = billet.heure_affichage || '';
+           if (h === 'Régularisé' || h === 'تمت التسوية') txtBadge = estMatArabe ? 'تمت التسوية' : 'Régularisé';
+           else txtBadge = estMatArabe ? `مسموح له بالدخول (${h})` : `Autorisé (${h})`;
         }
+        const badgeBillet = billet ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shadow-sm"><i class="fa-solid fa-user-check"></i><span>${txtBadge}</span></span>` : '';
+
+        const clsP = st === 'P' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-600';
+        const clsA = st === 'A' ? 'bg-rose-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-slate-600';
+        const clsR = st === 'R' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-600';
 
         const row = document.createElement('div');
-        const st = currentStatuts[e.id] || 'P';
-        row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 hover:bg-slate-50/80 transition`;
-        
-        const nomPrincipal = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
-        const nomSecondaire = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
-
-        const billet = billetsMap.get(String(e.id));
-        let texteBadge = "";
-        
-        if (billet) {
-            const hBillet = billet.heure_affichage || '';
-            if (hBillet === 'Régularisé' || hBillet === 'تمت التسوية') {
-                 texteBadge = estMatiereArabe ? 'تمت التسوية' : 'Régularisé';
-            } else {
-                 texteBadge = estMatiereArabe ? `مسموح له بالدخول (${hBillet})` : `Autorisé à entrer (${hBillet})`;
-            }
-        }
-
-        // FIX bonus : escapeHtml sur les noms et les badges
-        const badgeBilletHtml = billet ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-sm" dir="${estMatiereArabe ? 'rtl' : 'ltr'}"><i class="fa-solid fa-user-check text-emerald-600"></i><span>${escapeHtml(texteBadge)}</span></span>` : '';
-        const tagNouveau = e.est_nouveau ? `<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">Nouveau</span>` : '';
-
-        const classP = st === 'P' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50';
-        const classA = st === 'A' ? 'bg-rose-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-rose-50';
-        const classR = st === 'R' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-amber-50';
-
+        row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition`;
         row.innerHTML = `
           <div class="flex items-center gap-3.5 w-full sm:w-auto">
-            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">${indexOfficiel}</span>
-            <div class="truncate flex items-center gap-2 flex-wrap">
-              <span class="font-bold text-slate-900">${escapeHtml(nomPrincipal)}</span> 
-              <span class="text-xs text-slate-500 font-bold">${escapeHtml(nomSecondaire)}</span>
-              ${badgeBilletHtml} ${tagNouveau}
-            </div>
+            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300">${index}</span>
+            <div class="truncate flex items-center gap-2 flex-wrap"><span class="font-bold text-slate-900 dark:text-white">${nomPr}</span><span class="text-xs text-slate-500 dark:text-slate-400 font-bold">${nomSec}</span>${badgeBillet}</div>
           </div>
           <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
-            <button type="button" onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${classP}"><i class="fa-solid fa-check"></i><span>Présent</span></button>
-            <button type="button" onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${classA}"><i class="fa-solid fa-xmark"></i><span>Absent</span></button>
-            <button type="button" onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${classR}"><i class="fa-solid fa-clock"></i><span>Retard</span></button>
+            <button type="button" onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${clsP}"><i class="fa-solid fa-check"></i><span>${TRADUCTIONS[langueCourante].btn_present}</span></button>
+            <button type="button" onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${clsA}"><i class="fa-solid fa-xmark"></i><span>${TRADUCTIONS[langueCourante].btn_absent}</span></button>
+            <button type="button" onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${clsR}"><i class="fa-solid fa-clock"></i><span>${TRADUCTIONS[langueCourante].btn_retard}</span></button>
           </div>
         `;
         elevesContainer.appendChild(row);
       });
     }
 
-    window.changerStatut = function(id, st) { 
-      currentStatuts[id] = st; 
-      afficherEleves(); 
-      mettreAJourCompteurs(); 
-    };
-    
-    window.marquerTousPresents = function() {
-      currentEleves.forEach(function(e) { currentStatuts[e.id] = 'P'; });
-      afficherEleves();
-      mettreAJourCompteurs();
-    };
-
+    window.changerStatut = function(id, st) { currentStatuts[id] = st; afficherEleves(); mettreAJourCompteurs(); };
+    window.marquerTousPresents = function() { currentEleves.forEach(e => currentStatuts[e.id] = 'P'); afficherEleves(); mettreAJourCompteurs(); };
     function mettreAJourCompteurs() {
-      let p=0, a=0, r=0;
-      Object.keys(currentStatuts).forEach(function(key) {
-        const s = currentStatuts[key];
-        if(s==='P') p++; else if(s==='A') a++; else r++;
-      });
-      document.getElementById('count-presents').textContent = p;
-      document.getElementById('count-absents').textContent = a;
-      document.getElementById('count-retards').textContent = r;
+      let p=0, a=0, r=0; Object.values(currentStatuts).forEach(s => { if(s==='P') p++; else if(s==='A') a++; else r++; });
+      document.getElementById('count-presents').textContent = p; document.getElementById('count-absents').textContent = a; document.getElementById('count-retards').textContent = r;
       if (document.getElementById('sticky-presents')) document.getElementById('sticky-presents').textContent = p;
       if (document.getElementById('sticky-absents')) document.getElementById('sticky-absents').textContent = a;
     }
 
-    // ============================================================
-    // AJOUT ÉLÈVE MANQUANT
-    // FIX #1 : lecture des champs arabes
-    // FIX #6 : garde offline explicite
-    // ============================================================
     window.ouvrirModalNouvelEleve = function() {
       if (!selectClasse.value) return;
-      document.getElementById('add-eleve-nom').value = '';
-      document.getElementById('add-eleve-prenom').value = '';
-      document.getElementById('add-eleve-nom-ar').value = '';
-      document.getElementById('add-eleve-prenom-ar').value = '';
-      document.getElementById('modal-nouvel-eleve').classList.remove('hidden');
-      document.getElementById('modal-nouvel-eleve').classList.add('flex');
+      ['add-eleve-nom','add-eleve-prenom','add-eleve-nom-ar','add-eleve-prenom-ar'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('modal-nouvel-eleve').classList.remove('hidden'); document.getElementById('modal-nouvel-eleve').classList.add('flex');
     };
-
-    window.fermerModalNouvelEleve = function() {
-      document.getElementById('modal-nouvel-eleve').classList.add('hidden');
-      document.getElementById('modal-nouvel-eleve').classList.remove('flex');
-    };
-
+    window.fermerModalNouvelEleve = function() { document.getElementById('modal-nouvel-eleve').classList.add('hidden'); document.getElementById('modal-nouvel-eleve').classList.remove('flex'); };
     window.confirmerAjoutEleve = async function() {
-      // FIX #6 : garde offline
-      if (!navigator.onLine) {
-        alert((langueCourante === 'ar')
-          ? 'الاتصال بالإنترنت مطلوب لإضافة تلميذ جديد.'
-          : 'Connexion Internet requise pour ajouter un élève.');
-        return;
-      }
-
-      const cid = selectClasse.value;
-      const nom = document.getElementById('add-eleve-nom').value.trim().toUpperCase();
-      const prenom = document.getElementById('add-eleve-prenom').value.trim();
-      // FIX #1 : lecture des champs arabes
-      const nomAr = document.getElementById('add-eleve-nom-ar').value.trim();
-      const prenomAr = document.getElementById('add-eleve-prenom-ar').value.trim();
-      
+      if (!navigator.onLine || !supabaseClient) { alert('Connexion requise'); return; }
+      const cid = selectClasse.value, nom = document.getElementById('add-eleve-nom').value.trim().toUpperCase(), prenom = document.getElementById('add-eleve-prenom').value.trim();
+      const nomAr = document.getElementById('add-eleve-nom-ar').value.trim(), prenomAr = document.getElementById('add-eleve-prenom-ar').value.trim();
       if (!nom || !prenom) return;
-
       try {
-        const { data, error } = await supabaseClient.from('eleves').insert({
-          classe_id: parseInt(cid, 10),
-          nom: nom,
-          prenom: prenom,
-          nom_ar: nomAr || null,
-          prenom_ar: prenomAr || null,
-          matricule: 'TEMP-' + Date.now(),
-          actif: true
-        }).select().single();
+        const { data, error } = await supabaseClient.from('eleves').insert({ classe_id: parseInt(cid, 10), nom, prenom, nom_ar: nomAr||null, prenom_ar: prenomAr||null, matricule: 'TEMP-'+Date.now(), actif: true }).select().single();
         if (error) throw error;
-        data.est_nouveau = true;
-        currentEleves.push(data);
-        currentStatuts[data.id] = 'P';
-        afficherEleves();
-        mettreAJourCompteurs();
-        fermerModalNouvelEleve();
+        currentEleves.push(data); currentStatuts[data.id] = 'P'; afficherEleves(); mettreAJourCompteurs(); fermerModalNouvelEleve();
       } catch (err) { alert(err.message); }
     };
 
-    // ============================================================
-    // VALIDATION DE L'APPEL
-    // FIX #5 : préserve les <span id="lbl-..."> dans les innerHTML
-    // FIX bonus : garde t[0] horaire
-    // ============================================================
     window.declencherValidationAppel = async function() {
       if(!selectClasse.value || currentEleves.length === 0) return;
-
-      // FIX bonus : vérifier que l'horaire est bien renseigné
-      const horaireVal = selectHoraire ? selectHoraire.value : '';
-      if (!horaireVal || horaireVal.indexOf('-') === -1) {
-        alert((langueCourante === 'ar') ? 'يرجى اختيار التوقيت أولاً' : 'Veuillez sélectionner un horaire.');
-        return;
-      }
       
-      const btnSticky = document.getElementById('btn-valider-appel');
-      if(btnSticky) { btnSticky.disabled = true; btnSticky.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Traitement...`; }
-      if (btnValiderRapideTop) btnValiderRapideTop.disabled = true;
-
-      const t = horaireVal.split('-');
+      const horaireAuto = obtenirHoraireActuel();
       const dateChoisie = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
       
-      const donneesAppel = {
-        seance_id: seanceExistanteId,
-        classe_id: selectClasse.value,
-        matiere: inputMatiereBloque.value,
-        date_cours: dateChoisie,
-        heure_debut: t[0] + ':00',
-        heure_fin: t[1] + ':00',
-        pointages: currentEleves.map(function(e) { return { eleve_id: e.id, statut: currentStatuts[e.id] || 'P' }; })
+      const d = { 
+        seance_id: seanceExistanteId, 
+        classe_id: selectClasse.value, 
+        matiere: inputMatiereBloque.value, 
+        date_cours: dateChoisie, 
+        heure_debut: horaireAuto.debut, 
+        heure_fin: horaireAuto.fin, 
+        pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' })) 
       };
 
-      if (!navigator.onLine) {
-        const queue = getQueueHorsLigne();
-        queue.push(donneesAppel);
-        saveQueueHorsLigne(queue);
-        afficherToast('Enregistré hors-ligne', 'Synchronisation au retour du réseau.');
-        // FIX #5 : restaurer le span i18n
-        if (btnSticky) {
-          btnSticky.disabled = false;
-          btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span id="lbl-btn-val-big">Valider et transmettre l'appel</span>`;
-        }
-        if (btnValiderRapideTop) {
-          btnValiderRapideTop.disabled = false;
-          btnValiderRapideTop.innerHTML = `<i class="fa-solid fa-paper-plane mr-1"></i> <span id="lbl-btn-val">Valider</span>`;
-        }
-        return;
-      }
-
+      if (!navigator.onLine) { const q = getQueueHorsLigne(); q.push(d); saveQueueHorsLigne(q); afficherToast('Hors-ligne', 'Appel sauvegardé'); return; }
+      
+      const btn = document.getElementById('btn-valider-appel'); if(btn) { btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`; }
       try {
-        let seanceId = seanceExistanteId;
-        let anciensPointagesMap = new Map();
-        let anciensPtsBackup = [];
-
-        if (!seanceId) {
-          const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ 
-            classe_id: donneesAppel.classe_id, matiere: donneesAppel.matiere, date_cours: donneesAppel.date_cours, 
-            heure_debut: donneesAppel.heure_debut, heure_fin: donneesAppel.heure_fin, appel_valide: true 
-          }).select().single();
-          if(e1) throw e1;
-          seanceId = s.id;
+        if (!supabaseClient) throw new Error("Connexion à la base de données impossible.");
+        
+        let sid = seanceExistanteId, anciensPtsMap = new Map(), backup = [];
+        if (!sid) {
+          const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ classe_id: d.classe_id, matiere: d.matiere, date_cours: d.date_cours, heure_debut: d.heure_debut, heure_fin: d.heure_fin, appel_valide: true }).select().single();
+          if(e1) throw e1; sid = s.id;
         } else {
-          const { data: anciensPts } = await supabaseClient.from('pointages').select('*').eq('seance_id', seanceId);
-          if (anciensPts) {
-            anciensPtsBackup = anciensPts;
-            anciensPtsBackup.forEach(function(ap) { anciensPointagesMap.set(String(ap.eleve_id), ap); });
-          }
+          const { data: anciens } = await supabaseClient.from('pointages').select('*').eq('seance_id', sid);
+          if (anciens) { backup = anciens; anciens.forEach(ap => anciensPtsMap.set(String(ap.eleve_id), ap)); }
         }
-
-        const { error: errDel } = await supabaseClient.from('pointages').delete().eq('seance_id', seanceId);
-        if (errDel) throw errDel;
-
-        const pts = donneesAppel.pointages.map(function(p) {
-          const ancien = anciensPointagesMap.get(String(p.eleve_id));
-          const aUnBillet = billetsMap.has(String(p.eleve_id));
-          let justifieConserve = ancien ? ancien.justifie : false;
-          let motifConserve = ancien ? ancien.motif_justification : null;
-
-          if (p.statut === 'P' && ((ancien && (ancien.statut === 'A' || ancien.statut === 'R')) || aUnBillet)) {
-            justifieConserve = true;
-            if (!motifConserve) motifConserve = 'Régularisé (Entré en cours)';
-          }
-
-          return { seance_id: seanceId, eleve_id: p.eleve_id, statut: p.statut, justifie: justifieConserve, motif_justification: motifConserve };
+        await supabaseClient.from('pointages').delete().eq('seance_id', sid);
+        const pts = d.pointages.map(p => {
+          const anc = anciensPtsMap.get(String(p.eleve_id)), aB = billetsMap.has(String(p.eleve_id));
+          let jC = anc ? anc.justifie : false, mC = anc ? anc.motif_justification : null;
+          if (p.statut === 'P' && ((anc && (anc.statut==='A'||anc.statut==='R')) || aB)) { jC = true; if (!mC) mC = 'Régularisé'; }
+          return { seance_id: sid, eleve_id: p.eleve_id, statut: p.statut, justifie: jC, motif_justification: mC };
         });
-
-        const { error: errIns } = await supabaseClient.from('pointages').insert(pts);
-        
-        if(errIns) {
-            if (anciensPtsBackup.length > 0) {
-                await supabaseClient.from('pointages').insert(anciensPtsBackup);
-            }
-            throw errIns;
-        }
-        
-        seanceExistanteId = seanceId;
-        if (badgeModeSeance) badgeModeSeance.classList.remove('hidden');
-        afficherToast('Succès', 'Appel enregistré avec succès !');
-      } catch(e) { 
-        const queue = getQueueHorsLigne();
-        queue.push(donneesAppel);
-        saveQueueHorsLigne(queue);
-        afficherToast('Sauvegardé hors-ligne', 'Réseau instable : appel sécurisé localement.');
-      } finally { 
-        // FIX #5 : restaurer les spans i18n
-        if (btnSticky) {
-          btnSticky.disabled = false;
-          btnSticky.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span id="lbl-btn-val-big">Valider et transmettre l'appel</span>`;
-        }
-        if (btnValiderRapideTop) {
-          btnValiderRapideTop.disabled = false;
-          btnValiderRapideTop.innerHTML = `<i class="fa-solid fa-paper-plane mr-1"></i> <span id="lbl-btn-val">Valider</span>`;
-        }
-      }
+        const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
+        if(e2) { if(backup.length) await supabaseClient.from('pointages').insert(backup); throw e2; }
+        seanceExistanteId = sid; if(badgeModeSeance) badgeModeSeance.classList.remove('hidden'); afficherToast('Succès', 'Appel enregistré !');
+      } catch(e) { const q = getQueueHorsLigne(); q.push(d); saveQueueHorsLigne(q); afficherToast('Sauvegardé hors-ligne', 'Réseau instable'); }
+      finally { if(btn) { btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_call">${TRADUCTIONS[langueCourante].btn_submit_call}</span>`; } }
     };
 
-    // ============================================================
-    // ÉVÉNEMENTS
-    // ============================================================
-    if(selectClasse) selectClasse.addEventListener('change', function(e) { chargerEleves(e.target.value); });
+    if(selectClasse) selectClasse.addEventListener('change', e => chargerEleves(e.target.value));
     if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
-    if(selectHoraire) selectHoraire.addEventListener('change', verifierEtChargerSeanceExistante);
 
-    // ============================================================
-    // DÉMARRAGE
-    // ============================================================
+    // INITIALISATION
+    appliquerLangue(langueCourante);
     const matiereSession = sessionStorage.getItem('prof_auth_matiere');
-    if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) debloquerPagePourMatiere(matiereSession);
+    if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) {
+      const pinScreen = document.getElementById('pin-screen-prof'); if (pinScreen) pinScreen.remove();
+      if (inputMatiereBloque) inputMatiereBloque.value = matiereSession;
+      initClasses();
+    }
   </script>
 </body>
 </html>
