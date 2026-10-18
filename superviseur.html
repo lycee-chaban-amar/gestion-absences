@@ -181,15 +181,10 @@
     let __appInit = false;
     let chartRep = null, chartCls = null;
 
-    // Vérification que la librairie Supabase a bien chargé
     try {
-      if (typeof supabase === 'undefined') {
-        throw new Error("La librairie Supabase n'a pas pu charger. Vérifiez votre connexion internet ou désactivez AdBlock.");
-      }
+      if (typeof supabase === 'undefined') throw new Error("Supabase non chargé");
       supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch(e) {
-      console.error(e);
-    }
+    } catch(e) { console.error(e); }
 
     const filtreDate = document.getElementById('filtre-date');
     const filtreClasse = document.getElementById('filtre-classe');
@@ -243,16 +238,12 @@
     // AUTH & INIT
     // ============================================================
     function debloquerSuperviseur() {
-      if (!supabaseClient) {
-        alert("Erreur : Impossible de se connecter à la base de données (Supabase). Vérifiez votre réseau.");
-        return;
-      }
+      if (!supabaseClient) { alert("Erreur : Impossible de se connecter à la base de données (Supabase). Vérifiez votre réseau."); return; }
       const pinScreen = document.getElementById('pin-screen'); 
       if (pinScreen) pinScreen.remove();
       sessionStorage.setItem('superviseur_auth', 'true');
       if (__appInit) return;
       __appInit = true;
-      
       initialiserApplication().catch(err => {
         console.error("Erreur initialisation:", err);
         alert("Connexion à la base de données impossible. Erreur : " + err.message);
@@ -263,7 +254,6 @@
       const input = document.getElementById('input-pin'), err = document.getElementById('pin-error'), card = document.getElementById('pin-card');
       let val = input ? input.value.trim() : '';
       
-      // CORRECTION : Convertir les chiffres arabes (٢٦٢٦) en chiffres latins (2626) si besoin
       const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
       val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
 
@@ -281,11 +271,7 @@
     document.getElementById('btn-lock')?.addEventListener('click', () => { sessionStorage.removeItem('superviseur_auth'); location.reload(); });
 
     if (sessionStorage.getItem('superviseur_auth') === 'true') debloquerSuperviseur();
-    
-    async function initialiserApplication() { 
-      await loadClassesBilingues(); 
-      await fetchDonnees(); 
-    }
+    async function initialiserApplication() { await loadClassesBilingues(); await fetchDonnees(); }
 
     // ============================================================
     // GESTION GLOBALE DES CLICS
@@ -817,14 +803,33 @@
     };
     window.fermerModalApercuRapport = function() { document.getElementById('modal-apercu-rapport').classList.add('hidden'); document.getElementById('modal-apercu-rapport').classList.remove('flex'); };
     
+    // EXPORT PDF AVEC CORRECTION DE L'ESPACE VIDE
     window.lancerImpressionRapport = async function() { 
-      const el = document.getElementById('zone-impression-rapport');
-      el.classList.remove('hidden');
+      const source = document.getElementById('zone-impression-rapport');
+      
+      const container = document.createElement('div');
+      container.innerHTML = source.innerHTML;
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '190mm';
+      container.style.background = 'white';
+      container.style.padding = '0';
+      document.body.appendChild(container);
       
       if (document.fonts) { await document.fonts.ready; }
 
-      const opt = { margin: [10, 10, 10, 10], filename: `Rapport_Absences_${filtreDate.value}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-      html2pdf().set(opt).from(el).save().then(() => { el.classList.add('hidden'); });
+      const opt = { 
+        margin: [10, 10, 10, 10], 
+        filename: `Rapport_Absences_${filtreDate.value}.pdf`, 
+        image: { type: 'jpeg', quality: 0.98 }, 
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, 
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+      };
+      
+      html2pdf().set(opt).from(container).save().then(() => {
+        document.body.removeChild(container);
+      });
     };
 
     // ============================================================
