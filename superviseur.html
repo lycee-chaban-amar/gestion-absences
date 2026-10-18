@@ -900,8 +900,6 @@
       `;
 
       // --- TRAITEMENT PAGE 2 (Conseiller d'éducation) ---
-      
-      // 1. Tableau des horaires (Séances validées)
       const heures = ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
       let tableauHorairesHtml = "";
       
@@ -922,7 +920,6 @@
         tableauHorairesHtml += `<td></td></tr>`;
       });
 
-      // 2. Tableau Absences par niveau/classe
       const classes1AS = classesCache.filter(c => c.nom_court.startsWith('1AS'));
       const classes2AS = classesCache.filter(c => c.nom_court.startsWith('2AS'));
       const classes3AS = classesCache.filter(c => c.nom_court.startsWith('3AS'));
@@ -983,7 +980,7 @@
              <p class="font-bold text-xs w-1/3 text-right">مديرية التربية لولاية بجاية</p>
              <div class="w-1/3 text-center">
                <h2 class="font-black text-lg">التقرير اليومي لمستشار التربية</h2>
-               <p class="font-bold text-xs mt-2">التاريخ : ${dateStrD}</p>
+               <p class="font-bold text-xs mt-2">التاريخ : ${dateStrAr}</p>
              </div>
              <p class="font-bold text-xs w-1/3 text-left">ثانوية شعبان أعمر<br>الدروس غير المقدمة</p>
           </div>
