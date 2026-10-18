@@ -12,7 +12,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -28,16 +27,21 @@
     @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
     .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
     
+    /* RÈGLES D'IMPRESSION POUR ISOLER LE RAPPORT */
     @media print {
       body * { visibility: hidden !important; }
       body.print-rapport #zone-impression-rapport, body.print-rapport #zone-impression-rapport * { visibility: visible !important; }
-      body.print-rapport #zone-impression-rapport { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+      body.print-rapport #zone-impression-rapport { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
+      
       body.print-fiche-eleve #zone-impression-fiche-eleve, body.print-fiche-eleve #zone-impression-fiche-eleve * { visibility: visible !important; }
       body.print-fiche-eleve #zone-impression-fiche-eleve { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+      
       body.print-billet #zone-impression-billet, body.print-billet #zone-impression-billet * { visibility: visible !important; }
       body.print-billet #zone-impression-billet { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+      
       body.print-convocation #zone-impression-convocation, body.print-convocation #zone-impression-convocation * { visibility: visible !important; }
       body.print-convocation #zone-impression-convocation { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+      
       @page { size: A4 portrait; margin: 12mm; }
     }
   </style>
@@ -47,7 +51,9 @@
   <!-- MODALS -->
   <div id="modal-fiche-eleve" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto"><div class="bg-white dark:bg-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row"><div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-md"><i class="fa-solid fa-folder-open"></i></div><div><h3 class="text-base font-extrabold text-slate-800 dark:text-white">Dossier Disciplinaire</h3><p class="text-xs text-slate-500 dark:text-slate-400">بطاقة المتابعة الفردية</p></div></div><div class="flex items-center gap-2"><button type="button" onclick="lancerImpressionFicheEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"><i class="fa-solid fa-print"></i> <span>Imprimer</span></button><button type="button" onclick="fermerModalFicheEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-900 flex-1" dir="rtl"><div id="conteneur-fiche-eleve" class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-2xl mx-auto font-sans text-black dark:text-white space-y-5"></div></div><div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400"><span>السجل الإداري الإلكتروني</span><button type="button" onclick="fermerModalFicheEleve()" class="px-4 py-2 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
   
-  <div id="modal-apercu-rapport" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto"><div class="bg-white dark:bg-slate-800 rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row"><div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-md"><i class="fa-solid fa-file-signature"></i></div><div><h3 class="text-base font-extrabold text-slate-800 dark:text-white">Aperçu du Rapport</h3><p class="text-xs text-slate-500 dark:text-slate-400">معاينة التقرير اليومي</p></div></div><div class="flex items-center gap-2"><button type="button" onclick="lancerImpressionRapport()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"><i class="fa-solid fa-file-pdf"></i> <span>Télécharger PDF</span></button><button type="button" onclick="fermerModalApercuRapport()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-900 flex-1" dir="rtl"><div id="conteneur-document-rapport" class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-3xl mx-auto font-sans text-black dark:text-white"></div></div><div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400"><span>وثيقة رسمية</span><button type="button" onclick="fermerModalApercuRapport()" class="px-4 py-2 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
+  <div id="modal-apercu-rapport" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto"><div class="bg-white dark:bg-slate-800 rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row"><div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-md"><i class="fa-solid fa-file-signature"></i></div><div><h3 class="text-base font-extrabold text-slate-800 dark:text-white">Aperçu du Rapport</h3><p class="text-xs text-slate-500 dark:text-slate-400">معاينة التقرير اليومي</p></div></div><div class="flex items-center gap-2">
+    <!-- BOUTON MODIFIÉ ICI -->
+    <button type="button" onclick="lancerImpressionRapport()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"><i class="fa-solid fa-print"></i> <span>Imprimer (A4)</span></button><button type="button" onclick="fermerModalApercuRapport()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-900 flex-1" dir="rtl"><div id="conteneur-document-rapport" class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-3xl mx-auto font-sans text-black dark:text-white"></div></div><div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400"><span>وثيقة رسمية</span><button type="button" onclick="fermerModalApercuRapport()" class="px-4 py-2 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
 
   <div id="modal-details-appels" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]"><div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0"><h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clipboard-list text-indigo-600"></i><span>Détails des appels</span></h3><button type="button" onclick="fermerModalDetailsAppels()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="overflow-y-auto flex-1"><table class="w-full text-left text-sm"><thead class="bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase sticky top-0 border-b border-slate-200 dark:border-slate-700"><tr><th class="py-2.5 px-4">Matière</th><th class="py-2.5 px-4 text-center">Heure</th><th class="py-2.5 px-4 text-center">Classe</th></tr></thead><tbody id="details-appels-body" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody></table></div><div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 text-right"><button type="button" onclick="fermerModalDetailsAppels()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
 
@@ -721,8 +727,13 @@
         document.getElementById('zone-impression-fiche-eleve').innerHTML = conteneur.innerHTML;
       } catch (err) { conteneur.innerHTML = `<p class="text-rose-600 font-bold">Erreur: ${escapeHtml(err.message)}</p>`; }
     };
+    
     window.fermerModalFicheEleve = function() { document.getElementById('modal-fiche-eleve').classList.add('hidden'); document.getElementById('modal-fiche-eleve').classList.remove('flex'); };
-    window.lancerImpressionFicheEleve = function() { window.print(); };
+    window.lancerImpressionFicheEleve = function() { 
+      document.body.classList.add('print-fiche-eleve'); 
+      window.print(); 
+      setTimeout(() => document.body.classList.remove('print-fiche-eleve'), 1000); 
+    };
 
     window.imprimerBillet = async function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, eleveId) {
       const d = date || new Date().toISOString().split('T')[0];
@@ -732,19 +743,21 @@
       } catch (err) {}
       document.getElementById('billet-details').innerHTML = `<div class="flex justify-between border-b border-black pb-2"><p><b>Nom & Prénom:</b> ${escapeHtml(nom)} ${escapeHtml(prenom)}</p><p dir="rtl"><b>اللقب والاسم:</b> ${escapeHtml(nomAr)} ${escapeHtml(prenomAr)}</p></div><div class="flex justify-between border-b border-black py-2"><p><b>Division / القسم:</b> ${escapeHtml(classe)}</p><p><b>Statut / الطبيعة:</b> ${statut === 'A' ? 'Absence / غياب' : 'Retard / تأخر'}</p></div><div class="py-2"><p><b>Date & Heure:</b> ${escapeHtml(date)} à ${heure ? heure.substring(0,5) : ''}</p></div>`;
       document.getElementById('billet-date-emission').textContent = new Date().toLocaleString('fr-FR');
-      document.body.className += ' print-billet'; window.print();
+      document.body.classList.add('print-billet'); 
+      window.print();
       setTimeout(() => document.body.classList.remove('print-billet'), 1000);
     };
 
     window.imprimerConvocation = function(nom, prenom, nomAr, prenomAr, classe, tot) {
       document.getElementById('convocation-details').innerHTML = `<div class="mb-4 bg-gray-100 p-3 border border-black text-center font-bold"><p>${escapeHtml(nom)} ${escapeHtml(prenom)} — ${escapeHtml(nomAr)} ${escapeHtml(prenomAr)} — القسم: ${escapeHtml(classe)}</p><p class="mt-2 text-rose-700 text-base">حالة إنذار: غياب لمدة 3 أيام متتالية (مجموع الغيابات: ${tot} حصص)</p></div><p>إلى السيد(ة) ولي أمر التلميذ(ة) المحترم(ة) :</p><p>نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجل غياباً مستمراً لمدة 3 أيام دراسية متتالية، دون تقديم أي تبرير.</p><p>وعليه، يُرجى الحضور شخصياً إلى مكتب مستشار التربية لتسوية وضعية تمدرس التلميذ.</p>`;
       document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('ar-DZ');
-      document.body.className += ' print-convocation'; window.print();
+      document.body.classList.add('print-convocation'); 
+      window.print();
       setTimeout(() => document.body.classList.remove('print-convocation'), 1000);
     };
 
     // ============================================================
-    // RAPPORT & PDF
+    // RAPPORT & IMPRESSION
     // ============================================================
     function construireHtmlRapportComplet() {
       const clsChoisie = filtreClasse ? filtreClasse.value : 'ALL';
@@ -795,41 +808,21 @@
         <div class="grid grid-cols-3 gap-4 text-center text-xs font-bold pt-4 px-4 border-t border-dashed border-black"><div><p class="underline">مستشار التربية</p><div class="h-20 border-b border-dotted border-black mt-1"></div></div><div><p class="underline">ناظر الدراسات</p><div class="h-20 border-b border-dotted border-black mt-1"></div></div><div><p class="underline">مدير الثانوية</p><div class="h-20 border-b border-dotted border-black mt-1"></div></div></div>
       `;
     }
+    
     window.ouvrirApercuRapportJournalier = function() { 
       const h = construireHtmlRapportComplet();
       document.getElementById('conteneur-document-rapport').innerHTML = h; 
       document.getElementById('zone-impression-rapport').innerHTML = h; 
       document.getElementById('modal-apercu-rapport').classList.remove('hidden'); document.getElementById('modal-apercu-rapport').classList.add('flex'); 
     };
+    
     window.fermerModalApercuRapport = function() { document.getElementById('modal-apercu-rapport').classList.add('hidden'); document.getElementById('modal-apercu-rapport').classList.remove('flex'); };
     
-    // EXPORT PDF AVEC CORRECTION DE L'ESPACE VIDE
-    window.lancerImpressionRapport = async function() { 
-      const source = document.getElementById('zone-impression-rapport');
-      
-      const container = document.createElement('div');
-      container.innerHTML = source.innerHTML;
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '190mm';
-      container.style.background = 'white';
-      container.style.padding = '0';
-      document.body.appendChild(container);
-      
-      if (document.fonts) { await document.fonts.ready; }
-
-      const opt = { 
-        margin: [10, 10, 10, 10], 
-        filename: `Rapport_Absences_${filtreDate.value}.pdf`, 
-        image: { type: 'jpeg', quality: 0.98 }, 
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0 }, 
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
-      };
-      
-      html2pdf().set(opt).from(container).save().then(() => {
-        document.body.removeChild(container);
-      });
+    // REMPLACEMENT DE LA FONCTION PDF PAR L'IMPRESSION NATIVE
+    window.lancerImpressionRapport = function() { 
+      document.body.classList.add('print-rapport'); 
+      window.print(); 
+      setTimeout(() => document.body.classList.remove('print-rapport'), 1000); 
     };
 
     // ============================================================
