@@ -57,7 +57,7 @@
 
   <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row"><div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4"><h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-indigo-600"></i><span>Modifier le pointage</span></h3><button type="button" onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><input type="hidden" id="edit-pointage-id" /><div class="space-y-4 text-sm"><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Élève</label><div id="edit-eleve-nom" class="font-bold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700"></div></div><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Statut</label><select id="edit-statut" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 outline-none text-slate-800 dark:text-white"><option value="P">✅ Présent</option><option value="A">❌ Absent</option><option value="R">⏳ Retard</option></select></div><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Justification</label><div class="flex gap-4 mb-2"><label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200"><input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600" /> <span>Non</span></label><label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700 dark:text-emerald-400"><input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600" /> <span>Oui</span></label></div><input type="text" id="edit-motif" placeholder="Motif..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs outline-none text-slate-800 dark:text-white" /></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700"><button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button><button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Enregistrer</button></div></div></div>
 
-  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4"><div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform"><div class="w-16 h-16 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div><h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Espace Sécurisé</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-6">ثانوية شعبان أعمر - الرمز السري</p><div class="space-y-4"><div><input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" /><p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p></div><button type="button" id="btn-valider-pin" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg">Déverrouiller</button></div></div></div>
+  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4"><div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform"><div class="w-16 h-16 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div><h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Espace Sécurisé</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-6">ثانوية شعبان أعمر - الرمز السري</p><div class="space-y-4"><div><input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" /><p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p></div><button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer">Déverrouiller</button></div></div></div>
 
   <header class="bg-slate-900 dark:bg-slate-950 text-white shadow-md border-b border-slate-800 transition-colors">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
@@ -173,13 +173,23 @@
     // ============================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
+    let supabaseClient = null;
     let classesCache = [];
     let vuePointages = [];
     let pointagesSelectionnes = new Set();
     let __appInit = false;
     let chartRep = null, chartCls = null;
+
+    // Vérification que la librairie Supabase a bien chargé
+    try {
+      if (typeof supabase === 'undefined') {
+        throw new Error("La librairie Supabase n'a pas pu charger. Vérifiez votre connexion internet ou désactivez AdBlock.");
+      }
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch(e) {
+      console.error(e);
+    }
 
     const filtreDate = document.getElementById('filtre-date');
     const filtreClasse = document.getElementById('filtre-classe');
@@ -224,7 +234,7 @@
     // LOGS
     // ============================================================
     async function enregistrerLog(action, details) {
-      if (!navigator.onLine) return;
+      if (!navigator.onLine || !supabaseClient) return;
       try { await supabaseClient.from('logs').insert({ action: action, details: details }); } 
       catch(e) { console.warn("Log fail", e); }
     }
@@ -233,25 +243,49 @@
     // AUTH & INIT
     // ============================================================
     function debloquerSuperviseur() {
+      if (!supabaseClient) {
+        alert("Erreur : Impossible de se connecter à la base de données (Supabase). Vérifiez votre réseau.");
+        return;
+      }
       const pinScreen = document.getElementById('pin-screen'); 
       if (pinScreen) pinScreen.remove();
       sessionStorage.setItem('superviseur_auth', 'true');
       if (__appInit) return;
       __appInit = true;
-      initialiserApplication();
+      
+      initialiserApplication().catch(err => {
+        console.error("Erreur initialisation:", err);
+        alert("Connexion à la base de données impossible. Erreur : " + err.message);
+      });
     }
+
     function validerPinDirect() {
       const input = document.getElementById('input-pin'), err = document.getElementById('pin-error'), card = document.getElementById('pin-card');
-      const val = input ? input.value.trim() : '';
-      if (val === atob(PIN_MASQUE)) { if (err) err.classList.add('hidden'); debloquerSuperviseur(); } 
-      else { if (err) err.classList.remove('hidden'); if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } if (input) { input.value = ''; input.focus(); } }
+      let val = input ? input.value.trim() : '';
+      
+      // CORRECTION : Convertir les chiffres arabes (٢٦٢٦) en chiffres latins (2626) si besoin
+      const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+      val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
+
+      if (val === atob(PIN_MASQUE)) { 
+        if (err) err.classList.add('hidden'); 
+        debloquerSuperviseur(); 
+      } else { 
+        if (err) err.classList.remove('hidden'); 
+        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
+        if (input) { input.value = ''; input.focus(); } 
+      }
     }
-    document.getElementById('btn-valider-pin')?.addEventListener('click', e => { e.preventDefault(); validerPinDirect(); });
+    
     document.getElementById('input-pin')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
     document.getElementById('btn-lock')?.addEventListener('click', () => { sessionStorage.removeItem('superviseur_auth'); location.reload(); });
 
     if (sessionStorage.getItem('superviseur_auth') === 'true') debloquerSuperviseur();
-    async function initialiserApplication() { await loadClassesBilingues(); await fetchDonnees(); }
+    
+    async function initialiserApplication() { 
+      await loadClassesBilingues(); 
+      await fetchDonnees(); 
+    }
 
     // ============================================================
     // GESTION GLOBALE DES CLICS
@@ -280,6 +314,7 @@
     // CLASSES
     // ============================================================
     async function loadClassesBilingues() {
+      if (!supabaseClient) return;
       try {
         if (classesCache.length === 0) {
           const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
@@ -300,7 +335,7 @@
             selClsTr.appendChild(opt);
           });
         }
-      } catch (err) {}
+      } catch (err) { console.warn(err); }
     }
 
     // ============================================================
@@ -326,7 +361,7 @@
     // FETCH DONNEES
     // ============================================================
     async function fetchDonnees() {
-      const d = filtreDate.value; if(!d) return;
+      const d = filtreDate.value; if(!d || !supabaseClient) return;
       if(iconRefresh) iconRefresh.classList.add('fa-spin');
       registreBody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-indigo-500"><i class="fa-solid fa-spin fa-circle-notch text-2xl"></i></td></tr>`;
       
@@ -388,7 +423,6 @@
         const pid = pt.pointage_id || pt.id, eleveId = pt.eleve_id;
         const isChecked = pointagesSelectionnes.has(String(pid));
         
-        // LOGIQUE : Si un élève a une justification administrative, il est considéré comme Absent (Justifié)
         const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
         const isAbsent = pt.statut === 'A' || isJustifiedAbsence;
 
@@ -576,7 +610,6 @@
       const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
       const motif = prompt('Motif :', 'Accord administration'); if (motif === null) return;
       try {
-        // Forcer le statut à 'A' (Absent) lors de la justification pour respecter la logique
         await supabaseClient.from('pointages').update({ statut: 'A', justifie: true, motif_justification: motif || 'Justifié' }).in('id', ids);
         const nouveauxBillets = [];
         for (const id of ids) {
@@ -686,7 +719,6 @@
         conteneur.innerHTML = `
           <div class="text-center border-b-2 border-black dark:border-slate-600 pb-3 mb-4">
             <p class="font-bold text-xs text-slate-800 dark:text-white">ثانوية شعبان أعمر أوقاس</p>
-            <!-- CORRECTION DU CADRE VIDE ICI -->
             <div class="mt-2 border-2 border-black dark:border-slate-600 px-6 py-1 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white mx-auto" style="width: max-content; max-width: 100%;">
               <h2 class="font-black text-lg">بطاقة المتابعة الفردية</h2>
             </div>
@@ -768,7 +800,6 @@
           <p class="font-bold text-xs sm:text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
           <p class="font-bold text-xs sm:text-sm mt-0.5">وزارة التربية الوطنية • مديرية التربية لولاية بجاية</p>
           <p class="font-extrabold text-sm sm:text-base mt-0.5 text-indigo-900">ثانوية شعبان أعمر — أوقاس</p>
-          <!-- CORRECTION DU CADRE VIDE ICI AUSSI -->
           <div class="mt-3 border-2 border-black px-8 py-1.5 bg-slate-50 mx-auto" style="width: max-content; max-width: 100%;">
             <h2 class="font-black text-base sm:text-lg">التقرير اليومي لحركة التلاميذ والغيابات</h2>
           </div>
@@ -786,12 +817,10 @@
     };
     window.fermerModalApercuRapport = function() { document.getElementById('modal-apercu-rapport').classList.add('hidden'); document.getElementById('modal-apercu-rapport').classList.remove('flex'); };
     
-    // EXPORT PDF AVEC CORRECTION DE LA POLICE
     window.lancerImpressionRapport = async function() { 
       const el = document.getElementById('zone-impression-rapport');
       el.classList.remove('hidden');
       
-      // Attendre que la police soit chargée pour éviter les textes vides
       if (document.fonts) { await document.fonts.ready; }
 
       const opt = { margin: [10, 10, 10, 10], filename: `Rapport_Absences_${filtreDate.value}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
