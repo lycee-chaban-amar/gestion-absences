@@ -847,7 +847,7 @@
     };
 
     // ============================================================
-    // CONSTRUCTION DU NOUVEAU RAPPORT (2 PAGES) - REMPLI AUTO
+    // CONSTRUCTION DU NOUVEAU RAPPORT (2 PAGES) - SANS TABLEAU HORAIRE
     // ============================================================
     function construireHtmlRapportComplet() {
       const d = filtreDate.value;
@@ -900,26 +900,6 @@
       `;
 
       // --- TRAITEMENT PAGE 2 (Conseiller d'éducation) ---
-      const heures = ["08:00", "09:00", "10:00", "11:00", "14:00", "15:00", "16:00", "17:00"];
-      let tableauHorairesHtml = "";
-      
-      const seancesDuJour = [...new Set(vuePointages.map(p => JSON.stringify({mat: p.matiere, h: p.heure_debut, cls: p.classe_nom})))].map(s => JSON.parse(s));
-      const matieresUniques = [...new Set(seancesDuJour.map(s => s.mat))];
-      
-      matieresUniques.forEach(mat => {
-        tableauHorairesHtml += `<tr>
-          <td class="font-bold text-right px-2">${escapeHtml(mat)}</td>
-          <td class="text-right px-2"></td>
-          <td class="text-right px-2"></td>`;
-          
-        heures.forEach(h => {
-          const seance = seancesDuJour.find(s => s.mat === mat && s.h.startsWith(h.substring(0,2)));
-          tableauHorairesHtml += `<td class="font-bold text-xs">${seance ? escapeHtml(seance.cls) : ''}</td>`;
-        });
-        
-        tableauHorairesHtml += `<td></td></tr>`;
-      });
-
       const classes1AS = classesCache.filter(c => c.nom_court.startsWith('1AS'));
       const classes2AS = classesCache.filter(c => c.nom_court.startsWith('2AS'));
       const classes3AS = classesCache.filter(c => c.nom_court.startsWith('3AS'));
@@ -985,24 +965,6 @@
              <p class="font-bold text-xs w-1/3 text-left">ثانوية شعبان أعمر<br>الدروس غير المقدمة</p>
           </div>
         </div>
-
-        <table class="w-full text-center border-collapse border border-black print-table mb-6">
-          <thead>
-            <tr class="bg-gray-100">
-              <th rowspan="2" class="w-1/6">الأستاذ / المادة</th>
-              <th rowspan="2" class="w-1/6">المادة</th>
-              <th rowspan="2" class="w-1/6">القسم</th>
-              <th colspan="8">الحصص</th>
-              <th rowspan="2" class="w-1/6">ملاحظات</th>
-            </tr>
-            <tr class="bg-gray-100">
-              <th>8-9</th><th>9-10</th><th>10-11</th><th>11-12</th><th>14-15</th><th>15-16</th><th>16-17</th><th>17-18</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableauHorairesHtml || '<tr><td colspan="12" class="py-4">لا توجد حصص مسجلة اليوم</td></tr>'}
-          </tbody>
-        </table>
 
         <div class="flex gap-4 mb-6">
           <div class="w-2/3">
