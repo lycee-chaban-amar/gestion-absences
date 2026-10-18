@@ -27,7 +27,6 @@
     @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
     .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
     
-    /* RÈGLES D'IMPRESSION POUR ISOLER LE RAPPORT */
     @media print {
       body * { visibility: hidden !important; }
       body.print-rapport #zone-impression-rapport, body.print-rapport #zone-impression-rapport * { visibility: visible !important; }
@@ -52,7 +51,6 @@
   <div id="modal-fiche-eleve" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto"><div class="bg-white dark:bg-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row"><div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-md"><i class="fa-solid fa-folder-open"></i></div><div><h3 class="text-base font-extrabold text-slate-800 dark:text-white">Dossier Disciplinaire</h3><p class="text-xs text-slate-500 dark:text-slate-400">بطاقة المتابعة الفردية</p></div></div><div class="flex items-center gap-2"><button type="button" onclick="lancerImpressionFicheEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"><i class="fa-solid fa-print"></i> <span>Imprimer</span></button><button type="button" onclick="fermerModalFicheEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-900 flex-1" dir="rtl"><div id="conteneur-fiche-eleve" class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-2xl mx-auto font-sans text-black dark:text-white space-y-5"></div></div><div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400"><span>السجل الإداري الإلكتروني</span><button type="button" onclick="fermerModalFicheEleve()" class="px-4 py-2 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
   
   <div id="modal-apercu-rapport" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto"><div class="bg-white dark:bg-slate-800 rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row"><div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-md"><i class="fa-solid fa-file-signature"></i></div><div><h3 class="text-base font-extrabold text-slate-800 dark:text-white">Aperçu du Rapport</h3><p class="text-xs text-slate-500 dark:text-slate-400">معاينة التقرير اليومي</p></div></div><div class="flex items-center gap-2">
-    <!-- BOUTON MODIFIÉ ICI -->
     <button type="button" onclick="lancerImpressionRapport()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"><i class="fa-solid fa-print"></i> <span>Imprimer (A4)</span></button><button type="button" onclick="fermerModalApercuRapport()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-900 flex-1" dir="rtl"><div id="conteneur-document-rapport" class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-3xl mx-auto font-sans text-black dark:text-white"></div></div><div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400"><span>وثيقة رسمية</span><button type="button" onclick="fermerModalApercuRapport()" class="px-4 py-2 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
 
   <div id="modal-details-appels" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]"><div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0"><h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clipboard-list text-indigo-600"></i><span>Détails des appels</span></h3><button type="button" onclick="fermerModalDetailsAppels()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="overflow-y-auto flex-1"><table class="w-full text-left text-sm"><thead class="bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase sticky top-0 border-b border-slate-200 dark:border-slate-700"><tr><th class="py-2.5 px-4">Matière</th><th class="py-2.5 px-4 text-center">Heure</th><th class="py-2.5 px-4 text-center">Classe</th></tr></thead><tbody id="details-appels-body" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody></table></div><div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 text-right"><button type="button" onclick="fermerModalDetailsAppels()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
@@ -62,6 +60,38 @@
   <div id="modal-transfert-global" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row"><div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4"><h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-minus text-rose-600"></i><span>Élève transféré</span></h3><button type="button" onclick="fermerModalTransfertGlobal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="space-y-4 text-sm"><div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Classe</label><select id="transfert-select-classe" onchange="chargerElevesPourTransfert(this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none"><option value="">-- Choisir --</option></select></div><div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Élève</label><select id="transfert-select-eleve" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none"><option value="">-- Choisir --</option></select></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700"><button type="button" onclick="fermerModalTransfertGlobal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button><button type="button" onclick="confirmerTransfertGlobal()" class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Retirer</button></div></div></div>
 
   <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row"><div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4"><h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-indigo-600"></i><span>Modifier le pointage</span></h3><button type="button" onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><input type="hidden" id="edit-pointage-id" /><div class="space-y-4 text-sm"><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Élève</label><div id="edit-eleve-nom" class="font-bold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700"></div></div><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Statut</label><select id="edit-statut" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 outline-none text-slate-800 dark:text-white"><option value="P">✅ Présent</option><option value="A">❌ Absent</option><option value="R">⏳ Retard</option></select></div><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Justification</label><div class="flex gap-4 mb-2"><label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200"><input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600" /> <span>Non</span></label><label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700 dark:text-emerald-400"><input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600" /> <span>Oui</span></label></div><input type="text" id="edit-motif" placeholder="Motif..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs outline-none text-slate-800 dark:text-white" /></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700"><button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button><button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Enregistrer</button></div></div></div>
+
+  <!-- MODAL EDITER ÉLÈVE (RÉINTÉGRÉE) -->
+  <div id="modal-editer-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-pen text-amber-500"></i><span>Modifier l'identité de l'élève</span></h3>
+        <button type="button" onclick="fermerModalEditerEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <input type="hidden" id="edit-student-id" />
+      <div class="space-y-3.5 text-sm">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Nom (FR) *</label><input type="text" id="edit-student-nom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none uppercase text-slate-800 dark:text-white" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Prénom (FR) *</label><input type="text" id="edit-student-prenom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none capitalize text-slate-800 dark:text-white" /></div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">اللقب (بالعربية)</label><input type="text" id="edit-student-nom-ar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none text-slate-800 dark:text-white" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">الاسم (بالعربية)</label><input type="text" id="edit-student-prenom-ar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none text-slate-800 dark:text-white" /></div>
+        </div>
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col gap-2">
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400">Statut scolaire / الوضعية المدرسية</label>
+          <div class="flex gap-2">
+            <button type="button" onclick="marquerEleveTransfereDepuisModal()" class="flex-1 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Transféré</span></button>
+            <button type="button" onclick="supprimerEleveDefinitifDepuisModal()" class="bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"><i class="fa-solid fa-trash-can"></i><span>Supprimer</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700">
+        <button type="button" onclick="fermerModalEditerEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button>
+        <button type="button" onclick="enregistrerModificationEleve()" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Enregistrer</button>
+      </div>
+    </div>
+  </div>
 
   <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4"><div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform"><div class="w-16 h-16 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div><h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Espace Sécurisé</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-6">ثانوية شعبان أعمر - الرمز السري</p><div class="space-y-4"><div><input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" /><p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p></div><button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer">Déverrouiller</button></div></div></div>
 
@@ -174,9 +204,6 @@
   <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-xs font-bold">ثانوية شعبان أعمر - أوقاس</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p>أوقاس في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
 
   <script>
-    // ============================================================
-    // CONFIG & VARIABLES
-    // ============================================================
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     
@@ -214,9 +241,6 @@
       return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
     }
 
-    // ============================================================
-    // DARK MODE
-    // ============================================================
     function toggleDarkMode() {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -231,18 +255,12 @@
       document.documentElement.classList.add('dark'); updateDarkModeIcon(true);
     } else { updateDarkModeIcon(false); }
 
-    // ============================================================
-    // LOGS
-    // ============================================================
     async function enregistrerLog(action, details) {
       if (!navigator.onLine || !supabaseClient) return;
       try { await supabaseClient.from('logs').insert({ action: action, details: details }); } 
       catch(e) { console.warn("Log fail", e); }
     }
 
-    // ============================================================
-    // AUTH & INIT
-    // ============================================================
     function debloquerSuperviseur() {
       if (!supabaseClient) { alert("Erreur : Impossible de se connecter à la base de données (Supabase). Vérifiez votre réseau."); return; }
       const pinScreen = document.getElementById('pin-screen'); 
@@ -279,9 +297,6 @@
     if (sessionStorage.getItem('superviseur_auth') === 'true') debloquerSuperviseur();
     async function initialiserApplication() { await loadClassesBilingues(); await fetchDonnees(); }
 
-    // ============================================================
-    // GESTION GLOBALE DES CLICS
-    // ============================================================
     document.addEventListener('click', function(e) {
       const btn = e.target.closest('[data-action]');
       if (!btn) return;
@@ -302,9 +317,6 @@
       } else if (action === 'delete') { if (pid) supprimerPointage(pid); }
     });
 
-    // ============================================================
-    // CLASSES
-    // ============================================================
     async function loadClassesBilingues() {
       if (!supabaseClient) return;
       try {
@@ -330,9 +342,6 @@
       } catch (err) { console.warn(err); }
     }
 
-    // ============================================================
-    // SELECTION
-    // ============================================================
     function mettreAJourBarreSelection() {
       const b = document.getElementById('barre-actions-groupees'); if (!b) return;
       const t = pointagesSelectionnes.size;
@@ -349,9 +358,6 @@
       else { checkAllMaster.checked = false; checkAllMaster.indeterminate = true; }
     }
 
-    // ============================================================
-    // FETCH DONNEES
-    // ============================================================
     async function fetchDonnees() {
       const d = filtreDate.value; if(!d || !supabaseClient) return;
       if(iconRefresh) iconRefresh.classList.add('fa-spin');
@@ -399,9 +405,6 @@
       });
     }
 
-    // ============================================================
-    // RENDER TABLEAU
-    // ============================================================
     function renderTableau() {
       const fData = obtenirDonneesFiltrees();
       document.getElementById('registre-count').textContent = `${fData.length} ligne(s)`;
@@ -499,9 +502,6 @@
     };
     window.deselectionnerTout = function() { pointagesSelectionnes.clear(); if (checkAllMaster) checkAllMaster.checked = false; renderTableau(); mettreAJourBarreSelection(); };
 
-    // ============================================================
-    // GRAPHIQUES
-    // ============================================================
     function renderGraphiques() {
       const ctxRep = document.getElementById('chartRepartition');
       const ctxCls = document.getElementById('chartClasses');
@@ -534,9 +534,6 @@
       });
     }
 
-    // ============================================================
-    // MINI HISTORIQUE
-    // ============================================================
     window.ouvrirMiniHist = async function(eleveId, nom) {
       document.getElementById('mini-hist-nom').textContent = nom;
       const content = document.getElementById('mini-hist-content');
@@ -563,9 +560,6 @@
     };
     window.fermerMiniHist = function() { document.getElementById('modal-mini-hist').classList.add('hidden'); document.getElementById('modal-mini-hist').classList.remove('flex'); };
 
-    // ============================================================
-    // DETAILS APPELS
-    // ============================================================
     window.ouvrirModalDetailsAppels = async function() {
       const dateCible = filtreDate.value; if (!dateCible) return;
       const modal = document.getElementById('modal-details-appels'), tbody = document.getElementById('details-appels-body');
@@ -585,9 +579,6 @@
     };
     window.fermerModalDetailsAppels = function() { document.getElementById('modal-details-appels').classList.add('hidden'); document.getElementById('modal-details-appels').classList.remove('flex'); };
 
-    // ============================================================
-    // ACTIONS GROUPÉES
-    // ============================================================
     window.supprimerSelectionGroupee = async function() {
       const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
       if (!confirm(`Archiver ces ${ids.length} enregistrements ?`)) return;
@@ -614,9 +605,6 @@
       } catch (err) { alert(err.message); }
     };
 
-    // ============================================================
-    // MODIFIER POINTAGE
-    // ============================================================
     window.supprimerPointage = async function(id) { 
       if (!confirm('Déplacer vers la corbeille ?')) return; 
       try { 
@@ -653,9 +641,58 @@
       } catch (err) { alert(err.message); }
     };
 
-    // ============================================================
-    // FICHE ÉLÈVE & IMPRESSIONS
-    // ============================================================
+    // ------------------------------------------------------------
+    // FONCTIONS RÉINTÉGRÉES POUR L'ÉDITION DE L'ÉLÈVE
+    // ------------------------------------------------------------
+    window.ouvrirModalEditerEleve = function(eleveId) {
+      const pt = vuePointages.find(p => String(p.eleve_id) === String(eleveId)); 
+      if (!pt) return;
+      document.getElementById('edit-student-id').value = eleveId; 
+      document.getElementById('edit-student-nom').value = pt.nom || ''; 
+      document.getElementById('edit-student-prenom').value = pt.prenom || ''; 
+      document.getElementById('edit-student-nom-ar').value = pt.nom_ar || ''; 
+      document.getElementById('edit-student-prenom-ar').value = pt.prenom_ar || '';
+      document.getElementById('modal-editer-eleve').classList.remove('hidden'); 
+      document.getElementById('modal-editer-eleve').classList.add('flex');
+    };
+    
+    window.fermerModalEditerEleve = function() { 
+      document.getElementById('modal-editer-eleve').classList.add('hidden'); 
+      document.getElementById('modal-editer-eleve').classList.remove('flex'); 
+    };
+    
+    window.enregistrerModificationEleve = async function() {
+      const eleveId = document.getElementById('edit-student-id').value;
+      const nom = document.getElementById('edit-student-nom').value.trim().toUpperCase();
+      const prenom = document.getElementById('edit-student-prenom').value.trim();
+      const nomAr = document.getElementById('edit-student-nom-ar').value.trim();
+      const prenomAr = document.getElementById('edit-student-prenom-ar').value.trim();
+      if (!nom || !prenom) return;
+      try { 
+        await supabaseClient.from('eleves').update({ nom: nom, prenom: prenom, nom_ar: nomAr || null, prenom_ar: prenomAr || null }).eq('id', eleveId); 
+        fermerModalEditerEleve(); await fetchDonnees(); 
+      } catch (err) { alert(err.message); }
+    };
+
+    window.marquerEleveTransfereDepuisModal = async function() { 
+      const eleveId = document.getElementById('edit-student-id').value; 
+      if (!eleveId || !confirm('Confirmez-vous le transfert ?')) return; 
+      try { await supabaseClient.from('eleves').update({ actif: false }).eq('id', eleveId); fermerModalEditerEleve(); await fetchDonnees(); } catch (err) {} 
+    };
+    
+    window.supprimerEleveDefinitifDepuisModal = async function() { 
+      const eleveId = document.getElementById('edit-student-id').value; 
+      if (!eleveId || !confirm('Supprimer définitivement ?')) return; 
+      try { 
+        await supabaseClient.from('billets_entree').delete().eq('eleve_id', eleveId);
+        await supabaseClient.from('pointages').delete().eq('eleve_id', eleveId); 
+        const { error } = await supabaseClient.from('eleves').delete().eq('id', eleveId); 
+        if (error) throw error;
+        fermerModalEditerEleve(); await fetchDonnees(); 
+      } catch (err) { alert('Erreur suppression : ' + err.message); } 
+    };
+    // ------------------------------------------------------------
+
     window.ouvrirFicheEleve = async function(eleveId) {
       const modal = document.getElementById('modal-fiche-eleve'), conteneur = document.getElementById('conteneur-fiche-eleve');
       conteneur.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
@@ -756,9 +793,6 @@
       setTimeout(() => document.body.classList.remove('print-convocation'), 1000);
     };
 
-    // ============================================================
-    // RAPPORT & IMPRESSION
-    // ============================================================
     function construireHtmlRapportComplet() {
       const clsChoisie = filtreClasse ? filtreClasse.value : 'ALL';
       const incidents = vuePointages.filter(p => { 
@@ -818,16 +852,12 @@
     
     window.fermerModalApercuRapport = function() { document.getElementById('modal-apercu-rapport').classList.add('hidden'); document.getElementById('modal-apercu-rapport').classList.remove('flex'); };
     
-    // REMPLACEMENT DE LA FONCTION PDF PAR L'IMPRESSION NATIVE
     window.lancerImpressionRapport = function() { 
       document.body.classList.add('print-rapport'); 
       window.print(); 
       setTimeout(() => document.body.classList.remove('print-rapport'), 1000); 
     };
 
-    // ============================================================
-    // EXPORT EXCEL
-    // ============================================================
     if (btnExportExcel) {
       btnExportExcel.addEventListener('click', () => {
         let sources = obtenirDonneesFiltrees();
@@ -847,9 +877,6 @@
       });
     }
 
-    // ============================================================
-    // EVENTS
-    // ============================================================
     if (filtreDate) filtreDate.addEventListener('change', fetchDonnees);
     if (filtreClasse) filtreClasse.addEventListener('change', renderTableau);
     if (filtreStatut) filtreStatut.addEventListener('change', renderTableau);
