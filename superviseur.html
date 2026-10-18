@@ -684,7 +684,13 @@
         }).join('');
 
         conteneur.innerHTML = `
-          <div class="text-center border-b-2 border-black dark:border-slate-600 pb-3 mb-4"><p class="font-bold text-xs text-slate-800 dark:text-white">ثانوية شعبان أعمر أوقاس</p><h2 class="font-black text-lg mt-2 border-2 border-black dark:border-slate-600 inline-block px-6 py-1 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white">بطاقة المتابعة الفردية</h2></div>
+          <div class="text-center border-b-2 border-black dark:border-slate-600 pb-3 mb-4">
+            <p class="font-bold text-xs text-slate-800 dark:text-white">ثانوية شعبان أعمر أوقاس</p>
+            <!-- CORRECTION DU CADRE VIDE ICI -->
+            <div class="mt-2 border-2 border-black dark:border-slate-600 px-6 py-1 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white mx-auto" style="width: max-content; max-width: 100%;">
+              <h2 class="font-black text-lg">بطاقة المتابعة الفردية</h2>
+            </div>
+          </div>
           <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-800 dark:text-slate-200">
             <div>اللقب والاسم : <span class="font-normal">${escapeHtml(el.nom_ar || '')} ${escapeHtml(el.prenom_ar || '')} (${escapeHtml(el.nom)} ${escapeHtml(el.prenom)})</span></div>
             <div>القسم : <span class="font-normal" dir="ltr">${escapeHtml(el.classes ? el.classes.nom_court : '')}</span></div>
@@ -758,7 +764,15 @@
       }).join('');
 
       return `
-        <div class="text-center border-b-2 border-black pb-3 mb-4"><p class="font-bold text-xs sm:text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="font-bold text-xs sm:text-sm mt-0.5">وزارة التربية الوطنية • مديرية التربية لولاية بجاية</p><p class="font-extrabold text-sm sm:text-base mt-0.5 text-indigo-900">ثانوية شعبان أعمر — أوقاس</p><div class="mt-3 border-2 border-black inline-block px-8 py-1.5 bg-slate-50"><h2 class="font-black text-base sm:text-lg">التقرير اليومي لحركة التلاميذ والغيابات</h2></div></div>
+        <div class="text-center border-b-2 border-black pb-3 mb-4">
+          <p class="font-bold text-xs sm:text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+          <p class="font-bold text-xs sm:text-sm mt-0.5">وزارة التربية الوطنية • مديرية التربية لولاية بجاية</p>
+          <p class="font-extrabold text-sm sm:text-base mt-0.5 text-indigo-900">ثانوية شعبان أعمر — أوقاس</p>
+          <!-- CORRECTION DU CADRE VIDE ICI AUSSI -->
+          <div class="mt-3 border-2 border-black px-8 py-1.5 bg-slate-50 mx-auto" style="width: max-content; max-width: 100%;">
+            <h2 class="font-black text-base sm:text-lg">التقرير اليومي لحركة التلاميذ والغيابات</h2>
+          </div>
+        </div>
         ${clsHtml}
         <div class="mb-6"><h4 class="font-black text-xs mb-1.5">القائمة الاسمية المفصلة :</h4><table class="w-full text-right border-collapse text-xs border border-black"><thead class="bg-gray-100 font-bold"><tr class="border-b border-black"><th class="border-l border-black p-1.5 w-8 text-center">الرقم</th><th class="border-l border-black p-1.5">اللقب والاسم</th><th class="border-l border-black p-1.5 text-center">القسم</th><th class="border-l border-black p-1.5 text-center">المادة والتوقيت</th><th class="border-l border-black p-1.5 text-center">الحالة</th><th class="p-1.5 text-center">التبرير</th></tr></thead><tbody class="divide-y divide-black">${incHtml}</tbody></table></div>
         <div class="grid grid-cols-3 gap-4 text-center text-xs font-bold pt-4 px-4 border-t border-dashed border-black"><div><p class="underline">مستشار التربية</p><div class="h-20 border-b border-dotted border-black mt-1"></div></div><div><p class="underline">ناظر الدراسات</p><div class="h-20 border-b border-dotted border-black mt-1"></div></div><div><p class="underline">مدير الثانوية</p><div class="h-20 border-b border-dotted border-black mt-1"></div></div></div>
@@ -772,10 +786,14 @@
     };
     window.fermerModalApercuRapport = function() { document.getElementById('modal-apercu-rapport').classList.add('hidden'); document.getElementById('modal-apercu-rapport').classList.remove('flex'); };
     
-    // EXPORT PDF
-    window.lancerImpressionRapport = function() { 
+    // EXPORT PDF AVEC CORRECTION DE LA POLICE
+    window.lancerImpressionRapport = async function() { 
       const el = document.getElementById('zone-impression-rapport');
       el.classList.remove('hidden');
+      
+      // Attendre que la police soit chargée pour éviter les textes vides
+      if (document.fonts) { await document.fonts.ready; }
+
       const opt = { margin: [10, 10, 10, 10], filename: `Rapport_Absences_${filtreDate.value}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
       html2pdf().set(opt).from(el).save().then(() => { el.classList.add('hidden'); });
     };
