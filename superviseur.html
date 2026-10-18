@@ -27,7 +27,6 @@
     @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
     .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
     
-    /* RÈGLES D'IMPRESSION POUR ISOLER LES DOCUMENTS */
     @media print {
       body * { visibility: hidden !important; }
       body.print-rapport #zone-impression-rapport, body.print-rapport #zone-impression-rapport * { visibility: visible !important; }
@@ -99,7 +98,26 @@
     </div>
   </div>
 
-  <!-- 8. Écran PIN -->
+  <!-- 8. Modale NON APPELÉS (Nouvelle) -->
+  <div id="modal-non-appeles" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-slate-500"></i>
+          <span>Classes non appelées</span>
+        </h3>
+        <button type="button" onclick="fermerModalNonAppeles()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div id="non-appeles-content" class="overflow-y-auto flex-1 text-sm">
+        <!-- Rempli par le JS -->
+      </div>
+      <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 text-right">
+        <button type="button" onclick="fermerModalNonAppeles()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. Écran PIN -->
   <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4"><div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform"><div class="w-16 h-16 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div><h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Espace Sécurisé</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-6">ثانوية شعبان أعمر - الرمز السري</p><div class="space-y-4"><div><input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" /><p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p></div><button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer">Déverrouiller</button></div></div></div>
 
   <!-- HEADER -->
@@ -135,7 +153,7 @@
     <!-- GRAPHIQUES -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm h-64 relative">
-        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Répartition du Jour</h3>
+        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Répartition du Jour <span class="text-[10px] font-normal text-slate-400">(Cliquez sur le gris)</span></h3>
         <canvas id="chartRepartition"></canvas>
       </div>
       <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm h-64 relative">
@@ -219,7 +237,7 @@
     let classesCache = [];
     let vuePointages = [];
     let pointagesSelectionnes = new Set();
-    let totalElevesEtablissement = 0; // Calculé dynamiquement
+    let totalElevesEtablissement = 0;
     let __appInit = false;
     let chartRep = null, chartCls = null;
 
@@ -562,7 +580,20 @@
             borderWidth: 0 
           }] 
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Cairo' } } } } }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          // AJOUT DE L'ÉVÉNEMENT CLIC SUR LE GRAPHIQUE
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              if (index === 3) { // Index 3 = 'Non appelés'
+                ouvrirModalNonAppeles();
+              }
+            }
+          },
+          plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Cairo' } } } } 
+        }
       });
 
       chartCls = new Chart(ctxCls, {
@@ -571,6 +602,91 @@
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor }, grid: { color: isDark ? '#334155' : '#e2e8f0' } }, x: { ticks: { color: textColor }, grid: { display: false } } }, plugins: { legend: { display: false } } }
       });
     }
+
+    // ------------------------------------------------------------
+    // FONCTIONS POUR LA MODALE NON APPELÉS
+    // ------------------------------------------------------------
+    window.ouvrirModalNonAppeles = async function() {
+      const modal = document.getElementById('modal-non-appeles');
+      const content = document.getElementById('non-appeles-content');
+      content.innerHTML = '<div class="text-center py-8 text-indigo-500"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>';
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+
+      try {
+        // 1. Compter les élèves de chaque classe
+        const { data: eleves, error: errE } = await supabaseClient.from('eleves').select('classe_id').eq('actif', true);
+        if (errE) throw errE;
+        
+        const totalParClasse = {};
+        eleves.forEach(e => {
+          totalParClasse[e.classe_id] = (totalParClasse[e.classe_id] || 0) + 1;
+        });
+
+        // 2. Compter les élèves appelés aujourd'hui par classe
+        const appelesParClasse = {};
+        vuePointages.filter(pt => !pt.archive).forEach(pt => {
+          // On compte un élève une seule fois par classe
+          if (!appelesParClasse[pt.classe_id]) appelesParClasse[pt.classe_id] = new Set();
+          appelesParClasse[pt.classe_id].add(pt.eleve_id);
+        });
+
+        // 3. Identifier les classes incomplètes
+        let classesNonAppelees = [];
+        classesCache.forEach(cls => {
+          const totalEleves = totalParClasse[cls.id] || 0;
+          const elevesAppeles = appelesParClasse[cls.id] ? appelesParClasse[cls.id].size : 0;
+          
+          if (totalEleves > 0 && elevesAppeles < totalEleves) {
+            classesNonAppelees.push({
+              nom: cls.nom_court,
+              complet: cls.nom_complet,
+              manquants: totalEleves - elevesAppeles,
+              total: totalEleves
+            });
+          }
+        });
+
+        // 4. Afficher le résultat
+        if (classesNonAppelees.length === 0) {
+          content.innerHTML = `
+            <div class="text-center py-8">
+              <i class="fa-solid fa-check-circle text-emerald-500 text-4xl mb-3 block"></i>
+              <p class="text-sm font-bold text-slate-700 dark:text-slate-300">Toutes les classes ont fait l'appel !</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Trier par nombre de manquants décroissant
+        classesNonAppelees.sort((a, b) => b.manquants - a.manquants);
+
+        let html = '<ul class="space-y-2">';
+        classesNonAppelees.forEach(c => {
+          html += `
+            <li class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 p-3 rounded-xl">
+              <div>
+                <div class="font-bold text-slate-800 dark:text-white text-xs">${escapeHtml(c.nom)} <span class="text-slate-400 font-normal">(${escapeHtml(c.complet)})</span></div>
+                <div class="text-[11px] text-slate-500 mt-0.5">Total: ${c.total} élèves</div>
+              </div>
+              <span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg text-xs font-black">
+                ${c.manquants} non appelé(s)
+              </span>
+            </li>
+          `;
+        });
+        html += '</ul>';
+        content.innerHTML = html;
+
+      } catch (err) {
+        content.innerHTML = `<p class="text-center text-rose-500 font-bold">Erreur: ${escapeHtml(err.message)}</p>`;
+      }
+    };
+
+    window.fermerModalNonAppeles = function() {
+      document.getElementById('modal-non-appeles').classList.add('hidden');
+      document.getElementById('modal-non-appeles').classList.remove('flex');
+    };
+    // ------------------------------------------------------------
 
     window.ouvrirMiniHist = async function(eleveId, nom) {
       document.getElementById('mini-hist-nom').textContent = nom;
