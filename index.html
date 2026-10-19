@@ -71,23 +71,40 @@
       <div class="space-y-4">
         <div class="text-left">
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-i18n="lbl_matiere">Matière *</label>
+          <!-- LISTE COMPLETE RESTAURÉE ICI -->
           <select id="pin-select-matiere" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-white outline-none">
             <option value="">-- Choisir / اختر / Choose --</option>
-            <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
-            <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
-            <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
-            <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
-            <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
-            <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
-            <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
-            <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
-            <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
-            <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
-            <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
+            <optgroup label="📚 Scientifiques / علمية">
+              <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
+              <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
+              <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
+              <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
+            </optgroup>
+            <optgroup label="⚙️ Techniques & Économie / تقنية واقتصاد">
+              <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
+              <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
+              <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
+              <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
+              <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
+              <option value="Droit / قانون">قانون / Droit</option>
+            </optgroup>
+            <optgroup label="📖 Littéraires & Langues / آداب ولغات">
+              <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
+              <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
+              <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
+              <option value="Langue Allemande / ألمانية">ألمانية / Langue Allemande</option>
+              <option value="Langue Espagnole / إسبانية">إسبانية / Langue Espagnole</option>
+              <option value="Langue Amazighe / أمازيغية">أمازيغية / Tamazight</option>
+              <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
+              <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
+              <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
+            </optgroup>
+            <optgroup label="🏃 Sport / رياضة">
+              <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
+            </optgroup>
           </select>
         </div>
         <div>
-          <!-- MODIFICATION : type="tel" pour voir les chiffres et oninput pour valider auto -->
           <input type="tel" id="input-pin-prof" maxlength="4" placeholder="1234" autocomplete="off" inputmode="numeric" 
                  oninput="if(this.value.trim().length === 4) validerPinDirect();"
                  class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" />
@@ -217,13 +234,12 @@
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     
-    // SÉCURISATION DE L'INITIALISATION SUPABASE
     let supabaseClient = null;
     try {
       if (typeof supabase !== 'undefined') {
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       } else {
-        console.error("Supabase n'a pas pu charger (AdBlock ou réseau).");
+        console.error("Supabase n'a pas pu charger.");
       }
     } catch(e) { console.error(e); }
 
@@ -320,7 +336,6 @@
       appliquerLangue(langs[nextIdx]);
     };
 
-    // --- LOGIQUE PIN ---
     window.validerPinDirect = function() {
       const pinSelectMatiere = document.getElementById('pin-select-matiere');
       const inputPin = document.getElementById('input-pin-prof');
