@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feuille d'Appel - ثانوية شعبان أعمر أوقاس</title>
+  <title>Feuille d'Appel - ثانوية الشهيد شعبان اعمر</title>
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#1e1b4b">
   
@@ -11,6 +11,7 @@
   <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
@@ -22,6 +23,7 @@
     @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
     .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
     #toast-notification { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; }
+    .nom-officiel { font-family: 'Amiri', serif; font-weight: 700; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-all pb-28">
@@ -62,7 +64,7 @@
   <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
     <div class="text-center pt-2 sm:pt-4 text-white animate-row max-w-lg w-full">
       <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-indigo-600/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 text-2xl shadow-xl"><i class="fa-solid fa-graduation-cap"></i></div>
-      <h1 class="text-lg sm:text-2xl font-black text-indigo-300 mt-1 tracking-tight">ثانوية شعبان أعمر — أوقاس</h1>
+      <h1 class="text-lg sm:text-2xl font-black text-indigo-300 mt-1 tracking-tight nom-officiel">ثانوية الشهيد شعبان اعمر</h1>
     </div>
     <div id="pin-card-prof" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 dark:border-slate-700 my-4 animate-row">
       <div class="w-14 h-14 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner"><i class="fa-solid fa-chalkboard-user"></i></div>
@@ -71,7 +73,6 @@
       <div class="space-y-4">
         <div class="text-left">
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-i18n="lbl_matiere">Matière *</label>
-          <!-- LISTE COMPLETE RESTAURÉE ICI -->
           <select id="pin-select-matiere" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-white outline-none">
             <option value="">-- Choisir / اختر / Choose --</option>
             <optgroup label="📚 Scientifiques / علمية">
@@ -122,7 +123,10 @@
     <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
         <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
-        <div><h1 class="text-xl font-bold tracking-tight" data-i18n="header_title">Feuille d'Appel</h1><p class="text-xs text-indigo-200 dark:text-slate-400" data-i18n="header_sub">ثانوية شعبان أعمر أوقاس</p></div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight" data-i18n="header_title">Feuille d'Appel</h1>
+          <p class="text-sm text-indigo-200 dark:text-slate-400 nom-officiel mt-1">ثانوية الشهيد شعبان اعمر</p>
+        </div>
       </div>
       <div class="flex items-center gap-2 flex-wrap justify-end">
         <button type="button" onclick="toggleLangue()" class="text-xs font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/20 transition"><i class="fa-solid fa-globe text-amber-300"></i><span id="lang-label">العربية</span></button>
@@ -200,7 +204,7 @@
 
     const TRADUCTIONS = {
       fr: {
-        lang_btn: "العربية", header_title: "Feuille d'Appel", header_sub: "ثانوية شعبان أعمر أوقاس", btn_lock: "Verrouiller", conn_online: "En ligne", conn_offline: "Hors-ligne",
+        lang_btn: "العربية", header_title: "Feuille d'Appel", header_sub: "ثانوية الشهيد شعبان اعمر", btn_lock: "Verrouiller", conn_online: "En ligne", conn_offline: "Hors-ligne",
         sec_params: "Paramètres", lbl_date: "Date", lbl_classe: "Classe", lbl_matiere: "Matière", lbl_horaire: "Séance",
         kpi_presents: "Présents", kpi_absents: "Absents", kpi_retards: "Retards", default_classe_title: "Sélectionnez une classe",
         btn_mark_all: "Tout présent", btn_add_missing: "Élève manquant ?", btn_validate_quick: "Valider", btn_refresh: "Actualiser",
@@ -210,7 +214,7 @@
         btn_present: "Présent", btn_absent: "Absent", btn_retard: "Retard", no_search_result: "Aucun élève trouvé."
       },
       ar: {
-        lang_btn: "English", header_title: "ورقة الحضور والغياب", header_sub: "ثانوية شعبان أعمر أوقاس", btn_lock: "قفل الشاشة", conn_online: "متصل", conn_offline: "غير متصل",
+        lang_btn: "English", header_title: "ورقة الحضور والغياب", header_sub: "ثانوية الشهيد شعبان اعمر", btn_lock: "قفل الشاشة", conn_online: "متصل", conn_offline: "غير متصل",
         sec_params: "بيانات الحصة", lbl_date: "التاريخ", lbl_classe: "القسم", lbl_matiere: "المادة", lbl_horaire: "التوقيت",
         kpi_presents: "الحاضرون", kpi_absents: "الغائبون", kpi_retards: "المتأخرون", default_classe_title: "اختر القسم",
         btn_mark_all: "تعليم الجميع كحاضرين", btn_add_missing: "تلميذ غير مسجل ؟", btn_validate_quick: "تأكيد", btn_refresh: "تحديث",
