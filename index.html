@@ -3,311 +3,275 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feuille d'Appel - ثانوية شعبان أعمر أوقاس</title>
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#1e1b4b">
+  <title>Superviseur - ثانوية الشهيد شعبان اعمر</title>
+  
+  <meta name="theme-color" content="#0f172a">
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- AJOUT DE LA POLICE CALLIGRAPHIQUE OFFICIELLE -->
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-
+  
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
     button, select, input { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
     button:active { transform: scale(0.96); }
-    @keyframes slideUpFade { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-row { animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes slideUpFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-table-row { animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes alertPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.85; } }
+    .badge-alerte-rouge { animation: alertPulse 1.4s infinite ease-in-out; }
     @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
     .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
-    #toast-notification { transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease; }
+    
+    @media print {
+      body * { visibility: hidden !important; }
+      body.print-rapport #zone-impression-rapport, body.print-rapport #zone-impression-rapport * { visibility: visible !important; }
+      body.print-rapport #zone-impression-rapport { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
+      
+      body.print-fiche-eleve #zone-impression-fiche-eleve, body.print-fiche-eleve #zone-impression-fiche-eleve * { visibility: visible !important; }
+      body.print-fiche-eleve #zone-impression-fiche-eleve { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+      
+      body.print-billet #zone-impression-billet, body.print-billet #zone-impression-billet * { visibility: visible !important; }
+      body.print-billet #zone-impression-billet { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+      
+      body.print-convocation #zone-impression-convocation, body.print-convocation #zone-impression-convocation * { visibility: visible !important; }
+      body.print-convocation #zone-impression-convocation { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+      
+      @page { size: A4 portrait; margin: 10mm; }
+      .page-break { page-break-before: always; }
+    }
+    
+    .print-table { border-collapse: collapse; table-layout: fixed; width: 100%; font-size: 11px; }
+    .print-table th, .print-table td { border: 1px solid black; padding: 4px 2px; text-align: center; word-wrap: break-word; overflow-wrap: break-word; }
+    .print-table th { background-color: #f3f4f6; font-weight: bold; }
+    .print-kpi-box { border: 2px solid black; padding: 5px 15px; font-weight: bold; font-size: 14px; }
+    
+    /* STYLE POUR LE NOM OFFICIEL */
+    .nom-officiel { font-family: 'Amiri', serif; font-weight: 700; font-size: 1.1rem; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-all pb-28">
+<body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-all">
 
-  <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 opacity-0 z-50 pointer-events-none transition-all duration-300">
-    <div class="bg-slate-900/95 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 backdrop-blur-md">
-      <div id="toast-icon" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0 text-base"><i class="fa-solid fa-check"></i></div>
-      <div><h4 class="text-sm font-bold text-white" id="toast-titre">Opération réussie</h4><p class="text-xs text-slate-300" id="toast-message">Les données ont été envoyées.</p></div>
-    </div>
-  </div>
+  <!-- MODALS -->
+  <div id="modal-fiche-eleve" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto"><div class="bg-white dark:bg-slate-800 rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row"><div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-md"><i class="fa-solid fa-folder-open"></i></div><div><h3 class="text-base font-extrabold text-slate-800 dark:text-white">Dossier Disciplinaire</h3><p class="text-xs text-slate-500 dark:text-slate-400">بطاقة المتابعة الفردية</p></div></div><div class="flex items-center gap-2"><button type="button" onclick="lancerImpressionFicheEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"><i class="fa-solid fa-print"></i> <span>Imprimer</span></button><button type="button" onclick="fermerModalFicheEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-900 flex-1" dir="rtl"><div id="conteneur-fiche-eleve" class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-2xl mx-auto font-sans text-black dark:text-white space-y-5"></div></div><div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400"><span>السجل الإداري الإلكتروني</span><button type="button" onclick="fermerModalFicheEleve()" class="px-4 py-2 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
+  
+  <div id="modal-apercu-rapport" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto"><div class="bg-white dark:bg-slate-800 rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[92vh] overflow-hidden my-auto animate-table-row"><div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg shadow-md"><i class="fa-solid fa-file-signature"></i></div><div><h3 class="text-base font-extrabold text-slate-800 dark:text-white">Aperçu du Rapport</h3><p class="text-xs text-slate-500 dark:text-slate-400">معاينة التقرير اليومي</p></div></div><div class="flex items-center gap-2"><button type="button" onclick="lancerImpressionRapport()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5"><i class="fa-solid fa-print"></i> <span>Imprimer (A4)</span></button><button type="button" onclick="fermerModalApercuRapport()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="p-6 overflow-y-auto bg-slate-100 dark:bg-slate-900 flex-1" dir="rtl"><div id="conteneur-document-rapport" class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 max-w-3xl mx-auto font-sans text-black dark:text-white"></div></div><div class="px-6 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400"><span>وثيقة رسمية</span><button type="button" onclick="fermerModalApercuRapport()" class="px-4 py-2 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
 
-  <div id="modal-nouvel-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-row">
+  <div id="modal-details-appels" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]"><div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0"><h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clipboard-list text-indigo-600"></i><span>Détails des appels</span></h3><button type="button" onclick="fermerModalDetailsAppels()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="overflow-y-auto flex-1"><table class="w-full text-left text-sm"><thead class="bg-slate-50 dark:bg-slate-800/50 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase sticky top-0 border-b border-slate-200 dark:border-slate-700"><tr><th class="py-2.5 px-4">Matière</th><th class="py-2.5 px-4 text-center">Heure</th><th class="py-2.5 px-4 text-center">Classe</th></tr></thead><tbody id="details-appels-body" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody></table></div><div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 text-right"><button type="button" onclick="fermerModalDetailsAppels()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button></div></div></div>
+
+  <div id="modal-mini-hist" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row"><div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 mb-3"><h3 class="font-bold text-slate-800 dark:text-white text-sm" id="mini-hist-nom">Élève</h3><button type="button" onclick="fermerMiniHist()" class="text-slate-400 hover:text-rose-500"><i class="fa-solid fa-xmark"></i></button></div><div id="mini-hist-content" class="text-sm space-y-2 text-slate-600 dark:text-slate-300"></div></div></div>
+
+  <div id="modal-transfert-global" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row"><div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4"><h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-minus text-rose-600"></i><span>Élève transféré</span></h3><button type="button" onclick="fermerModalTransfertGlobal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="space-y-4 text-sm"><div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Classe</label><select id="transfert-select-classe" onchange="chargerElevesPourTransfert(this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none"><option value="">-- Choisir --</option></select></div><div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Élève</label><select id="transfert-select-eleve" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none"><option value="">-- Choisir --</option></select></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700"><button type="button" onclick="fermerModalTransfertGlobal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button><button type="button" onclick="confirmerTransfertGlobal()" class="bg-rose-600 hover:bg-rose-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Retirer</button></div></div></div>
+
+  <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4"><div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row"><div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4"><h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-indigo-600"></i><span>Modifier le pointage</span></h3><button type="button" onclick="fermerModalModifier()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button></div><input type="hidden" id="edit-pointage-id" /><div class="space-y-4 text-sm"><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Élève</label><div id="edit-eleve-nom" class="font-bold text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700"></div></div><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Statut</label><select id="edit-statut" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 outline-none text-slate-800 dark:text-white"><option value="P">✅ Présent</option><option value="A">❌ Absent</option><option value="R">⏳ Retard</option></select></div><div><label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Justification</label><div class="flex gap-4 mb-2"><label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-slate-800 dark:text-slate-200"><input type="radio" name="edit-justifie" value="non" id="edit-justifie-non" checked class="text-indigo-600" /> <span>Non</span></label><label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-bold text-emerald-700 dark:text-emerald-400"><input type="radio" name="edit-justifie" value="oui" id="edit-justifie-oui" class="text-emerald-600" /> <span>Oui</span></label></div><input type="text" id="edit-motif" placeholder="Motif..." class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs outline-none text-slate-800 dark:text-white" /></div></div><div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700"><button type="button" onclick="fermerModalModifier()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button><button type="button" onclick="enregistrerModificationPointage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Enregistrer</button></div></div></div>
+
+  <div id="modal-editer-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
-        <div class="flex items-center gap-2 text-indigo-700 dark:text-indigo-400">
-          <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-slate-700 flex items-center justify-center text-lg"><i class="fa-solid fa-user-plus"></i></div>
-          <div><h3 class="text-base font-bold text-slate-900 dark:text-white leading-tight" data-i18n="modal_add_title">Élève manquant</h3></div>
-        </div>
-        <button type="button" onclick="fermerModalNouvelEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-pen text-amber-500"></i><span>Modifier l'identité</span></h3>
+        <button type="button" onclick="fermerModalEditerEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
+      <input type="hidden" id="edit-student-id" />
       <div class="space-y-3.5 text-sm">
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-i18n="lbl_nom">Nom (FR) *</label><input type="text" id="add-eleve-nom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none uppercase" /></div>
-          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-i18n="lbl_prenom">Prénom (FR) *</label><input type="text" id="add-eleve-prenom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none capitalize" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Nom (FR) *</label><input type="text" id="edit-student-nom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none uppercase text-slate-800 dark:text-white" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">Prénom (FR) *</label><input type="text" id="edit-student-prenom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none capitalize text-slate-800 dark:text-white" /></div>
         </div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">اللقب (AR)</label><input type="text" id="add-eleve-nom-ar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none" /></div>
-          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">الاسم (AR)</label><input type="text" id="add-eleve-prenom-ar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-white outline-none" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">اللقب (AR)</label><input type="text" id="edit-student-nom-ar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none text-slate-800 dark:text-white" /></div>
+          <div><label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">الاسم (AR)</label><input type="text" id="edit-student-prenom-ar" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-bold outline-none text-slate-800 dark:text-white" /></div>
+        </div>
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-700 flex flex-col gap-2">
+          <label class="block text-xs font-bold text-slate-500 dark:text-slate-400">Statut scolaire / الوضعية</label>
+          <div class="flex gap-2">
+            <button type="button" onclick="marquerEleveTransfereDepuisModal()" class="flex-1 bg-amber-50 dark:bg-amber-900/30 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Transféré</span></button>
+            <button type="button" onclick="supprimerEleveDefinitifDepuisModal()" class="bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-700 px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"><i class="fa-solid fa-trash-can"></i><span>Supprimer</span></button>
+          </div>
         </div>
       </div>
-      <div class="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100 dark:border-slate-700">
-        <button type="button" onclick="fermerModalNouvelEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700" data-i18n="btn_cancel">Annuler</button>
-        <button type="button" onclick="confirmerAjoutEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> <span data-i18n="btn_add">Ajouter</span></button>
+      <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700">
+        <button type="button" onclick="fermerModalEditerEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button>
+        <button type="button" onclick="enregistrerModificationEleve()" class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md">Enregistrer</button>
       </div>
     </div>
   </div>
 
-  <div id="pin-screen-prof" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-6 overflow-y-auto">
-    <div class="text-center pt-2 sm:pt-4 text-white animate-row max-w-lg w-full">
-      <div class="w-14 h-14 mx-auto mb-2 rounded-2xl bg-indigo-600/20 border border-indigo-400/30 flex items-center justify-center text-amber-300 text-2xl shadow-xl"><i class="fa-solid fa-graduation-cap"></i></div>
-      <h1 class="text-lg sm:text-2xl font-black text-indigo-300 mt-1 tracking-tight">ثانوية شعبان أعمر — أوقاس</h1>
-    </div>
-    <div id="pin-card-prof" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-indigo-100 dark:border-slate-700 my-4 animate-row">
-      <div class="w-14 h-14 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-inner"><i class="fa-solid fa-chalkboard-user"></i></div>
-      <h2 class="text-xl font-extrabold text-slate-900 dark:text-white" data-i18n="pin_title">Espace Enseignant</h2>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-5" data-i18n="pin_sub">Sélectionnez votre matière</p>
-      <div class="space-y-4">
-        <div class="text-left">
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1" data-i18n="lbl_matiere">Matière *</label>
-          <!-- LISTE COMPLETE RESTAURÉE ICI -->
-          <select id="pin-select-matiere" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-white outline-none">
-            <option value="">-- Choisir / اختر / Choose --</option>
-            <optgroup label="📚 Scientifiques / علمية">
-              <option value="Mathématiques / رياضيات">رياضيات / Mathématiques</option>
-              <option value="Sciences Naturelles / علوم الطبيعة">علوم الطبيعة / Sciences Naturelles</option>
-              <option value="Sciences Physiques / علوم فيزيائية">علوم فيزيائية / Sciences Physiques</option>
-              <option value="Informatique / إعلام آلي">إعلام آلي / Informatique</option>
-            </optgroup>
-            <optgroup label="⚙️ Techniques & Économie / تقنية واقتصاد">
-              <option value="Génie Civil / هندسة مدنية">هندسة مدنية / Génie Civil</option>
-              <option value="Génie Électrique / هندسة كهربائية">هندسة كهربائية / Génie Électrique</option>
-              <option value="Génie Mécanique / هندسة ميكانيكية">هندسة ميكانيكية / Génie Mécanique</option>
-              <option value="Génie des Procédés / هندسة الطرائق">هندسة الطرائق / Génie des Procédés</option>
-              <option value="Gestion & Économie / تسيير واقتصاد">تسيير واقتصاد / Gestion & Économie</option>
-              <option value="Droit / قانون">قانون / Droit</option>
-            </optgroup>
-            <optgroup label="📖 Littéraires & Langues / آداب ولغات">
-              <option value="Langue Arabe / لغة عربية">لغة عربية / Langue Arabe</option>
-              <option value="Langue Française / فرنسية">فرنسية / Langue Française</option>
-              <option value="Langue Anglaise / إنجليزية">إنجليزية / Langue Anglaise</option>
-              <option value="Langue Allemande / ألمانية">ألمانية / Langue Allemande</option>
-              <option value="Langue Espagnole / إسبانية">إسبانية / Langue Espagnole</option>
-              <option value="Langue Amazighe / أمازيغية">أمازيغية / Tamazight</option>
-              <option value="Philosophie / فلسفة">فلسفة / Philosophie</option>
-              <option value="Histoire-Géographie / تاريخ وجغرافيا">تاريخ وجغرافيا / Histoire-Géo</option>
-              <option value="Sciences Islamiques / علوم إسلامية">علوم إسلامية / Sciences Islamiques</option>
-            </optgroup>
-            <optgroup label="🏃 Sport / رياضة">
-              <option value="EPS / تربية بدنية">تربية بدنية / Sport (EPS)</option>
-            </optgroup>
-          </select>
-        </div>
-        <div>
-          <input type="tel" id="input-pin-prof" maxlength="4" placeholder="1234" autocomplete="off" inputmode="numeric" 
-                 oninput="if(this.value.trim().length === 4) validerPinDirect();"
-                 class="w-full text-center text-3xl tracking-[0.5em] font-mono py-2.5 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" />
-          <p id="pin-prof-error" class="hidden text-xs text-rose-500 font-bold mt-2" data-i18n="pin_error">Code incorrect</p>
-        </div>
-        <button type="button" id="btn-valider-pin-prof" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg" data-i18n="pin_btn">Déverrouiller</button>
+  <div id="modal-non-appeles" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-clock-rotate-left text-slate-500"></i>
+          <span>Classes non appelées</span>
+        </h3>
+        <button type="button" onclick="fermerModalNonAppeles()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-    </div>
-    <div class="text-center pb-2 sm:pb-4 text-xs text-slate-400 space-y-2.5 animate-row max-w-sm w-full">
-      <a href="superviseur.html" class="inline-flex items-center justify-center gap-2 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-white px-5 py-2.5 rounded-2xl border border-slate-700 transition w-full sm:w-auto"><i class="fa-solid fa-shield-halved text-indigo-400"></i><span class="font-bold" data-i18n="admin_space">Administration</span></a>
+      <div id="non-appeles-content" class="overflow-y-auto flex-1 text-sm"></div>
+      <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 text-right">
+        <button type="button" onclick="fermerModalNonAppeles()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
+      </div>
     </div>
   </div>
 
-  <header class="bg-indigo-700 dark:bg-slate-950 text-white shadow-md border-b dark:border-slate-800 transition-colors">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4"><div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform"><div class="w-16 h-16 bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner"><i class="fa-solid fa-shield-halved"></i></div><h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Espace Sécurisé</h2><p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-6">يرجى إدخال الرمز السري</p><div class="space-y-4"><div><input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" /><p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p></div><button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer">Déverrouiller</button></div></div></div>
+
+  <header class="bg-slate-900 dark:bg-slate-950 text-white shadow-md border-b border-slate-800 transition-colors">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="flex items-center gap-3">
-        <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
-        <div><h1 class="text-xl font-bold tracking-tight" data-i18n="header_title">Feuille d'Appel</h1><p class="text-xs text-indigo-200 dark:text-slate-400" data-i18n="header_sub">ثانوية شعبان أعمر أوقاس</p></div>
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-xl shadow-md"><i class="fa-solid fa-shield-halved"></i></div>
+        <!-- MODIFICATION DU TITRE ICI AVEC LA POLICE OFFICIELLE -->
+        <div>
+          <h1 class="text-lg font-bold tracking-tight">Espace Vie Scolaire <span class="text-indigo-400 mx-1">|</span> فضاء الاستشارة</h1>
+          <p class="nom-officiel text-indigo-300 mt-1">ثانوية الشهيد شعبان اعمر</p>
+        </div>
       </div>
       <div class="flex items-center gap-2 flex-wrap justify-end">
-        <button type="button" onclick="toggleLangue()" class="text-xs font-bold bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 border border-white/20 transition"><i class="fa-solid fa-globe text-amber-300"></i><span id="lang-label">العربية</span></button>
-        <button type="button" onclick="toggleDarkMode()" id="btn-darkmode" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full border border-indigo-600 flex items-center gap-1.5 transition"><i class="fa-solid fa-moon text-amber-300" id="icon-darkmode"></i></button>
-        <button type="button" onclick="verrouillerSessionProf()" class="text-xs font-semibold text-indigo-100 hover:text-white bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full border border-indigo-600 flex items-center gap-1.5 transition"><i class="fa-solid fa-lock text-amber-300"></i><span data-i18n="btn_lock">Verrouiller</span></button>
-        <button type="button" onclick="synchroniserAppelsEnAttente()" class="flex items-center gap-2 bg-indigo-800/80 hover:bg-indigo-900 px-3 py-1.5 rounded-full text-xs font-medium border border-indigo-600 transition"><span id="conn-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span><span id="conn-text" data-i18n="conn_online">En ligne</span></button>
+        <button type="button" onclick="toggleDarkMode()" id="btn-darkmode" class="text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 px-3.5 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition"><i class="fa-solid fa-moon text-amber-300" id="icon-darkmode"></i></button>
+        <a href="index.html" class="text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 px-3.5 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-chalkboard-user text-indigo-400"></i><span>Enseignant</span></a>
+        <button type="button" id="btn-lock" class="text-xs font-semibold text-rose-300 bg-slate-800 hover:bg-rose-950/80 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5"><i class="fa-solid fa-lock text-rose-400"></i><span>Verrouiller</span></button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
-    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
-      <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-sliders text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="sec_params">Paramètres du Cours</span></h2>
-        <span id="badge-mode-seance" class="hidden text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200"><i class="fa-solid fa-clock-rotate-left mr-1"></i> <span data-i18n="tag_mode_edit">Modification</span></span>
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div onclick="ouvrirModalDetailsAppels()" class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md transition group">
+        <div class="flex justify-between text-slate-500 dark:text-slate-400 mb-1"><span class="text-xs font-bold uppercase tracking-wider group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">Appels faits</span><i class="fa-solid fa-clipboard-check text-indigo-500 group-hover:scale-110 transition"></i></div>
+        <div class="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-white" id="kpi-seances">0</div>
+        <div class="flex justify-between items-center mt-1"><p class="text-[11px] text-slate-400 dark:text-slate-500">Aujourd'hui</p><p class="text-[10px] text-indigo-500 font-bold opacity-0 group-hover:opacity-100 transition">Détails <i class="fa-solid fa-arrow-right ml-0.5"></i></p></div>
       </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" data-i18n="lbl_date">Date</label><input type="date" id="input-date-cours" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 dark:text-white outline-none" /></div>
-        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" data-i18n="lbl_classe">Classe</label><select id="select-classe" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm text-slate-800 dark:text-white outline-none"><option value="">-- Choisir / اختر --</option></select></div>
-        <div><label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1" data-i18n="lbl_matiere">Matière</label><input type="text" id="input-matiere-bloque" readonly class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-900 dark:text-indigo-300 cursor-not-allowed outline-none" /></div>
-        
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm"><div class="flex justify-between text-rose-500 mb-1"><span class="text-xs font-bold uppercase tracking-wider">Absences</span><i class="fa-solid fa-user-xmark text-rose-500"></i></div><div class="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400" id="kpi-absents">0</div><p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Signalés</p></div>
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm"><div class="flex justify-between text-amber-500 mb-1"><span class="text-xs font-bold uppercase tracking-wider">Retards</span><i class="fa-solid fa-user-clock text-amber-500"></i></div><div class="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400" id="kpi-retards">0</div><p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">En retard</p></div>
+      <div class="bg-rose-50/70 dark:bg-rose-900/30 p-4 rounded-2xl border-2 border-rose-300 dark:border-rose-700 shadow-sm"><div class="flex justify-between text-rose-700 dark:text-rose-400 mb-1"><span class="text-xs font-extrabold uppercase tracking-wider">Alerte 3j</span><i class="fa-solid fa-triangle-exclamation text-rose-600 badge-alerte-rouge"></i></div><div class="text-2xl sm:text-3xl font-black text-rose-700 dark:text-rose-400" id="kpi-alertes">0</div><p class="text-[11px] text-rose-500 font-bold mt-1">Consécutifs</p></div>
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm col-span-2 lg:col-span-1"><div class="flex justify-between text-emerald-500 mb-1"><span class="text-xs font-bold uppercase tracking-wider">Taux Présence</span><i class="fa-solid fa-chart-pie text-emerald-500"></i></div><div class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400" id="kpi-taux">--%</div><p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Moyenne</p></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm h-64 relative">
+        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Répartition du Jour <span class="text-[10px] font-normal text-slate-400">(Cliquez sur le gris)</span></h3>
+        <canvas id="chartRepartition"></canvas>
+      </div>
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm h-64 relative">
+        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Absences par Classe</h3>
+        <canvas id="chartClasses"></canvas>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row justify-between gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
+        <div><label class="block text-xs font-bold mb-1 text-slate-600 dark:text-slate-400">Date</label><input type="date" id="filtre-date" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none cursor-pointer" /></div>
+        <div><label class="block text-xs font-bold mb-1 text-slate-600 dark:text-slate-400">Classe</label><select id="filtre-classe" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none cursor-pointer"><option value="ALL">-- Toutes --</option></select></div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Séance / التوقيت (Auto)</label>
-          <input type="text" id="input-horaire-auto" readonly class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-900 dark:text-indigo-300 cursor-not-allowed outline-none" value="Calcul..." />
+          <label class="block text-xs font-bold mb-1 text-slate-600 dark:text-slate-400">Statut</label>
+          <select id="filtre-statut" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none cursor-pointer">
+            <option value="A_R">Absents & Retards</option>
+            <option value="ALERTE_3">🚨 Alerte (3j)</option>
+            <option value="A">Absents uniquement</option>
+            <option value="R">Retards uniquement</option>
+            <option value="ALL">Tout afficher</option>
+            <option value="CORBEILLE">🗑️ Corbeille (Archivés)</option>
+          </select>
         </div>
+      </div>
+      <div class="flex flex-wrap gap-2 items-end">
+        <button type="button" onclick="ouvrirModalTransfertGlobal()" class="bg-rose-50 dark:bg-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-700 px-3.5 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-user-xmark"></i><span>Transféré</span></button>
+        <button type="button" id="btn-refresh" class="bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-3.5 py-2.5 rounded-xl text-sm font-bold border border-slate-300 dark:border-slate-600 transition flex items-center gap-1.5 shadow-sm"><i id="icon-refresh" class="fa-solid fa-arrows-rotate text-indigo-600 dark:text-indigo-400"></i><span>Actualiser</span></button>
+        <button type="button" id="btn-export-excel" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-file-excel"></i><span>Excel</span></button>
+        <button type="button" onclick="ouvrirApercuRapportJournalier()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-md transition flex items-center gap-1.5"><i class="fa-solid fa-file-lines"></i><span>Rapport</span></button>
       </div>
     </div>
 
-    <div id="stats-bar" class="hidden grid grid-cols-3 gap-3">
-      <div class="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-emerald-700 dark:text-emerald-400 uppercase" data-i18n="kpi_presents">Présents</span><span id="count-presents" class="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">0</span></div>
-      <div class="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-700 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-rose-700 dark:text-rose-400 uppercase" data-i18n="kpi_absents">Absents</span><span id="count-absents" class="text-3xl font-extrabold text-rose-600 dark:text-rose-400 mt-1 block">0</span></div>
-      <div class="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 p-3.5 rounded-2xl text-center"><span class="block text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase" data-i18n="kpi_retards">Retards</span><span id="count-retards" class="text-3xl font-extrabold text-amber-600 dark:text-amber-400 mt-1 block">0</span></div>
+    <div id="barre-actions-groupees" class="hidden bg-indigo-900 dark:bg-indigo-950 text-white p-3.5 rounded-2xl shadow-lg flex-wrap items-center justify-between gap-3 border border-indigo-700 animate-table-row">
+      <div class="flex items-center gap-2.5 text-sm font-bold"><span class="w-7 h-7 rounded-full bg-indigo-700 flex items-center justify-center text-xs font-black" id="count-selected">0</span><span>sélectionné(s)</span></div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button type="button" onclick="justifierSelectionGroupee()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-check"></i><span>Justifier</span></button>
+        <button type="button" onclick="supprimerSelectionGroupee()" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm"><i class="fa-solid fa-trash-can"></i><span>Archiver</span></button>
+        <button type="button" onclick="deselectionnerTout()" class="bg-indigo-800 hover:bg-indigo-700 text-indigo-200 px-3 py-1.5 rounded-xl text-xs font-bold"><span>Annuler</span></button>
+      </div>
     </div>
 
-    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
-      <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-50/70 dark:bg-slate-800/50">
-        <div><h2 class="text-lg font-bold text-slate-800 dark:text-white" id="classe-titre" data-i18n="default_classe_title">Sélectionnez une classe</h2><p class="text-xs text-slate-500 dark:text-slate-400 font-medium" id="classe-effectif">0</p></div>
-        <div class="flex items-center gap-2 flex-wrap">
-          <button type="button" id="btn-tout-present" onclick="marquerTousPresents()" class="hidden text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-700 px-3.5 py-2 rounded-xl"><i class="fa-solid fa-check-double text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="btn_mark_all">Tout présent</span></button>
-          <button type="button" id="btn-ouvrir-modal-eleve" onclick="ouvrirModalNouvelEleve()" class="hidden text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-700 px-3.5 py-2 rounded-xl"><i class="fa-solid fa-user-plus text-emerald-600 dark:text-emerald-400 mr-1"></i> <span data-i18n="btn_add_missing">Élève manquant ?</span></button>
-          <button type="button" id="btn-refresh-prof" onclick="rafraichirBilletsSilencieux()" class="hidden text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 px-3.5 py-2 rounded-xl shadow-sm"><i class="fa-solid fa-arrows-rotate mr-1 text-indigo-600 dark:text-indigo-400"></i> <span data-i18n="btn_refresh">Actualiser</span></button>
-          <button type="button" id="btn-valider-rapide-top" onclick="declencherValidationAppel()" class="hidden text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl shadow-sm"><i class="fa-solid fa-paper-plane mr-1"></i> <span data-i18n="btn_validate_quick">Valider</span></button>
-        </div>
+    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm transition-colors">
+      <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center flex-wrap gap-2">
+        <h2 class="font-bold text-slate-800 dark:text-white">Registre des Absences</h2>
+        <p class="text-xs text-slate-600 dark:text-slate-300 font-bold bg-slate-200/80 dark:bg-slate-700 px-3 py-1 rounded-full" id="registre-count">0 ligne(s)</p>
       </div>
-      <div id="search-container" class="hidden p-3 sm:px-5 bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-        <div class="relative">
-          <div class="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none"><i class="fa-solid fa-magnifying-glass text-sm text-indigo-500"></i></div>
-          <input type="text" id="input-search-eleve" placeholder="Rechercher..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl ps-10 py-2.5 text-xs sm:text-sm font-medium text-slate-800 dark:text-white outline-none" />
-          <button type="button" id="btn-clear-search" onclick="clearSearchEleve()" class="hidden absolute inset-y-0 end-0 flex items-center pe-3 text-slate-400"><i class="fa-solid fa-circle-xmark text-base"></i></button>
-        </div>
-      </div>
-      <div id="eleves-container" class="flex flex-col divide-y divide-slate-100 dark:divide-slate-700 min-h-[180px]">
-        <div class="py-12 text-center text-slate-400 dark:text-slate-500"><i class="fa-solid fa-arrow-up text-3xl mb-2 text-indigo-300"></i><p class="text-sm" data-i18n="prompt_select_classe">Veuillez choisir une division.</p></div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead class="bg-slate-100 dark:bg-slate-900/50 text-xs font-bold uppercase text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+            <tr>
+              <th class="py-3.5 px-3 w-12 text-center"><input type="checkbox" id="checkbox-select-all" onchange="toggleSelectAll(this)" class="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 accent-indigo-600 cursor-pointer" /></th>
+              <th class="py-3 px-2 w-10 text-center">N°</th>
+              <th class="py-3 px-4">Élève</th>
+              <th class="py-3 px-3">Classe</th>
+              <th class="py-3 px-3">Matière</th>
+              <th class="py-3 px-3 text-center">Cumul</th>
+              <th class="py-3 px-3 text-center">Statut</th>
+              <th class="py-3 px-3 text-center">Justification</th>
+              <th class="py-3 px-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="registre-body" class="divide-y divide-slate-100 dark:divide-slate-700 text-sm"></tbody>
+        </table>
       </div>
     </div>
   </main>
 
-  <div id="sticky-footer-bar" class="hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 shadow-2xl p-3 sm:py-3.5 transition-all">
-    <div class="max-w-5xl mx-auto flex items-center justify-between gap-3 px-2 sm:px-4">
-      <div class="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-bold">
-        <span class="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-700"><span data-i18n="kpi_presents">Présents</span>: <b id="sticky-presents" class="text-emerald-600 dark:text-emerald-400">0</b></span>
-        <span class="text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 px-2.5 py-1 rounded-lg border border-rose-200 dark:border-rose-700"><span data-i18n="kpi_absents">Absents</span>: <b id="sticky-absents" class="text-rose-600 dark:text-rose-400">0</b></span>
-      </div>
-      <button type="button" id="btn-valider-appel" onclick="declencherValidationAppel()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-sm sm:text-base py-2.5 sm:py-3 px-5 sm:px-8 rounded-xl shadow-lg flex items-center gap-2"><i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_call">Valider l'appel</span></button>
-    </div>
-  </div>
+  <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
+  <div id="zone-impression-fiche-eleve" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
+  <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10"><div class="text-center border-b pb-3 mb-4"><h3 class="font-bold nom-officiel">ثانوية الشهيد شعبان اعمر</h3><h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée</h2></div><div id="billet-details" class="space-y-3 text-sm"></div><div class="mt-6 pt-4 border-t flex justify-between text-xs"><p>Édité le : <span id="billet-date-emission"></span></p><p class="font-bold">Visa Administration</p></div></div>
+  <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-base font-bold nom-officiel">ثانوية الشهيد شعبان اعمر</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p>أوقاس في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
 
   <script>
-    const CODES_MATIERES_BASE64 = {
-      "Mathématiques / رياضيات": "MTAwMQ==", "Sciences Naturelles / علوم الطبيعة": "MTAwMg==", "Sciences Physiques / علوم فيزيائية": "MTAwMw==", "Informatique / إعلام آلي": "MTAwNA==",
-      "Génie Civil / هندسة مدنية": "MjAwMQ==", "Génie Électrique / هندسة كهربائية": "MjAwMg==", "Génie Mécanique / هندسة ميكانيكية": "MjAwMw==", "Génie des Procédés / هندسة الطرائق": "MjAwNA==", "Gestion & Économie / تسيير واقتصاد": "MjAwNQ==", "Droit / قانون": "MjAwNg==",
-      "Langue Arabe / لغة عربية": "MzAwMQ==", "Langue Française / فرنسية": "MzAwMg==", "Langue Anglaise / إنجليزية": "MzAwMw==", "Langue Allemande / ألمانية": "MzAwNA==", "Langue Espagnole / إسبانية": "MzAwNQ==", "Langue Amazighe / أمازيغية": "MzAwNg==", "Philosophie / فلسفة": "MzAwNw==", "Histoire-Géographie / تاريخ وجغرافيا": "MzAwOA==", "Sciences Islamiques / علوم إسلامية": "MzAwOQ==",
-      "EPS / تربية بدنية": "NDAwMQ=="
-    };
-
-    const TRADUCTIONS = {
-      fr: {
-        lang_btn: "العربية", header_title: "Feuille d'Appel", header_sub: "ثانوية شعبان أعمر أوقاس", btn_lock: "Verrouiller", conn_online: "En ligne", conn_offline: "Hors-ligne",
-        sec_params: "Paramètres", lbl_date: "Date", lbl_classe: "Classe", lbl_matiere: "Matière", lbl_horaire: "Séance",
-        kpi_presents: "Présents", kpi_absents: "Absents", kpi_retards: "Retards", default_classe_title: "Sélectionnez une classe",
-        btn_mark_all: "Tout présent", btn_add_missing: "Élève manquant ?", btn_validate_quick: "Valider", btn_refresh: "Actualiser",
-        prompt_select_classe: "Veuillez choisir une division.", btn_submit_call: "Valider l'appel", tag_mode_edit: "Séance existante",
-        pin_title: "Espace Enseignant", pin_sub: "Sélectionnez votre matière", pin_error: "Code incorrect", pin_btn: "Déverrouiller", admin_space: "Administration",
-        modal_add_title: "Élève manquant", lbl_nom: "Nom (FR) *", lbl_prenom: "Prénom (FR) *", btn_cancel: "Annuler", btn_add: "Ajouter",
-        btn_present: "Présent", btn_absent: "Absent", btn_retard: "Retard", no_search_result: "Aucun élève trouvé."
-      },
-      ar: {
-        lang_btn: "English", header_title: "ورقة الحضور والغياب", header_sub: "ثانوية شعبان أعمر أوقاس", btn_lock: "قفل الشاشة", conn_online: "متصل", conn_offline: "غير متصل",
-        sec_params: "بيانات الحصة", lbl_date: "التاريخ", lbl_classe: "القسم", lbl_matiere: "المادة", lbl_horaire: "التوقيت",
-        kpi_presents: "الحاضرون", kpi_absents: "الغائبون", kpi_retards: "المتأخرون", default_classe_title: "اختر القسم",
-        btn_mark_all: "تعليم الجميع كحاضرين", btn_add_missing: "تلميذ غير مسجل ؟", btn_validate_quick: "تأكيد", btn_refresh: "تحديث",
-        prompt_select_classe: "يرجى اختيار الفوج التربوي.", btn_submit_call: "تأكيد وإرسال", tag_mode_edit: "وضع التعديل",
-        pin_title: "فضاء الأستاذ", pin_sub: "اختر مادتك", pin_error: "رمز غير صحيح", pin_btn: "الدخول", admin_space: "الإدارة",
-        modal_add_title: "تسجيل تلميذ", lbl_nom: "اللقب (لاتيني) *", lbl_prenom: "الاسم (لاتيني) *", btn_cancel: "إلغاء", btn_add: "إضافة",
-        btn_present: "حاضر", btn_absent: "غائب", btn_retard: "متأخر", no_search_result: "لا يوجد أي تلميذ."
-      },
-      en: {
-        lang_btn: "Français", header_title: "Digital Attendance", header_sub: "Chaabane Aamar High School", btn_lock: "Lock", conn_online: "Online", conn_offline: "Offline",
-        sec_params: "Course Settings", lbl_date: "Date", lbl_classe: "Class", lbl_matiere: "Subject", lbl_horaire: "Time Slot",
-        kpi_presents: "Present", kpi_absents: "Absent", kpi_retards: "Late", default_classe_title: "Select a class",
-        btn_mark_all: "Mark all present", btn_add_missing: "Missing student?", btn_validate_quick: "Submit", btn_refresh: "Refresh",
-        prompt_select_classe: "Please select a class.", btn_submit_call: "Submit Attendance", tag_mode_edit: "Existing session",
-        pin_title: "Teacher Area", pin_sub: "Select your subject", pin_error: "Incorrect code", pin_btn: "Unlock", admin_space: "Administration",
-        modal_add_title: "Missing Student", lbl_nom: "Last Name *", lbl_prenom: "First Name *", btn_cancel: "Cancel", btn_add: "Add",
-        btn_present: "Present", btn_absent: "Absent", btn_retard: "Late", no_search_result: "No student found."
-      }
-    };
-
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     
     let supabaseClient = null;
+    let classesCache = [];
+    let vuePointages = [];
+    let pointagesSelectionnes = new Set();
+    let totalElevesEtablissement = 0;
+    let __appInit = false;
+    let chartRep = null, chartCls = null;
+
+    let currentKpis = { total_seances: 0, total_absents: 0, total_retards: 0, total_alertes: 0, taux_presence: 0 };
+
     try {
-      if (typeof supabase !== 'undefined') {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      } else {
-        console.error("Supabase n'a pas pu charger.");
-      }
+      if (typeof supabase === 'undefined') throw new Error("Supabase non chargé");
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     } catch(e) { console.error(e); }
 
-    let langueCourante = localStorage.getItem('pref_langue_prof') || 'fr';
-    let classesList = [], currentEleves = [], currentStatuts = {}, searchTermEleve = '', seanceExistanteId = null;
-    let billetsMap = new Map(), billetsDate = null, chargerToken = 0;
+    const filtreDate = document.getElementById('filtre-date');
+    const filtreClasse = document.getElementById('filtre-classe');
+    const filtreStatut = document.getElementById('filtre-statut');
+    const registreBody = document.getElementById('registre-body');
+    const btnRefresh = document.getElementById('btn-refresh');
+    const iconRefresh = document.getElementById('icon-refresh');
+    const checkAllMaster = document.getElementById('checkbox-select-all');
+    const btnExportExcel = document.getElementById('btn-export-excel');
 
-    const inputDateCours = document.getElementById('input-date-cours');
-    const selectClasse = document.getElementById('select-classe');
-    const inputMatiereBloque = document.getElementById('input-matiere-bloque');
-    const inputHoraireAuto = document.getElementById('input-horaire-auto');
-    const elevesContainer = document.getElementById('eleves-container');
-    const btnValiderRapideTop = document.getElementById('btn-valider-rapide-top');
-    const btnOuvrirModalEleve = document.getElementById('btn-ouvrir-modal-eleve');
-    const searchContainer = document.getElementById('search-container');
-    const inputSearchEleve = document.getElementById('input-search-eleve');
-    const btnClearSearch = document.getElementById('btn-clear-search');
-    const badgeModeSeance = document.getElementById('badge-mode-seance');
-    const stickyFooterBar = document.getElementById('sticky-footer-bar');
-    const btnRefreshProf = document.getElementById('btn-refresh-prof');
+    if (filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
-    if (inputDateCours) inputDateCours.value = new Date().toISOString().split('T')[0];
+    const PIN_MASQUE = "MjYyNg==";
 
-    function obtenirHoraireActuel() {
-        const maintenant = new Date();
-        const heure = maintenant.getHours();
-        
-        const creneaux = [
-            { debut: 8, fin: 9, label: "08:00 - 09:00" },
-            { debut: 9, fin: 10, label: "09:00 - 10:00" },
-            { debut: 10, fin: 11, label: "10:00 - 11:00" },
-            { debut: 11, fin: 12, label: "11:00 - 12:00" },
-            { debut: 13, fin: 14, label: "13:00 - 14:00" },
-            { debut: 14, fin: 15, label: "14:00 - 15:00" },
-            { debut: 15, fin: 16, label: "15:00 - 16:00" },
-            { debut: 16, fin: 17, label: "16:00 - 17:00" }
-        ];
-        
-        let creneauActuel = creneaux[0];
-        for (let i = 0; i < creneaux.length; i++) {
-            if (heure >= creneaux[i].debut) {
-                creneauActuel = creneaux[i];
-            }
-        }
-        
-        const strD = String(creneauActuel.debut).padStart(2, '0');
-        const strF = String(creneauActuel.fin).padStart(2, '0');
-        
-        return { 
-            debut: `${strD}:00:00`, 
-            fin: `${strF}:00:00`,
-            affichage: creneauActuel.label
-        };
+    function escapeHtml(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-
-    function actualiserHeureAuto() {
-        if (inputHoraireAuto) {
-            const horaire = obtenirHoraireActuel();
-            inputHoraireAuto.value = horaire.affichage;
-        }
+    function escJs(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
     }
-    setInterval(actualiserHeureAuto, 60000);
-    actualiserHeureAuto();
 
     function toggleDarkMode() {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
       updateDarkModeIcon(isDark);
+      if(vuePointages.length) renderTableau();
     }
     function updateDarkModeIcon(isDark) {
       const icon = document.getElementById('icon-darkmode');
@@ -317,349 +281,789 @@
       document.documentElement.classList.add('dark'); updateDarkModeIcon(true);
     } else { updateDarkModeIcon(false); }
 
-    function appliquerLangue(lang) {
-      langueCourante = lang;
-      localStorage.setItem('pref_langue_prof', lang);
-      const htmlRoot = document.getElementById('html-root');
-      if (htmlRoot) { htmlRoot.setAttribute('lang', lang); htmlRoot.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr'); }
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const cle = el.getAttribute('data-i18n');
-        if (TRADUCTIONS[lang] && TRADUCTIONS[lang][cle]) el.textContent = TRADUCTIONS[lang][cle];
-      });
-      const lblLang = document.getElementById('lang-label');
-      if (lblLang) lblLang.textContent = TRADUCTIONS[lang].lang_btn;
-      if (currentEleves.length > 0) afficherEleves();
+    async function enregistrerLog(action, details) {
+      if (!navigator.onLine || !supabaseClient) return;
+      try { await supabaseClient.from('logs').insert({ action: action, details: details }); } 
+      catch(e) { console.warn("Log fail", e); }
     }
-    window.toggleLangue = function() {
-      const langs = ['fr', 'ar', 'en'];
-      let nextIdx = (langs.indexOf(langueCourante) + 1) % 3;
-      appliquerLangue(langs[nextIdx]);
-    };
 
-    window.validerPinDirect = function() {
-      const pinSelectMatiere = document.getElementById('pin-select-matiere');
-      const inputPin = document.getElementById('input-pin-prof');
-      const err = document.getElementById('pin-prof-error');
-      const card = document.getElementById('pin-card-prof');
+    function debloquerSuperviseur() {
+      if (!supabaseClient) { alert("Erreur de connexion."); return; }
+      const pinScreen = document.getElementById('pin-screen'); 
+      if (pinScreen) pinScreen.remove();
+      sessionStorage.setItem('superviseur_auth', 'true');
+      if (__appInit) return;
+      __appInit = true;
+      initialiserApplication().catch(err => { console.error(err); });
+    }
+
+    function validerPinDirect() {
+      const input = document.getElementById('input-pin'), err = document.getElementById('pin-error'), card = document.getElementById('pin-card');
+      let val = input ? input.value.trim() : '';
+      const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+      val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
+
+      if (val === atob(PIN_MASQUE)) { 
+        if (err) err.classList.add('hidden'); 
+        debloquerSuperviseur(); 
+      } else { 
+        if (err) err.classList.remove('hidden'); 
+        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
+        if (input) { input.value = ''; input.focus(); } 
+      }
+    }
+    
+    document.getElementById('input-pin')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
+    document.getElementById('btn-lock')?.addEventListener('click', () => { sessionStorage.removeItem('superviseur_auth'); location.reload(); });
+
+    if (sessionStorage.getItem('superviseur_auth') === 'true') debloquerSuperviseur();
+    
+    async function initialiserApplication() { 
+      await chargerTotalEleves();
+      await loadClassesBilingues(); 
+      await fetchDonnees(); 
+    }
+
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      e.preventDefault(); e.stopPropagation();
+      const action = btn.getAttribute('data-action');
+      const eleveId = btn.getAttribute('data-eleve-id');
+      const pid = btn.getAttribute('data-pointage-id');
+
+      if (action === 'dossier') { if (eleveId) ouvrirFicheEleve(eleveId); }
+      else if (action === 'edit-eleve') { if (eleveId) ouvrirModalEditerEleve(eleveId); }
+      else if (action === 'edit-pointage') { if (pid) ouvrirModalModifier(pid); }
+      else if (action === 'billet') {
+        const tr = btn.closest('tr');
+        if (tr) imprimerBillet(tr.dataset.nom, tr.dataset.prenom, tr.dataset.nomAr, tr.dataset.prenomAr, tr.dataset.classe, tr.dataset.date, tr.dataset.heure, tr.dataset.statut, tr.dataset.eleveId);
+      } else if (action === 'convoc') {
+        const tr = btn.closest('tr');
+        if (tr) imprimerConvocation(tr.dataset.nom, tr.dataset.prenom, tr.dataset.nomAr, tr.dataset.prenomAr, tr.dataset.classe, parseInt(tr.dataset.tot, 10));
+      } else if (action === 'delete') { if (pid) supprimerPointage(pid); }
+    });
+
+    async function chargerTotalEleves() {
+      if (!supabaseClient) return;
+      try {
+        const { count } = await supabaseClient.from('eleves').select('*', { count: 'exact', head: true }).eq('actif', true);
+        totalElevesEtablissement = count || 0;
+      } catch (err) {}
+    }
+
+    async function loadClassesBilingues() {
+      if (!supabaseClient) return;
+      try {
+        if (classesCache.length === 0) {
+          const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
+          classesCache = data || [];
+        }
+        if (filtreClasse) {
+          filtreClasse.innerHTML = `<option value="ALL">-- Toutes les classes --</option>`;
+          classesCache.forEach(cls => {
+            const opt = document.createElement('option'); opt.value = cls.id; opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+            filtreClasse.appendChild(opt);
+          });
+        }
+        const selClsTr = document.getElementById('transfert-select-classe');
+        if (selClsTr) {
+          selClsTr.innerHTML = `<option value="">-- Choisir --</option>`;
+          classesCache.forEach(cls => {
+            const opt = document.createElement('option'); opt.value = cls.id; opt.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
+            selClsTr.appendChild(opt);
+          });
+        }
+      } catch (err) { console.warn(err); }
+    }
+
+    function mettreAJourBarreSelection() {
+      const b = document.getElementById('barre-actions-groupees'); if (!b) return;
+      const t = pointagesSelectionnes.size;
+      document.getElementById('count-selected').textContent = t;
+      if (t > 0) { b.classList.remove('hidden'); b.classList.add('flex'); } else { b.classList.add('hidden'); b.classList.remove('flex'); }
+    }
+    function actualiserMasterCheckbox() {
+      if (!checkAllMaster) return;
+      const fData = obtenirDonneesFiltrees();
+      if (fData.length === 0) { checkAllMaster.checked = false; checkAllMaster.indeterminate = false; return; }
+      let n = 0; fData.forEach(pt => { if (pointagesSelectionnes.has(String(pt.pointage_id || pt.id))) n++; });
+      if (n === 0) { checkAllMaster.checked = false; checkAllMaster.indeterminate = false; } 
+      else if (n === fData.length) { checkAllMaster.checked = true; checkAllMaster.indeterminate = false; } 
+      else { checkAllMaster.checked = false; checkAllMaster.indeterminate = true; }
+    }
+
+    async function fetchDonnees() {
+      const d = filtreDate.value; if(!d || !supabaseClient) return;
+      if(iconRefresh) iconRefresh.classList.add('fa-spin');
+      registreBody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-indigo-500"><i class="fa-solid fa-spin fa-circle-notch text-2xl"></i></td></tr>`;
       
-      if (!pinSelectMatiere || !inputPin) return;
+      try {
+        const { data: vueData, error: vueErr } = await supabaseClient.from('v_registre_journalier').select('*').eq('date_cours', d);
+        if (vueErr) throw new Error(`Erreur Supabase: ${vueErr.message}`);
+        const { data: kpiData } = await supabaseClient.rpc('get_kpis_jour', { p_date: d });
 
-      const matiere = pinSelectMatiere.value;
-      const codeSaisi = inputPin.value.trim();
+        vuePointages = vueData || [];
+        if (vuePointages.length > 0) {
+          vuePointages.sort((a, b) => String(b.pointage_id || b.id || '').localeCompare(String(a.pointage_id || a.id || '')));
+        }
+        
+        pointagesSelectionnes.clear(); if(checkAllMaster) checkAllMaster.checked = false; mettreAJourBarreSelection();
 
-      if (!matiere) {
-        if (err) { err.textContent = (langueCourante === 'ar') ? '⚠️ يرجى اختيار المادة أولاً' : '⚠️ Veuillez choisir votre matière'; err.classList.remove('hidden'); }
+        currentKpis = kpiData || { total_seances: 0, total_absents: 0, total_retards: 0, total_alertes: 0, taux_presence: 0 };
+        document.getElementById('kpi-seances').textContent = currentKpis.total_seances || 0;
+        document.getElementById('kpi-absents').textContent = currentKpis.total_absents || 0;
+        document.getElementById('kpi-retards').textContent = currentKpis.total_retards || 0;
+        document.getElementById('kpi-alertes').textContent = currentKpis.total_alertes || 0;
+        document.getElementById('kpi-taux').textContent = (currentKpis.taux_presence !== undefined && currentKpis.taux_presence !== null) ? `${currentKpis.taux_presence}%` : '--%';
+        
+        renderTableau();
+        renderGraphiques();
+      } catch (err) { 
+        registreBody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-rose-500 font-bold bg-rose-50 dark:bg-rose-900/30">${escapeHtml(err.message)}</td></tr>`; 
+      } finally { if(iconRefresh) iconRefresh.classList.remove('fa-spin'); }
+    }
+
+    function obtenirDonneesFiltrees() {
+      const cl = filtreClasse ? filtreClasse.value : 'ALL';
+      const st = filtreStatut ? filtreStatut.value : 'A_R';
+      
+      return vuePointages.filter(pt => {
+        if (st === 'CORBEILLE') return pt.archive === true && (cl === 'ALL' || String(pt.classe_id) === String(cl));
+        if (pt.archive === true) return false;
+        if (cl !== 'ALL' && String(pt.classe_id) !== String(cl)) return false;
+        if (st === 'ALERTE_3') return pt.en_alerte === true;
+        if (st === 'A_R') return pt.statut === 'A' || pt.statut === 'R' || (pt.statut === 'P' && pt.justifie === true);
+        if (st === 'A') return pt.statut === 'A';
+        if (st === 'R') return pt.statut === 'R';
+        return true;
+      });
+    }
+
+    function renderTableau() {
+      const fData = obtenirDonneesFiltrees();
+      document.getElementById('registre-count').textContent = `${fData.length} ligne(s)`;
+      if(fData.length === 0) {
+        registreBody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-slate-400 dark:text-slate-500 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>Aucun enregistrement.</td></tr>`;
         return;
       }
+      registreBody.innerHTML = '';
+      fData.forEach((pt, i) => {
+        const al = pt.en_alerte === true, tot = pt.total_absences || 0;
+        const pid = pt.pointage_id || pt.id, eleveId = pt.eleve_id;
+        const isChecked = pointagesSelectionnes.has(String(pid));
+        
+        const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
+        const isAbsent = pt.statut === 'A' || isJustifiedAbsence;
 
-      if (codeSaisi.length < 4) return;
+        let stHtml = '';
+        if (isAbsent) stHtml = `<span class="bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-xmark"></i> Absent</span>`;
+        else if (pt.statut === 'R') stHtml = `<span class="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-clock"></i> Retard</span>`;
+        else stHtml = `<span class="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-user-check"></i> Présent</span>`;
 
-      const codeAttenduBase64 = CODES_MATIERES_BASE64[matiere];
+        let bg = al ? 'bg-rose-50 dark:bg-rose-900/20 border-l-4 border-l-rose-500' : (i % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-slate-50/70 dark:bg-slate-800/50');
+        if (isChecked) bg = 'bg-indigo-50/80 dark:bg-indigo-900/30 border-l-4 border-l-indigo-600';
+        
+        const tr = document.createElement('tr');
+        tr.className = `animate-table-row ${bg} hover:bg-indigo-50/50 dark:hover:bg-slate-700/50 transition cursor-pointer`;
+        
+        tr.dataset.nom = pt.nom || ''; tr.dataset.prenom = pt.prenom || '';
+        tr.dataset.nomAr = pt.nom_ar || ''; tr.dataset.prenomAr = pt.prenom_ar || '';
+        tr.dataset.classe = pt.classe_nom || ''; tr.dataset.date = pt.date_cours || '';
+        tr.dataset.heure = (pt.heure_debut && pt.heure_debut.length >= 5) ? pt.heure_debut.substring(0,5) : '';
+        tr.dataset.statut = pt.statut || ''; tr.dataset.eleveId = eleveId || ''; tr.dataset.tot = tot;
 
-      if (codeAttenduBase64 && codeSaisi === atob(codeAttenduBase64)) {
-        if (err) err.classList.add('hidden');
-        debloquerPagePourMatiere(matiere);
-      } else {
-        if (err) { err.textContent = (langueCourante === 'ar') ? 'رمز غير صحيح' : 'Code incorrect'; err.classList.remove('hidden'); }
-        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
-        inputPin.value = '';
-        inputPin.focus();
-      }
-    };
+        const heureAff = tr.dataset.heure || '--';
+        const nomPr = `${pt.nom || ''} ${pt.prenom || ''}`.trim();
+        const nomSec = `(${pt.nom_ar || ''} ${pt.prenom_ar || ''})`.trim();
+        const isArchived = pt.archive === true;
 
-    window.debloquerPagePourMatiere = function(matiere) {
-      const pinScreen = document.getElementById('pin-screen-prof');
-      if (pinScreen) pinScreen.remove();
-      sessionStorage.setItem('prof_auth_matiere', matiere);
-      if (inputMatiereBloque) inputMatiereBloque.value = matiere;
-      initClasses();
-    };
-
-    window.verrouillerSessionProf = function() {
-      sessionStorage.removeItem('prof_auth_matiere');
-      location.reload();
-    };
-
-    function getQueueHorsLigne() { try { return JSON.parse(localStorage.getItem('offline_appels_queue') || '[]'); } catch (e) { return []; } }
-    function saveQueueHorsLigne(queue) { localStorage.setItem('offline_appels_queue', JSON.stringify(queue)); mettreAJourBadgeReseau(); }
-    function mettreAJourBadgeReseau() {
-      const dot = document.getElementById('conn-dot'), text = document.getElementById('conn-text');
-      if (!dot || !text) return;
-      const queue = getQueueHorsLigne();
-      if (!navigator.onLine) { dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500'; text.textContent = `Hors-ligne (${queue.length})`; }
-      else if (queue.length > 0) { dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-bounce'; text.textContent = `Sync (${queue.length})`; }
-      else { dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse'; text.textContent = TRADUCTIONS[langueCourante].conn_online; }
-    }
-    window.synchroniserAppelsEnAttente = async function() {
-      if (!navigator.onLine || !supabaseClient) return; const queue = getQueueHorsLigne(); if (!queue.length) return;
-      let reussis = 0; const newQueue = [];
-      for (const item of queue) {
-        try {
-          let sid = item.seance_id;
-          if (!sid) {
-             const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ classe_id: item.classe_id, matiere: item.matiere, date_cours: item.date_cours, heure_debut: item.heure_debut, heure_fin: item.heure_fin, appel_valide: true }).select().single();
-             if (e1) throw e1; sid = s.id;
-          }
-          await supabaseClient.from('pointages').delete().eq('seance_id', sid);
-          const pts = item.pointages.map(pt => ({ seance_id: sid, eleve_id: pt.eleve_id, statut: pt.statut, justifie: pt.justifie, motif_justification: pt.motif_justification }));
-          const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
-          if (e2) throw e2; reussis++;
-        } catch (e) { newQueue.push(item); }
-      }
-      saveQueueHorsLigne(newQueue);
-      if (reussis > 0) afficherToast('Succès', `${reussis} appel(s) transmis.`);
-    };
-    window.addEventListener('online', () => { mettreAJourBadgeReseau(); synchroniserAppelsEnAttente(); });
-    window.addEventListener('offline', mettreAJourBadgeReseau);
-
-    function afficherToast(titre, msg) {
-      const t = document.getElementById('toast-notification'); if (!t) return;
-      document.getElementById('toast-titre').textContent = titre; document.getElementById('toast-message').textContent = msg;
-      t.classList.remove('-translate-y-24', 'opacity-0'); t.classList.add('translate-y-0', 'opacity-100');
-      setTimeout(() => { t.classList.add('-translate-y-24', 'opacity-0'); t.classList.remove('translate-y-0', 'opacity-100'); }, 3500);
-    }
-
-    async function initClasses() {
-      const cache = localStorage.getItem('cache_classes');
-      if (cache) { try { classesList = JSON.parse(cache); remplirSelectClasses(classesList); } catch(e){} }
-      if (navigator.onLine && supabaseClient) {
-        try { const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court'); if (data) { classesList = data; localStorage.setItem('cache_classes', JSON.stringify(data)); remplirSelectClasses(classesList); } } catch (e) {}
-      }
-      mettreAJourBadgeReseau();
-    }
-    function remplirSelectClasses(liste) {
-      if (!selectClasse) return;
-      selectClasse.innerHTML = `<option value="">-- ${TRADUCTIONS[langueCourante].lbl_classe} --</option>`;
-      const g = { '1AS': document.createElement('optgroup'), '2AS': document.createElement('optgroup'), '3AS': document.createElement('optgroup'), 'AUTRE': document.createElement('optgroup') };
-      g['1AS'].label = "1ère Année"; g['2AS'].label = "2ème Année"; g['3AS'].label = "3ème Année"; g['AUTRE'].label = "Autres";
-      liste.forEach(cls => {
-        const o = document.createElement('option'); o.value = cls.id; o.textContent = `${cls.nom_court} — ${cls.nom_complet}`;
-        if(cls.nom_court.startsWith('1AS')) g['1AS'].appendChild(o); else if(cls.nom_court.startsWith('2AS')) g['2AS'].appendChild(o); else if(cls.nom_court.startsWith('3AS')) g['3AS'].appendChild(o); else g['AUTRE'].appendChild(o);
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-center">
+            <input type="checkbox" value="${pid}" ${isChecked ? 'checked' : ''} onchange="toggleSelectRow('${escJs(pid)}', this.checked)" class="row-checkbox w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 cursor-pointer accent-indigo-600" />
+          </td>
+          <td class="py-3 px-2 text-center text-xs font-bold text-slate-400 dark:text-slate-500">${i + 1}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-slate-900 dark:text-white cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition" onclick="ouvrirMiniHist(${eleveId}, '${escJs(nomPr)}')">${escapeHtml(nomPr)}</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">${escapeHtml(nomSec)}</div>
+            ${al ? `<span class="badge-alerte-rouge bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full mt-1 inline-block font-bold">🚨 3J</span>` : ''}
+          </td>
+          <td class="py-3 px-3"><span class="bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-700 px-2 py-1 rounded-lg font-bold text-xs">${escapeHtml(pt.classe_nom)}</span></td>
+          <td class="py-3 px-3 text-xs"><div class="font-bold text-slate-700 dark:text-slate-200">${escapeHtml(pt.matiere)}</div><div class="text-slate-500 dark:text-slate-400">${heureAff}</div></td>
+          <td class="py-3 px-3 text-center"><span class="px-2 py-1 rounded-lg font-black text-xs ${al ? 'bg-rose-200 dark:bg-rose-900/50 text-rose-900 dark:text-rose-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}">${tot}</span></td>
+          <td class="py-3 px-3 text-center">${stHtml}</td>
+          <td class="py-3 px-3 text-center text-xs">
+            ${isAbsent || pt.statut === 'R'
+              ? (pt.justifie 
+                  ? `<span class="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/50 px-2 py-1 border border-emerald-200 dark:border-emerald-700 rounded-lg font-bold">${escapeHtml(pt.motif_justification || 'Justifié')}</span>` 
+                  : `<span class="text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30 px-2 py-1 rounded-lg font-bold">Non justifié</span>`)
+              : (pt.justifie 
+                  ? `<span class="text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/50 px-2 py-1 border border-emerald-200 dark:border-emerald-700 rounded-lg font-bold">${escapeHtml(pt.motif_justification || 'Régularisé')}</span>` 
+                  : `<span class="text-emerald-600 dark:text-emerald-400 font-bold px-2 py-1">Présent</span>`)
+            }
+          </td>
+          <td class="py-3 px-3 text-center">
+            <div class="flex items-center justify-center gap-1.5 flex-wrap">
+              <button type="button" data-action="dossier" data-eleve-id="${eleveId}" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 p-2 rounded-lg cursor-pointer transition" title="Dossier"><i class="fa-solid fa-folder-open"></i></button>
+              <button type="button" data-action="edit-eleve" data-eleve-id="${eleveId}" class="bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/50 p-2 rounded-lg cursor-pointer transition" title="Modifier l'élève"><i class="fa-solid fa-user-pen"></i></button>
+              <button type="button" data-action="edit-pointage" data-pointage-id="${pid}" class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 p-2 rounded-lg cursor-pointer transition" title="Pointage"><i class="fa-solid fa-pen"></i></button>
+              ${!isArchived ? `
+                <button type="button" data-action="billet" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition"><i class="fa-solid fa-print mr-1"></i>Billet</button>
+                ${al ? `<button type="button" data-action="convoc" class="bg-rose-600 text-white hover:bg-rose-700 px-2.5 py-1.5 rounded-lg font-bold text-xs cursor-pointer shadow-sm transition"><i class="fa-solid fa-envelope mr-1"></i>Convoc.</button>` : ''}
+                <button type="button" data-action="delete" data-pointage-id="${pid}" class="bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 p-2 rounded-lg cursor-pointer transition" title="Archiver"><i class="fa-solid fa-trash"></i></button>
+              ` : `<span class="text-[10px] text-slate-400 font-bold bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">Archivé</span>`}
+            </div>
+          </td>
+        `;
+        tr.onclick = ev => { 
+          if (ev.target.closest('button, input, .cursor-pointer')) return;
+          const cb = tr.querySelector('.row-checkbox'); 
+          if (cb) { cb.checked = !cb.checked; toggleSelectRow(pid, cb.checked); } 
+        };
+        registreBody.appendChild(tr);
       });
-      ['1AS','2AS','3AS','AUTRE'].forEach(k => { if(g[k].children.length) selectClasse.appendChild(g[k]); });
+      actualiserMasterCheckbox();
     }
 
-    async function chargerBilletsActifs(dateCible) {
-      if (!navigator.onLine || !supabaseClient) return;
-      if (billetsDate !== dateCible) { billetsMap = new Map(); billetsDate = dateCible; }
-      const { data } = await supabaseClient.from('v_billets_actifs_jour').select('*').eq('date_billet', dateCible).eq('actif', true);
-      const maintenant = new Date(); const minutesActuelles = maintenant.getHours() * 60 + maintenant.getMinutes();
-      const aujourdhuiIso = maintenant.toISOString().split('T')[0];
-      const newMap = new Map();
-      billetsMap.forEach((v, k) => { if ((v.heure_affichage === 'Régularisé' || v.heure_affichage === 'تمت التسوية') && v.date === dateCible) newMap.set(String(k), v); });
-      if (data) {
-        data.forEach(b => {
-          const h = b.heure_emission ? b.heure_emission.substring(0, 5) : '';
-          if (!h) return;
-          const parts = h.split(':'); const mEm = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-          if (dateCible !== aujourdhuiIso || (minutesActuelles - mEm) >= -5) {
-            newMap.set(String(b.eleve_id), { motif: b.motif, heure_affichage: h, heure_emission: h, date: dateCible });
+    window.toggleSelectAll = function(masterCb) { 
+      const fData = obtenirDonneesFiltrees(); 
+      if (masterCb.checked) fData.forEach(pt => pointagesSelectionnes.add(String(pt.pointage_id || pt.id))); 
+      else fData.forEach(pt => pointagesSelectionnes.delete(String(pt.pointage_id || pt.id))); 
+      renderTableau(); mettreAJourBarreSelection(); 
+    };
+    window.toggleSelectRow = function(id, isChecked) { 
+      id = String(id); if (isChecked) pointagesSelectionnes.add(id); else pointagesSelectionnes.delete(id); 
+      actualiserMasterCheckbox(); mettreAJourBarreSelection(); 
+    };
+    window.deselectionnerTout = function() { pointagesSelectionnes.clear(); if (checkAllMaster) checkAllMaster.checked = false; renderTableau(); mettreAJourBarreSelection(); };
+
+    function renderGraphiques() {
+      const ctxRep = document.getElementById('chartRepartition');
+      const ctxCls = document.getElementById('chartClasses');
+      if(!ctxRep || !ctxCls) return;
+
+      let p=0, a=0, r=0; const parClasse = {};
+      vuePointages.filter(pt => !pt.archive).forEach(pt => {
+        const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
+        if(pt.statut==='A' || isJustifiedAbsence) { a++; parClasse[pt.classe_nom] = (parClasse[pt.classe_nom]||0)+1; }
+        else if(pt.statut==='R') r++;
+        else if(pt.statut==='P') p++;
+      });
+
+      const totalAppeles = p + a + r;
+      const totalAttendu = totalElevesEtablissement > 0 ? totalElevesEtablissement : totalAppeles;
+      let nonAppeles = totalAttendu - totalAppeles;
+      if (nonAppeles < 0) nonAppeles = 0; 
+
+      if(chartRep) chartRep.destroy();
+      if(chartCls) chartCls.destroy();
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const textColor = isDark ? '#cbd5e1' : '#475569';
+
+      chartRep = new Chart(ctxRep, {
+        type: 'doughnut',
+        data: { 
+          labels: ['Présents', 'Absents', 'Retards', 'Non appelés'], 
+          datasets: [{ 
+            data: [p, a, r, nonAppeles], 
+            backgroundColor: ['#10b981', '#f43f5e', '#f59e0b', '#cbd5e1'],
+            borderWidth: 0 
+          }] 
+        },
+        options: { 
+          responsive: true, maintainAspectRatio: false, 
+          onClick: (event, elements) => {
+            if (elements.length > 0 && elements[0].index === 3) ouvrirModalNonAppeles();
+          },
+          plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Cairo' } } } } 
+        }
+      });
+
+      chartCls = new Chart(ctxCls, {
+        type: 'bar',
+        data: { labels: Object.keys(parClasse), datasets: [{ label: 'Absences', data: Object.values(parClasse), backgroundColor: '#f43f5e', borderRadius: 4 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor }, grid: { color: isDark ? '#334155' : '#e2e8f0' } }, x: { ticks: { color: textColor }, grid: { display: false } } }, plugins: { legend: { display: false } } }
+      });
+    }
+
+    window.ouvrirModalNonAppeles = async function() {
+      const modal = document.getElementById('modal-non-appeles');
+      const content = document.getElementById('non-appeles-content');
+      content.innerHTML = '<div class="text-center py-8 text-indigo-500"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>';
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+
+      try {
+        const { data: eleves } = await supabaseClient.from('eleves').select('classe_id').eq('actif', true);
+        const totalParClasse = {};
+        (eleves||[]).forEach(e => { totalParClasse[e.classe_id] = (totalParClasse[e.classe_id] || 0) + 1; });
+
+        const appelesParClasse = {};
+        vuePointages.filter(pt => !pt.archive).forEach(pt => {
+          if (!appelesParClasse[pt.classe_id]) appelesParClasse[pt.classe_id] = new Set();
+          appelesParClasse[pt.classe_id].add(pt.eleve_id);
+        });
+
+        let classesNonAppelees = [];
+        classesCache.forEach(cls => {
+          const total = totalParClasse[cls.id] || 0;
+          const appeles = appelesParClasse[cls.id] ? appelesParClasse[cls.id].size : 0;
+          if (total > 0 && appeles < total) {
+            classesNonAppelees.push({ nom: cls.nom_court, manquants: total - appeles, total: total });
           }
         });
-      }
-      billetsMap = newMap;
-    }
 
-    async function rafraichirBilletsSilencieux() {
-      if (!selectClasse || !selectClasse.value || !navigator.onLine) return;
-      try { const dt = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0]; await chargerBilletsActifs(dt); afficherEleves(); } catch (err) {}
-    }
-    setInterval(rafraichirBilletsSilencieux, 60000);
-    window.addEventListener('focus', rafraichirBilletsSilencieux);
-
-    async function verifierEtChargerSeanceExistante() {
-      const cid = selectClasse.value, mat = inputMatiereBloque.value, dt = inputDateCours ? inputDateCours.value : '';
-      const horaireAuto = obtenirHoraireActuel();
-      const heureDeb = horaireAuto.debut;
-
-      if (!cid || !mat || !dt || !navigator.onLine || !supabaseClient) { seanceExistanteId = null; if(badgeModeSeance) badgeModeSeance.classList.add('hidden'); return; }
-      
-      try {
-        await chargerBilletsActifs(dt);
-        const { data: seance } = await supabaseClient.from('seances').select('id, pointages (eleve_id, statut, justifie, motif_justification)').eq('classe_id', cid).eq('matiere', mat).eq('date_cours', dt).eq('heure_debut', heureDeb).maybeSingle();
-        if (seance) {
-          seanceExistanteId = seance.id; if(badgeModeSeance) badgeModeSeance.classList.remove('hidden');
-          if (seance.pointages) {
-            seance.pointages.forEach(pt => {
-              currentStatuts[pt.eleve_id] = pt.statut;
-              if (pt.justifie && pt.statut === 'P' && !billetsMap.has(String(pt.eleve_id))) {
-                billetsMap.set(String(pt.eleve_id), { motif: pt.motif_justification, heure_affichage: (langueCourante==='ar'?'تمت التسوية':'Régularisé'), date: dt });
-              }
-            });
-          }
-          afficherEleves(); mettreAJourCompteurs();
-        } else { seanceExistanteId = null; if(badgeModeSeance) badgeModeSeance.classList.add('hidden'); }
-      } catch (err) { seanceExistanteId = null; if(badgeModeSeance) badgeModeSeance.classList.add('hidden'); }
-    }
-
-    async function chargerEleves(cid) {
-      const token = ++chargerToken;
-      if(!cid) {
-        elevesContainer.innerHTML = `<div class="py-12 text-center text-slate-400"><p class="text-sm">${TRADUCTIONS[langueCourante].prompt_select_classe}</p></div>`;
-        document.getElementById('stats-bar').classList.add('hidden'); document.getElementById('btn-tout-present').classList.add('hidden');
-        if (btnValiderRapideTop) btnValiderRapideTop.classList.add('hidden'); if (stickyFooterBar) stickyFooterBar.classList.add('hidden');
-        if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.add('hidden'); if (btnRefreshProf) btnRefreshProf.classList.add('hidden');
-        if (searchContainer) searchContainer.classList.add('hidden'); if (badgeModeSeance) badgeModeSeance.classList.add('hidden');
-        clearSearchEleve(); seanceExistanteId = null; return;
-      }
-      elevesContainer.innerHTML = `<div class="py-12 text-center text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
-      let sc = classesList.find(c => c.id == cid);
-      document.getElementById('classe-titre').textContent = sc ? `${sc.nom_court} (${sc.nom_complet})` : 'Classe';
-      
-      const cache = localStorage.getItem(`cache_eleves_${cid}`); let elevesCharges = [];
-      if (cache) { try { elevesCharges = JSON.parse(cache); } catch(e){} }
-      if (navigator.onLine && supabaseClient) {
-        try { const { data } = await supabaseClient.from('eleves').select('*').eq('classe_id', cid).eq('actif', true).order('nom'); if (data) { elevesCharges = data; localStorage.setItem(`cache_eleves_${cid}`, JSON.stringify(data)); } } catch (e) {}
-      }
-      if (token !== chargerToken) return;
-      currentEleves = elevesCharges;
-      document.getElementById('classe-effectif').textContent = `${currentEleves.length} inscrits`;
-      currentStatuts = {}; currentEleves.forEach(e => currentStatuts[e.id] = 'P');
-      clearSearchEleve(); afficherEleves(); mettreAJourCompteurs();
-      document.getElementById('stats-bar').classList.remove('hidden'); document.getElementById('btn-tout-present').classList.remove('hidden');
-      if (btnValiderRapideTop) btnValiderRapideTop.classList.remove('hidden'); if (stickyFooterBar) stickyFooterBar.classList.remove('hidden');
-      if (btnOuvrirModalEleve) btnOuvrirModalEleve.classList.remove('hidden'); if (btnRefreshProf) btnRefreshProf.classList.remove('hidden');
-      if (searchContainer) searchContainer.classList.remove('hidden');
-      await verifierEtChargerSeanceExistante();
-    }
-
-    function filterEleves(terme) {
-      searchTermEleve = (terme || '').trim().toLowerCase();
-      if (btnClearSearch) { if (searchTermEleve.length > 0) btnClearSearch.classList.remove('hidden'); else btnClearSearch.classList.add('hidden'); }
-      afficherEleves();
-    }
-    window.clearSearchEleve = function() { if (inputSearchEleve) inputSearchEleve.value = ''; searchTermEleve = ''; if (btnClearSearch) btnClearSearch.classList.add('hidden'); afficherEleves(); };
-    if (inputSearchEleve) inputSearchEleve.addEventListener('input', e => filterEleves(e.target.value));
-
-    function afficherEleves() {
-      elevesContainer.innerHTML = '';
-      const listeFiltree = currentEleves.filter(e => {
-        if (!searchTermEleve) return true;
-        return `${e.nom || ''} ${e.prenom || ''} ${e.nom_ar || ''} ${e.prenom_ar || ''}`.toLowerCase().includes(searchTermEleve);
-      });
-      if (listeFiltree.length === 0) { elevesContainer.innerHTML = `<div class="py-10 text-center text-slate-400"><p class="text-sm font-semibold">${TRADUCTIONS[langueCourante].no_search_result}</p></div>`; return; }
-      
-      const matieresArabe = ["Langue Arabe / لغة عربية", "Philosophie / فلسفة", "Histoire-Géographie / تاريخ وجغرافيا", "Sciences Islamiques / علوم إسلامية", "Droit / قانون", "Gestion & Économie / تسيير واقتصاد"];
-      const estMatArabe = matieresArabe.includes(inputMatiereBloque.value);
-
-      listeFiltree.forEach((e) => {
-        const index = currentEleves.findIndex(x => x.id === e.id) + 1;
-        const st = currentStatuts[e.id] || 'P';
-        const nomPr = (langueCourante === 'ar' && e.nom_ar) ? `${e.nom_ar} ${e.prenom_ar}` : `${e.nom} ${e.prenom}`;
-        const nomSec = (langueCourante === 'ar' && e.nom_ar) ? `(${e.nom} ${e.prenom})` : `(${e.nom_ar||''} ${e.prenom_ar||''})`;
-        
-        const billet = billetsMap.get(String(e.id));
-        let txtBadge = "";
-        if (billet) {
-           const h = billet.heure_affichage || '';
-           if (h === 'Régularisé' || h === 'تمت التسوية') txtBadge = estMatArabe ? 'تمت التسوية' : 'Régularisé';
-           else txtBadge = estMatArabe ? `مسموح له بالدخول (${h})` : `Autorisé (${h})`;
+        if (classesNonAppelees.length === 0) {
+          content.innerHTML = `<div class="text-center py-8"><i class="fa-solid fa-check-circle text-emerald-500 text-4xl mb-3 block"></i><p class="text-sm font-bold text-slate-700 dark:text-slate-300">Toutes les classes ont fait l'appel !</p></div>`;
+          return;
         }
-        const badgeBillet = billet ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shadow-sm"><i class="fa-solid fa-user-check"></i><span>${txtBadge}</span></span>` : '';
 
-        const clsP = st === 'P' ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-slate-600';
-        const clsA = st === 'A' ? 'bg-rose-600 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-slate-600';
-        const clsR = st === 'R' ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-amber-50 dark:hover:bg-slate-600';
-
-        const row = document.createElement('div');
-        row.className = `animate-row px-4 py-3 sm:py-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-slate-700/50 transition`;
-        row.innerHTML = `
-          <div class="flex items-center gap-3.5 w-full sm:w-auto">
-            <span class="w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 dark:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300">${index}</span>
-            <div class="truncate flex items-center gap-2 flex-wrap"><span class="font-bold text-slate-900 dark:text-white">${nomPr}</span><span class="text-xs text-slate-500 dark:text-slate-400 font-bold">${nomSec}</span>${badgeBillet}</div>
-          </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
-            <button type="button" onclick="changerStatut(${e.id}, 'P')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${clsP}"><i class="fa-solid fa-check"></i><span>${TRADUCTIONS[langueCourante].btn_present}</span></button>
-            <button type="button" onclick="changerStatut(${e.id}, 'A')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${clsA}"><i class="fa-solid fa-xmark"></i><span>${TRADUCTIONS[langueCourante].btn_absent}</span></button>
-            <button type="button" onclick="changerStatut(${e.id}, 'R')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${clsR}"><i class="fa-solid fa-clock"></i><span>${TRADUCTIONS[langueCourante].btn_retard}</span></button>
-          </div>
-        `;
-        elevesContainer.appendChild(row);
-      });
-    }
-
-    window.changerStatut = function(id, st) { currentStatuts[id] = st; afficherEleves(); mettreAJourCompteurs(); };
-    window.marquerTousPresents = function() { currentEleves.forEach(e => currentStatuts[e.id] = 'P'); afficherEleves(); mettreAJourCompteurs(); };
-    function mettreAJourCompteurs() {
-      let p=0, a=0, r=0; Object.values(currentStatuts).forEach(s => { if(s==='P') p++; else if(s==='A') a++; else r++; });
-      document.getElementById('count-presents').textContent = p; document.getElementById('count-absents').textContent = a; document.getElementById('count-retards').textContent = r;
-      if (document.getElementById('sticky-presents')) document.getElementById('sticky-presents').textContent = p;
-      if (document.getElementById('sticky-absents')) document.getElementById('sticky-absents').textContent = a;
-    }
-
-    window.ouvrirModalNouvelEleve = function() {
-      if (!selectClasse.value) return;
-      ['add-eleve-nom','add-eleve-prenom','add-eleve-nom-ar','add-eleve-prenom-ar'].forEach(id => document.getElementById(id).value = '');
-      document.getElementById('modal-nouvel-eleve').classList.remove('hidden'); document.getElementById('modal-nouvel-eleve').classList.add('flex');
+        classesNonAppelees.sort((a, b) => b.manquants - a.manquants);
+        let html = '<ul class="space-y-2">';
+        classesNonAppelees.forEach(c => {
+          html += `<li class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 p-3 rounded-xl"><div><div class="font-bold text-slate-800 dark:text-white text-xs">${escapeHtml(c.nom)}</div><div class="text-[11px] text-slate-500 mt-0.5">Total: ${c.total} élèves</div></div><span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg text-xs font-black">${c.manquants} manquant(s)</span></li>`;
+        });
+        content.innerHTML = html + '</ul>';
+      } catch (err) { content.innerHTML = `<p class="text-center text-rose-500 font-bold">Erreur: ${escapeHtml(err.message)}</p>`; }
     };
-    window.fermerModalNouvelEleve = function() { document.getElementById('modal-nouvel-eleve').classList.add('hidden'); document.getElementById('modal-nouvel-eleve').classList.remove('flex'); };
-    window.confirmerAjoutEleve = async function() {
-      if (!navigator.onLine || !supabaseClient) { alert('Connexion requise'); return; }
-      const cid = selectClasse.value, nom = document.getElementById('add-eleve-nom').value.trim().toUpperCase(), prenom = document.getElementById('add-eleve-prenom').value.trim();
-      const nomAr = document.getElementById('add-eleve-nom-ar').value.trim(), prenomAr = document.getElementById('add-eleve-prenom-ar').value.trim();
-      if (!nom || !prenom) return;
+    window.fermerModalNonAppeles = function() { document.getElementById('modal-non-appeles').classList.add('hidden'); document.getElementById('modal-non-appeles').classList.remove('flex'); };
+
+    window.ouvrirMiniHist = async function(eleveId, nom) {
+      document.getElementById('mini-hist-nom').textContent = nom;
+      const content = document.getElementById('mini-hist-content');
+      content.innerHTML = '<div class="text-center py-4 text-indigo-500"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+      document.getElementById('modal-mini-hist').classList.remove('hidden'); document.getElementById('modal-mini-hist').classList.add('flex');
+      const { data } = await supabaseClient.from('pointages').select('statut, justifie, motif_justification, seances(date_cours, matiere)').eq('eleve_id', eleveId).eq('archive', false).order('id', { ascending: false }).limit(5);
+      if(!data || data.length === 0) { content.innerHTML = '<p class="text-center text-slate-400">Aucune absence enregistrée.</p>'; return; }
+      let html = '<ul class="space-y-2 border-l-2 border-indigo-200 dark:border-indigo-700 ml-2 pl-3">';
+      data.forEach(p => {
+        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+        const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+        let color = 'text-emerald-600', label = 'Présent';
+        if (isAbsent) { color = 'text-rose-600 dark:text-rose-400'; label = 'Absent'; }
+        else if (p.statut === 'R') { color = 'text-amber-600 dark:text-amber-400'; label = 'Retard'; }
+        const date = p.seances?.date_cours || '--', mat = p.seances?.matiere || '--';
+        html += `<li class="relative text-xs"><span class="absolute -left-[17px] top-1 w-2 h-2 rounded-full bg-indigo-400 dark:bg-indigo-500"></span><span class="font-bold text-slate-800 dark:text-white">${date}</span> - ${mat}<br><span class="${color} font-bold">${label}</span> ${p.justifie ? '<span class="text-emerald-500">(Justifié)</span>' : ''}</li>`;
+      });
+      content.innerHTML = html + '</ul>';
+    };
+    window.fermerMiniHist = function() { document.getElementById('modal-mini-hist').classList.add('hidden'); document.getElementById('modal-mini-hist').classList.remove('flex'); };
+
+    window.ouvrirModalDetailsAppels = async function() {
+      const dateCible = filtreDate.value; if (!dateCible) return;
+      const modal = document.getElementById('modal-details-appels'), tbody = document.getElementById('details-appels-body');
+      tbody.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-indigo-500"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></td></tr>`;
+      modal.classList.remove('hidden'); modal.classList.add('flex');
       try {
-        const { data, error } = await supabaseClient.from('eleves').insert({ classe_id: parseInt(cid, 10), nom, prenom, nom_ar: nomAr||null, prenom_ar: prenomAr||null, matricule: 'TEMP-'+Date.now(), actif: true }).select().single();
+        const { data, error } = await supabaseClient.from('seances').select('id, matiere, heure_debut, classes(nom_court)').eq('date_cours', dateCible).order('heure_debut', { ascending: true });
         if (error) throw error;
-        currentEleves.push(data); currentStatuts[data.id] = 'P'; afficherEleves(); mettreAJourCompteurs(); fermerModalNouvelEleve();
+        if (!data || data.length === 0) { tbody.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-slate-500">Aucun appel enregistré.</td></tr>`; return; }
+        let html = '';
+        data.forEach(s => {
+          const h = (s.heure_debut || '').substring(0, 5), c = s.classes ? s.classes.nom_court : 'N/A';
+          html += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition"><td class="py-3 px-4 font-bold text-slate-800 dark:text-white">${escapeHtml(s.matiere)}</td><td class="py-3 px-4 text-center"><span class="bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-lg text-xs font-bold"><i class="fa-regular fa-clock mr-1"></i>${h}</span></td><td class="py-3 px-4 text-center font-bold text-slate-600 dark:text-slate-300">${escapeHtml(c)}</td></tr>`;
+        });
+        tbody.innerHTML = html;
+      } catch (err) { tbody.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-rose-500 font-bold">Erreur: ${escapeHtml(err.message)}</td></tr>`; }
+    };
+    window.fermerModalDetailsAppels = function() { document.getElementById('modal-details-appels').classList.add('hidden'); document.getElementById('modal-details-appels').classList.remove('flex'); };
+
+    window.supprimerSelectionGroupee = async function() {
+      const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
+      if (!confirm(`Archiver ces ${ids.length} enregistrements ?`)) return;
+      try { 
+        await supabaseClient.from('pointages').update({ archive: true }).in('id', ids); 
+        enregistrerLog('Archivage groupé', `${ids.length} pointages archivés`);
+        pointagesSelectionnes.clear(); await fetchDonnees(); 
       } catch (err) { alert(err.message); }
     };
 
-    window.declencherValidationAppel = async function() {
-      if(!selectClasse.value || currentEleves.length === 0) return;
-      
-      const horaireAuto = obtenirHoraireActuel();
-      const dateChoisie = inputDateCours ? inputDateCours.value : new Date().toISOString().split('T')[0];
-      
-      const d = { 
-        seance_id: seanceExistanteId, 
-        classe_id: selectClasse.value, 
-        matiere: inputMatiereBloque.value, 
-        date_cours: dateChoisie, 
-        heure_debut: horaireAuto.debut, 
-        heure_fin: horaireAuto.fin, 
-        pointages: currentEleves.map(e => ({ eleve_id: e.id, statut: currentStatuts[e.id] || 'P' })) 
-      };
-
-      if (!navigator.onLine) { const q = getQueueHorsLigne(); q.push(d); saveQueueHorsLigne(q); afficherToast('Hors-ligne', 'Appel sauvegardé'); return; }
-      
-      const btn = document.getElementById('btn-valider-appel'); if(btn) { btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ...`; }
+    window.justifierSelectionGroupee = async function() {
+      const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
+      const motif = prompt('Motif :', 'Accord administration'); if (motif === null) return;
       try {
-        if (!supabaseClient) throw new Error("Connexion à la base de données impossible.");
-        
-        let sid = seanceExistanteId, anciensPtsMap = new Map(), backup = [];
-        if (!sid) {
-          const { data: s, error: e1 } = await supabaseClient.from('seances').insert({ classe_id: d.classe_id, matiere: d.matiere, date_cours: d.date_cours, heure_debut: d.heure_debut, heure_fin: d.heure_fin, appel_valide: true }).select().single();
-          if(e1) throw e1; sid = s.id;
-        } else {
-          const { data: anciens } = await supabaseClient.from('pointages').select('*').eq('seance_id', sid);
-          if (anciens) { backup = anciens; anciens.forEach(ap => anciensPtsMap.set(String(ap.eleve_id), ap)); }
+        await supabaseClient.from('pointages').update({ statut: 'A', justifie: true, motif_justification: motif || 'Justifié' }).in('id', ids);
+        const nouveauxBillets = [];
+        for (const id of ids) {
+          const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(id));
+          if (pt && pt.eleve_id) nouveauxBillets.push({ eleve_id: pt.eleve_id, date_billet: pt.date_cours, heure_emission: new Date().toTimeString().split(' ')[0], statut_origine: pt.statut || 'A', motif: motif || 'Justifié', actif: true });
         }
-        await supabaseClient.from('pointages').delete().eq('seance_id', sid);
-        const pts = d.pointages.map(p => {
-          const anc = anciensPtsMap.get(String(p.eleve_id)), aB = billetsMap.has(String(p.eleve_id));
-          let jC = anc ? anc.justifie : false, mC = anc ? anc.motif_justification : null;
-          if (p.statut === 'P' && ((anc && (anc.statut==='A'||anc.statut==='R')) || aB)) { jC = true; if (!mC) mC = 'Régularisé'; }
-          return { seance_id: sid, eleve_id: p.eleve_id, statut: p.statut, justifie: jC, motif_justification: mC };
-        });
-        const { error: e2 } = await supabaseClient.from('pointages').insert(pts);
-        if(e2) { if(backup.length) await supabaseClient.from('pointages').insert(backup); throw e2; }
-        seanceExistanteId = sid; if(badgeModeSeance) badgeModeSeance.classList.remove('hidden'); afficherToast('Succès', 'Appel enregistré !');
-      } catch(e) { const q = getQueueHorsLigne(); q.push(d); saveQueueHorsLigne(q); afficherToast('Sauvegardé hors-ligne', 'Réseau instable'); }
-      finally { if(btn) { btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> <span data-i18n="btn_submit_call">${TRADUCTIONS[langueCourante].btn_submit_call}</span>`; } }
+        if (nouveauxBillets.length > 0) await supabaseClient.from('billets_entree').insert(nouveauxBillets);
+        enregistrerLog('Justification groupée', `${ids.length} pointages justifiés (${motif})`);
+        pointagesSelectionnes.clear(); await fetchDonnees();
+      } catch (err) { alert(err.message); }
     };
 
-    if(selectClasse) selectClasse.addEventListener('change', e => chargerEleves(e.target.value));
-    if(inputDateCours) inputDateCours.addEventListener('change', verifierEtChargerSeanceExistante);
+    window.supprimerPointage = async function(id) { 
+      if (!confirm('Déplacer vers la corbeille ?')) return; 
+      try { 
+        await supabaseClient.from('pointages').update({ archive: true }).eq('id', id); 
+        enregistrerLog('Archivage', `Pointage ID ${id} archivé`);
+        await fetchDonnees(); 
+      } catch (err) { alert(err.message); } 
+    };
 
-    // INITIALISATION
-    appliquerLangue(langueCourante);
-    const matiereSession = sessionStorage.getItem('prof_auth_matiere');
-    if (matiereSession && CODES_MATIERES_BASE64[matiereSession]) {
-      const pinScreen = document.getElementById('pin-screen-prof'); if (pinScreen) pinScreen.remove();
-      if (inputMatiereBloque) inputMatiereBloque.value = matiereSession;
-      initClasses();
+    window.ouvrirModalModifier = function(pid) {
+      const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(pid)); if (!pt) return;
+      document.getElementById('edit-pointage-id').value = pid; 
+      document.getElementById('edit-eleve-nom').textContent = pt.nom + " " + pt.prenom;
+      document.getElementById('edit-statut').value = pt.statut; 
+      document.getElementById('edit-justifie-' + (pt.justifie ? 'oui' : 'non')).checked = true;
+      document.getElementById('edit-motif').value = pt.motif_justification || '';
+      document.getElementById('modal-modifier').classList.remove('hidden'); document.getElementById('modal-modifier').classList.add('flex');
+    };
+    window.fermerModalModifier = function() { document.getElementById('modal-modifier').classList.add('hidden'); document.getElementById('modal-modifier').classList.remove('flex'); };
+    
+    window.enregistrerModificationPointage = async function() {
+      const id = document.getElementById('edit-pointage-id').value;
+      const statut = document.getElementById('edit-statut').value;
+      const justifie = document.getElementById('edit-justifie-oui').checked;
+      const motif = document.getElementById('edit-motif').value.trim();
+      try {
+        await supabaseClient.from('pointages').update({ statut, justifie, motif_justification: motif || null }).eq('id', id);
+        if (justifie) {
+          const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(id));
+          if (pt && pt.eleve_id) await supabaseClient.from('billets_entree').insert({ eleve_id: pt.eleve_id, date_billet: pt.date_cours, heure_emission: new Date().toTimeString().split(' ')[0], statut_origine: statut, motif: motif || 'Régularisé', actif: true });
+        }
+        enregistrerLog('Modification pointage', `Statut changé en ${statut} pour l'élève ID ${id}`);
+        fermerModalModifier(); await fetchDonnees();
+      } catch (err) { alert(err.message); }
+    };
+
+    window.ouvrirModalEditerEleve = function(eleveId) {
+      const pt = vuePointages.find(p => String(p.eleve_id) === String(eleveId)); 
+      if (!pt) return;
+      document.getElementById('edit-student-id').value = eleveId; 
+      document.getElementById('edit-student-nom').value = pt.nom || ''; 
+      document.getElementById('edit-student-prenom').value = pt.prenom || ''; 
+      document.getElementById('edit-student-nom-ar').value = pt.nom_ar || ''; 
+      document.getElementById('edit-student-prenom-ar').value = pt.prenom_ar || '';
+      document.getElementById('modal-editer-eleve').classList.remove('hidden'); 
+      document.getElementById('modal-editer-eleve').classList.add('flex');
+    };
+    
+    window.fermerModalEditerEleve = function() { 
+      document.getElementById('modal-editer-eleve').classList.add('hidden'); 
+      document.getElementById('modal-editer-eleve').classList.remove('flex'); 
+    };
+    
+    window.enregistrerModificationEleve = async function() {
+      const eleveId = document.getElementById('edit-student-id').value;
+      const nom = document.getElementById('edit-student-nom').value.trim().toUpperCase();
+      const prenom = document.getElementById('edit-student-prenom').value.trim();
+      const nomAr = document.getElementById('edit-student-nom-ar').value.trim();
+      const prenomAr = document.getElementById('edit-student-prenom-ar').value.trim();
+      if (!nom || !prenom) return;
+      try { 
+        await supabaseClient.from('eleves').update({ nom: nom, prenom: prenom, nom_ar: nomAr || null, prenom_ar: prenomAr || null }).eq('id', eleveId); 
+        fermerModalEditerEleve(); await fetchDonnees(); 
+      } catch (err) { alert(err.message); }
+    };
+
+    window.marquerEleveTransfereDepuisModal = async function() { 
+      const eleveId = document.getElementById('edit-student-id').value; 
+      if (!eleveId || !confirm('Confirmez-vous le transfert ?')) return; 
+      try { await supabaseClient.from('eleves').update({ actif: false }).eq('id', eleveId); fermerModalEditerEleve(); await fetchDonnees(); } catch (err) {} 
+    };
+    
+    window.supprimerEleveDefinitifDepuisModal = async function() { 
+      const eleveId = document.getElementById('edit-student-id').value; 
+      if (!eleveId || !confirm('Supprimer définitivement ?')) return; 
+      try { 
+        await supabaseClient.from('billets_entree').delete().eq('eleve_id', eleveId);
+        await supabaseClient.from('pointages').delete().eq('eleve_id', eleveId); 
+        const { error } = await supabaseClient.from('eleves').delete().eq('id', eleveId); 
+        if (error) throw error;
+        fermerModalEditerEleve(); await fetchDonnees(); 
+      } catch (err) { alert('Erreur suppression : ' + err.message); } 
+    };
+
+    window.ouvrirFicheEleve = async function(eleveId) {
+      const modal = document.getElementById('modal-fiche-eleve'), conteneur = document.getElementById('conteneur-fiche-eleve');
+      conteneur.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      try {
+        const { data: el } = await supabaseClient.from('eleves').select('*, classes (nom_court, nom_complet)').eq('id', eleveId).single();
+        const { data: pts } = await supabaseClient.from('pointages').select('id, statut, justifie, motif_justification, seances (date_cours, heure_debut, matiere)').eq('eleve_id', eleveId).eq('archive', false).order('id', { ascending: false });
+        const h = pts || []; let totalAbs = 0, totalRet = 0;
+        h.forEach(p => { 
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          if(p.statut === 'A' || isJustifiedAbsence) totalAbs++; 
+          if(p.statut === 'R') totalRet++; 
+        });
+        const absParMatiere = {};
+        h.forEach(p => { 
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          if ((p.statut === 'A' || isJustifiedAbsence) && p.seances) { 
+            const mat = p.seances.matiere || 'Inconnue'; 
+            absParMatiere[mat] = (absParMatiere[mat] || 0) + 1; 
+          } 
+        });
+        let matHtml = '';
+        if (Object.keys(absParMatiere).length > 0) {
+          matHtml = `<div><h4 class="font-bold text-xs mb-2">توزيع الغيابات حسب المواد :</h4><div class="grid grid-cols-3 gap-2">`;
+          Object.keys(absParMatiere).forEach(m => { matHtml += `<div class="border border-slate-300 dark:border-slate-600 p-2 rounded-lg text-center bg-white dark:bg-slate-900 text-xs"><div class="font-semibold truncate text-slate-800 dark:text-slate-200">${escapeHtml(m)}</div><div class="text-rose-600 font-black mt-0.5">${absParMatiere[m]} غيابات</div></div>`; });
+          matHtml += `</div></div>`;
+        }
+        let histHtml = h.length === 0 ? `<tr><td colspan="4" class="p-4 text-center font-bold text-slate-500">لا توجد أي غيابات مسجلة.</td></tr>` : h.map(p => {
+           const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+           const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+           const dt = (p.seances && p.seances.date_cours) ? p.seances.date_cours : '--', mat = (p.seances && p.seances.matiere) ? p.seances.matiere : '--';
+           const hr = (p.seances && p.seances.heure_debut && p.seances.heure_debut.length >= 5) ? p.seances.heure_debut.substring(0,5) : '--';
+           let stC = '', stT = 'حاضر'; 
+           if (isAbsent) { stC = 'text-rose-700'; stT = 'غياب'; } 
+           else if (p.statut === 'R') { stC = 'text-amber-700'; stT = 'تأخر'; }
+           let just = '';
+           if (isAbsent || p.statut === 'R') { just = p.justifie ? (p.motif_justification || 'مبرر') : 'غير مبرر'; } 
+           else { just = p.justifie ? (p.motif_justification || 'تسوية') : 'حاضر'; }
+           return `<tr><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-center text-slate-700 dark:text-slate-300" dir="ltr">${escapeHtml(dt)}</td><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-slate-700 dark:text-slate-300">${escapeHtml(mat)} (${hr})</td><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-center font-bold ${stC}">${stT}</td><td class="p-2 text-center text-slate-700 dark:text-slate-300">${escapeHtml(just)}</td></tr>`;
+        }).join('');
+        conteneur.innerHTML = `
+          <div class="text-center border-b-2 border-black dark:border-slate-600 pb-3 mb-4">
+            <p class="font-bold text-sm nom-officiel text-slate-800 dark:text-white">ثانوية الشهيد شعبان اعمر</p>
+            <div class="mt-2 border-2 border-black dark:border-slate-600 px-6 py-1 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white mx-auto" style="width: max-content; max-width: 100%;"><h2 class="font-black text-lg">بطاقة المتابعة الفردية</h2></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-800 dark:text-slate-200">
+            <div>اللقب والاسم : <span class="font-normal">${escapeHtml(el.nom_ar || '')} ${escapeHtml(el.prenom_ar || '')} (${escapeHtml(el.nom)} ${escapeHtml(el.prenom)})</span></div>
+            <div>القسم : <span class="font-normal" dir="ltr">${escapeHtml(el.classes ? el.classes.nom_court : '')}</span></div>
+            <div>مجموع الغيابات : <span class="text-rose-700 dark:text-rose-400 font-black">${totalAbs} حصص</span></div>
+            <div>مجموع التأخرات : <span class="text-amber-700 dark:text-amber-400 font-black">${totalRet} مرات</span></div>
+          </div>
+          ${matHtml}
+          <div><h4 class="font-bold text-xs mb-2 text-slate-800 dark:text-white">السجل الزمني للغيابات :</h4><div class="max-h-56 overflow-y-auto border border-slate-300 dark:border-slate-600 rounded-lg"><table class="w-full text-right border-collapse text-xs"><thead class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-800 dark:text-slate-200 sticky top-0 border-b border-slate-300 dark:border-slate-600"><tr><th class="border-l border-slate-300 dark:border-slate-600 p-2 text-center">التاريخ</th><th class="border-l border-slate-300 dark:border-slate-600 p-2">المادة</th><th class="border-l border-slate-300 dark:border-slate-600 p-2 text-center">الحالة</th><th class="p-2 text-center">التبرير</th></tr></thead><tbody class="divide-y divide-slate-200 dark:divide-slate-700">${histHtml}</tbody></table></div></div>
+        `;
+        document.getElementById('zone-impression-fiche-eleve').innerHTML = conteneur.innerHTML;
+      } catch (err) { conteneur.innerHTML = `<p class="text-rose-600 font-bold">Erreur: ${escapeHtml(err.message)}</p>`; }
+    };
+    
+    window.fermerModalFicheEleve = function() { document.getElementById('modal-fiche-eleve').classList.add('hidden'); document.getElementById('modal-fiche-eleve').classList.remove('flex'); };
+    window.lancerImpressionFicheEleve = function() { document.body.classList.add('print-fiche-eleve'); window.print(); setTimeout(() => document.body.classList.remove('print-fiche-eleve'), 1000); };
+
+    window.imprimerBillet = async function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, eleveId) {
+      const d = date || new Date().toISOString().split('T')[0];
+      try {
+        const { data: ex } = await supabaseClient.from('billets_entree').select('id').eq('eleve_id', eleveId).eq('date_billet', d).limit(1);
+        if (!ex || ex.length === 0) await supabaseClient.from('billets_entree').insert({ eleve_id: eleveId, date_billet: d, heure_emission: new Date().toTimeString().split(' ')[0], statut_origine: statut || 'A', motif: 'Régularisation' });
+      } catch (err) {}
+      document.getElementById('billet-details').innerHTML = `<div class="flex justify-between border-b border-black pb-2"><p><b>Nom & Prénom:</b> ${escapeHtml(nom)} ${escapeHtml(prenom)}</p><p dir="rtl"><b>اللقب والاسم:</b> ${escapeHtml(nomAr)} ${escapeHtml(prenomAr)}</p></div><div class="flex justify-between border-b border-black py-2"><p><b>Division / القسم:</b> ${escapeHtml(classe)}</p><p><b>Statut / الطبيعة:</b> ${statut === 'A' ? 'Absence / غياب' : 'Retard / تأخر'}</p></div><div class="py-2"><p><b>Date & Heure:</b> ${escapeHtml(date)} à ${heure ? heure.substring(0,5) : ''}</p></div>`;
+      document.getElementById('billet-date-emission').textContent = new Date().toLocaleString('fr-FR');
+      document.body.classList.add('print-billet'); window.print(); setTimeout(() => document.body.classList.remove('print-billet'), 1000);
+    };
+
+    window.imprimerConvocation = function(nom, prenom, nomAr, prenomAr, classe, tot) {
+      document.getElementById('convocation-details').innerHTML = `<div class="mb-4 bg-gray-100 p-3 border border-black text-center font-bold"><p>${escapeHtml(nom)} ${escapeHtml(prenom)} — ${escapeHtml(nomAr)} ${escapeHtml(prenomAr)} — القسم: ${escapeHtml(classe)}</p><p class="mt-2 text-rose-700 text-base">حالة إنذار: غياب لمدة 3 أيام متتالية (مجموع الغيابات: ${tot} حصص)</p></div><p>إلى السيد(ة) ولي أمر التلميذ(ة) المحترم(ة) :</p><p>نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجل غياباً مستمراً لمدة 3 أيام دراسية متتالية، دون تقديم أي تبرير.</p><p>وعليه، يُرجى الحضور شخصياً إلى مكتب مستشار التربية لتسوية وضعية تمدرس التلميذ.</p>`;
+      document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('ar-DZ');
+      document.body.classList.add('print-convocation'); window.print(); setTimeout(() => document.body.classList.remove('print-convocation'), 1000);
+    };
+
+    // ============================================================
+    // CONSTRUCTION DU NOUVEAU RAPPORT (2 PAGES) - MODIFIÉ
+    // ============================================================
+    function construireHtmlRapportComplet() {
+      const d = filtreDate.value;
+      const dateObj = new Date(d);
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateStrAr = dateObj.toLocaleDateString('ar-DZ', options);
+      
+      const clsChoisie = filtreClasse ? filtreClasse.value : 'ALL';
+      
+      // --- PAGE 1 ---
+      const incidents = vuePointages.filter(p => { 
+        if (clsChoisie !== 'ALL' && String(p.classe_id) !== String(clsChoisie)) return false; 
+        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+        return p.statut === 'A' || p.statut === 'R' || isJustifiedAbsence; 
+      });
+
+      let incHtml = incidents.length === 0 ? `<tr><td colspan="6" class="p-4 text-center font-bold">لم تُسجل أي غيابات.</td></tr>` : incidents.map((p, i) => {
+        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+        const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+        const h = (p.heure_debut && p.heure_debut.length >= 5) ? p.heure_debut.substring(0,5) : '';
+        
+        let stT = 'حاضر'; 
+        if (isAbsent) { stT = 'غياب'; } 
+        else if (p.statut === 'R') { stT = 'تأخر'; }
+        
+        let just = '';
+        if (isAbsent || p.statut === 'R') { just = p.justifie ? (p.motif_justification || 'مبرر') : 'غير مبرر'; } 
+        else { just = p.justifie ? (p.motif_justification || 'تسوية') : 'حاضر'; }
+
+        return `<tr><td class="border border-black p-1.5 text-center">${i + 1}</td><td class="border border-black p-1.5 font-bold">${escapeHtml(p.nom_ar || p.nom)} ${escapeHtml(p.prenom_ar || p.prenom)}</td><td class="border border-black p-1.5 text-center font-bold" dir="ltr">${escapeHtml(p.classe_nom)}</td><td class="border border-black p-1.5 text-center" dir="ltr">${escapeHtml(p.matiere)}<br>${h}</td><td class="border border-black p-1.5 text-center font-bold ${isAbsent ? 'text-rose-700' : (p.statut === 'R' ? 'text-amber-700' : 'text-emerald-700')}">${stT}</td><td class="border border-black p-1.5 text-center text-[11px]">${escapeHtml(just)}</td></tr>`;
+      }).join('');
+
+      const page1 = `
+        <div class="text-center mb-6">
+          <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية - مديرية التربية لولاية بجاية</p>
+          <p class="font-bold text-lg mt-1 nom-officiel">ثانوية الشهيد شعبان اعمر</p>
+          <div class="mt-4 border-2 border-black inline-block px-12 py-1"><h2 class="font-black text-lg">التقرير اليومي للغيابات والتأخرات</h2></div>
+          <p class="font-bold text-sm mt-4">تاريخ اليوم : ${dateStrAr}</p>
+        </div>
+        <div class="flex justify-between items-center gap-2 mb-6 w-full" dir="rtl">
+          <div class="print-kpi-box text-center w-1/4">الحصص المنجزة : ${currentKpis.total_seances || 0}</div>
+          <div class="print-kpi-box text-center w-1/4">الغيابات : ${currentKpis.total_absents || 0}</div>
+          <div class="print-kpi-box text-center w-1/4">التأخرات : ${currentKpis.total_retards || 0}</div>
+          <div class="print-kpi-box text-center w-1/4">نسبة الحضور : ${currentKpis.taux_presence || 0}%</div>
+        </div>
+        <table class="border-collapse border border-black print-table mb-8">
+          <thead><tr class="bg-gray-100"><th class="w-10">الرقم</th><th>اللقب والاسم</th><th>القسم</th><th>المادة والتوقيت</th><th>الحالة</th><th>التبرير / التأشيرة</th></tr></thead>
+          <tbody class="divide-y divide-black">${incHtml}</tbody>
+        </table>
+      `;
+
+      // --- PAGE 2 ---
+      const classes1AS = classesCache.filter(c => c.nom_court.startsWith('1AS'));
+      const classes2AS = classesCache.filter(c => c.nom_court.startsWith('2AS'));
+      const classes3AS = classesCache.filter(c => c.nom_court.startsWith('3AS'));
+      
+      const getAbs = (classeNom) => {
+        return vuePointages.filter(p => {
+          if (p.classe_nom !== classeNom) return false;
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          return p.statut === 'A' || isJustifiedAbsence;
+        }).length;
+      };
+
+      let rowsNiveaux = `
+        <tr>
+          <td rowspan="2" class="font-bold bg-gray-50">السنة الأولى ثانوي</td>
+          <td class="font-bold">الأفواج</td>
+          ${classes1AS.map(c => `<td class="text-xs">${c.nom_court}</td>`).join('')}
+          ${Array(9 - classes1AS.length).fill('<td></td>').join('')}
+          <td rowspan="2"></td>
+        </tr>
+        <tr>
+          <td class="font-bold">عدد الغياب</td>
+          ${classes1AS.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
+          ${Array(9 - classes1AS.length).fill('<td></td>').join('')}
+        </tr>
+        <tr>
+          <td rowspan="2" class="font-bold bg-gray-50">السنة الثانية ثانوي</td>
+          <td class="font-bold">الأفواج</td>
+          ${classes2AS.map(c => `<td class="text-xs">${c.nom_court}</td>`).join('')}
+          ${Array(9 - classes2AS.length).fill('<td></td>').join('')}
+          <td rowspan="2"></td>
+        </tr>
+        <tr>
+          <td class="font-bold">عدد الغياب</td>
+          ${classes2AS.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
+          ${Array(9 - classes2AS.length).fill('<td></td>').join('')}
+        </tr>
+        <tr>
+          <td rowspan="2" class="font-bold bg-gray-50">السنة الثالثة ثانوي</td>
+          <td class="font-bold">الأفواج</td>
+          ${classes3AS.map(c => `<td class="text-xs">${c.nom_court}</td>`).join('')}
+          ${Array(9 - classes3AS.length).fill('<td></td>').join('')}
+          <td rowspan="2"></td>
+        </tr>
+        <tr>
+          <td class="font-bold">عدد الغياب</td>
+          ${classes3AS.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
+          ${Array(9 - classes3AS.length).fill('<td></td>').join('')}
+        </tr>
+      `;
+
+      const page2 = `
+        <div class="page-break"></div>
+        <div class="text-center mb-6 relative">
+          <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية</p>
+          <div class="flex justify-between items-end mt-2">
+             <p class="font-bold text-xs w-1/3 text-right">مديرية التربية لولاية بجاية</p>
+             <div class="w-1/3 text-center">
+               <h2 class="font-black text-lg">التقرير اليومي لمستشار التربية</h2>
+               <p class="font-bold text-xs mt-2">التاريخ : ${dateStrAr}</p>
+             </div>
+             <div class="w-1/3 text-left">
+               <p class="font-bold text-base nom-officiel">ثانوية الشهيد شعبان اعمر</p>
+               <p class="font-bold text-xs mt-1">الدروس غير المقدمة</p>
+             </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-start gap-2 mb-6 w-full" dir="rtl">
+          <!-- Tableau de gauche (68%) -->
+          <div class="w-[68%] flex-shrink-0">
+            <table class="print-table">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="w-[15%]">السنة</th>
+                  <th class="w-[15%]">الأفواج</th>
+                  <th colspan="9">الغيابات</th>
+                  <th class="w-[10%]">المجموع</th>
+                </tr>
+              </thead>
+              <tbody>${rowsNiveaux}</tbody>
+            </table>
+          </div>
+
+          <!-- Tableau de droite (30%) -->
+          <div class="w-[30%] flex-shrink-0 flex flex-col gap-4">
+            <table class="print-table">
+              <thead><tr class="bg-gray-100"><th colspan="2">غيابات وتأخرات المساعدين التربويين</th></tr></thead>
+              <tbody>
+                <tr><td class="font-bold w-1/2">الفترة الصباحية</td><td></td></tr>
+                <tr><td class="font-bold w-1/2">الفترة المسائية</td><td></td></tr>
+              </tbody>
+            </table>
+            
+            <table class="print-table">
+              <thead><tr class="bg-gray-100"><th colspan="4">الخلاصة</th></tr><tr class="bg-gray-100"><th>البيان</th><th>تلميذ</th><th>أساتذة</th><th>مساعدون</th></tr></thead>
+              <tbody>
+                <tr><td class="font-bold">الحاضرون</td><td></td><td></td><td></td></tr>
+                <tr><td class="font-bold">الغائبون</td><td></td><td></td><td></td></tr>
+                <tr><td class="font-bold">المجموع</td><td></td><td></td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-end mt-12 pt-4">
+          <p class="font-bold text-sm">ملاحظات مختلفة: ..................................................................................</p>
+          <p class="font-bold text-sm">أوقاس في : ${new Date().toLocaleDateString('ar-DZ')}</p>
+        </div>
+      `;
+
+      return page1 + page2;
     }
+    
+    window.ouvrirApercuRapportJournalier = function() { 
+      const h = construireHtmlRapportComplet();
+      document.getElementById('conteneur-document-rapport').innerHTML = h; 
+      document.getElementById('zone-impression-rapport').innerHTML = h; 
+      document.getElementById('modal-apercu-rapport').classList.remove('hidden'); document.getElementById('modal-apercu-rapport').classList.add('flex'); 
+    };
+    
+    window.fermerModalApercuRapport = function() { document.getElementById('modal-apercu-rapport').classList.add('hidden'); document.getElementById('modal-apercu-rapport').classList.remove('flex'); };
+    
+    window.lancerImpressionRapport = function() { 
+      document.body.classList.add('print-rapport'); 
+      window.print(); 
+      setTimeout(() => document.body.classList.remove('print-rapport'), 1000); 
+    };
+
+    if (btnExportExcel) {
+      btnExportExcel.addEventListener('click', () => {
+        let sources = obtenirDonneesFiltrees();
+        if (pointagesSelectionnes.size > 0) sources = sources.filter(p => pointagesSelectionnes.has(String(p.pointage_id || p.id)));
+        if(sources.length === 0) return;
+        const d = sources.map((p, i) => {
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+          return { 
+            "N°": i + 1, "Date": p.date_cours, "Division": p.classe_nom, "Nom": p.nom, "Prénom": p.prenom, "Matière": p.matiere, 
+            "Statut": isAbsent ? 'Absent' : (p.statut === 'R' ? 'Retard' : 'Présent'), 
+            "Justifié": p.justifie ? "OUI" : "NON", "Motif": p.motif_justification || '' 
+          };
+        });
+        const ws = XLSX.utils.json_to_sheet(d), wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Registre"); XLSX.writeFile(wb, `Absences_${filtreDate.value}.xlsx`);
+      });
+    }
+
+    if (filtreDate) filtreDate.addEventListener('change', fetchDonnees);
+    if (filtreClasse) filtreClasse.addEventListener('change', renderTableau);
+    if (filtreStatut) filtreStatut.addEventListener('change', renderTableau);
+    if (btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
   </script>
 </body>
 </html>
