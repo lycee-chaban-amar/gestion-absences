@@ -154,21 +154,28 @@
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div><label class="block text-sm font-medium text-slate-700 mb-1">Date / التاريخ</label><input type="date" id="input-date-cours" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold outline-none cursor-pointer" /></div>
+        <!-- Champ Date - Automatisé et verrouillé -->
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Date / التاريخ</label>
+          <input type="date" id="input-date-cours" readonly class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-600 outline-none cursor-not-allowed" />
+        </div>
+        
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Classe / القسم</label>
-          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none cursor-pointer"><option value="">-- Choisir la division / اختر الفوج --</option></select>
+          <select id="select-classe" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-900 outline-none cursor-pointer focus:ring-2 focus:ring-indigo-600 shadow-inner">
+            <option value="">-- Choisir la division / اختر الفوج --</option>
+          </select>
         </div>
+        
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Matière / المادة</label>
-          <input type="text" id="input-matiere-bloque" readonly class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-indigo-900 cursor-not-allowed outline-none" />
+          <input type="text" id="input-matiere-bloque" readonly class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-600 cursor-not-allowed outline-none" />
         </div>
+        
+        <!-- Champ Séance - Automatisé et verrouillé -->
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1">Séance / التوقيت</label>
-          <select id="select-horaire" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm outline-none cursor-pointer">
-            <optgroup label="☀️ Matin / الصباح"><option value="08:00-09:00">08:00 - 09:00</option><option value="09:00-10:00">09:00 - 10:00</option><option value="10:00-11:00">10:00 - 11:00</option><option value="11:00-12:00">11:00 - 12:00</option></optgroup>
-            <optgroup label="🌤️ Après-midi / المساء"><option value="13:00-14:00">13:00 - 14:00</option><option value="14:00-15:00">14:00 - 15:00</option><option value="15:00-16:00">15:00 - 16:00</option><option value="16:00-17:00">16:00 - 17:00</option></optgroup>
-          </select>
+          <input type="text" id="select-horaire" readonly class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-600 outline-none cursor-not-allowed text-center" />
         </div>
       </div>
     </div>
@@ -238,7 +245,7 @@
     let searchTermEleve = '';
     let seanceExistanteId = null;
     let billetsMap = new Map();
-    let absencesNonJustifieesMap = new Map(); // NOUVEAU: Map pour stocker les absences non justifiées passées
+    let absencesNonJustifieesMap = new Map(); 
 
     const inputDateCours = document.getElementById('input-date-cours');
     const selectClasse = document.getElementById('select-classe');
@@ -254,9 +261,34 @@
     const stickyFooterBar = document.getElementById('sticky-footer-bar');
     const btnRefreshProf = document.getElementById('btn-refresh-prof');
 
-    if (inputDateCours) {
-      inputDateCours.value = new Date().toISOString().split('T')[0];
+    // NOUVEAU: Fonction d'automatisation et de verrouillage (Date et Heure)
+    function autoConfigurerDateEtHeure() {
+      const maintenant = new Date();
+      
+      if (inputDateCours) {
+        inputDateCours.value = maintenant.toISOString().split('T')[0];
+      }
+
+      const h = maintenant.getHours();
+      let seance = "08:00-09:00"; 
+      
+      if (h <= 8) seance = "08:00-09:00";
+      else if (h === 9) seance = "09:00-10:00";
+      else if (h === 10) seance = "10:00-11:00";
+      else if (h === 11 || h === 12) seance = "11:00-12:00";
+      else if (h === 13) seance = "13:00-14:00";
+      else if (h === 14) seance = "14:00-15:00";
+      else if (h === 15) seance = "15:00-16:00";
+      else if (h >= 16) seance = "16:00-17:00";
+
+      if (selectHoraire) {
+        selectHoraire.value = seance;
+      }
     }
+
+    // Exécuter l'automatisation au lancement et vérifier chaque minute
+    autoConfigurerDateEtHeure();
+    setInterval(autoConfigurerDateEtHeure, 60000);
 
     // Gestion du PIN
     window.validerPinDirect = function() {
