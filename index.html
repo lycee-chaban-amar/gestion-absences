@@ -234,13 +234,13 @@
     <!-- TABLEAU D'ÉVALUATION -->
     <table class="w-full text-sm border-collapse border border-black mt-4">
       <thead>
-        <tr class="bg-white font-bold text-center border-b border-black">
-          <th class="border-r border-black p-3 text-left w-1/3">Nom et Prénom</th>
-          <th class="border-r border-black p-3 w-32">Évaluation continue</th>
-          <th class="border-r border-black p-3 w-28">Devoir</th>
-          <th class="border-r border-black p-3 w-32">Composition</th>
-          <th class="border-r border-black p-3 w-28">Moyenne</th>
-          <th class="p-3 w-32">Observations</th>
+        <tr class="bg-white font-bold border-b border-black">
+          <th class="border-r border-black p-3 text-center w-1/3">Nom et Prénom</th>
+          <th class="border-r border-black p-3 text-center w-32">Évaluation continue</th>
+          <th class="border-r border-black p-3 text-center w-28">Devoir</th>
+          <th class="border-r border-black p-3 text-center w-32">Composition</th>
+          <th class="border-r border-black p-3 text-center w-28">Moyenne</th>
+          <th class="p-3 text-center w-32">Observations</th>
         </tr>
       </thead>
       <tbody id="print-tbody" class="divide-y divide-black">
@@ -586,7 +586,7 @@
       elevesActuels.forEach((e) => {
         rowsHtml += `
           <tr class="h-10">
-            <td class="border-r border-black p-2 font-bold uppercase">${escapeHtml(e.nom)} <span class="capitalize font-normal">${escapeHtml(e.prenom)}</span></td>
+            <td class="border-r border-black p-2 font-bold text-center text-base" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
             <td class="border-r border-black p-2"></td>
             <td class="border-r border-black p-2"></td>
             <td class="border-r border-black p-2"></td>
