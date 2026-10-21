@@ -126,7 +126,6 @@
     
     <!-- Bloc Informations de la Séance -->
     <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
-      <div class="absolute top-0 right-0 bg-teal-500 text-white text-[10px] font-black uppercase tracking-widest py-1 px-4 rounded-bl-xl shadow-sm">Officiel</div>
       <h2 class="text-lg font-extrabold mb-5 text-slate-800 dark:text-white flex items-center gap-2">
         <i class="fa-solid fa-calendar-day text-teal-500"></i>
         <span>Informations de la séance / معلومات الحصة</span>
@@ -301,14 +300,14 @@
       <thead>
         <tr class="bg-white font-bold border-b border-black">
           <th class="border-r border-black p-2 text-center w-1/4" rowspan="2">Nom et Prénom</th>
-          <th class="border-r border-black p-2 text-center" colspan="4">Octobre</th>
-          <th class="border-r border-black p-2 text-center" colspan="4">Novembre</th>
-          <th class="p-2 text-center" colspan="4">Décembre</th>
+          <th class="border-r border-black p-2 text-center" colspan="5">Octobre</th>
+          <th class="border-r border-black p-2 text-center" colspan="5">Novembre</th>
+          <th class="p-2 text-center" colspan="5">Décembre</th>
         </tr>
         <tr class="bg-white font-bold border-b border-black h-6">
-          <th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th>
-          <th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th>
-          <th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="w-8"></th>
+          <th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th>
+          <th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th>
+          <th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="w-7"></th>
         </tr>
       </thead>
       <tbody id="print-tbody-suivi" class="divide-y divide-black">
@@ -690,9 +689,9 @@
         rowsHtml += `
           <tr class="h-10">
             <td class="border-r border-black p-1 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
-            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
-            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
-            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td></td>
+            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
+            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
+            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td></td>
           </tr>
         `;
       });
