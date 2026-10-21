@@ -21,10 +21,60 @@
     button:active { transform: scale(0.96); }
     @keyframes slideUpFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     .animate-table-row { animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    
+    @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+    .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
+    
     .font-amiri { font-family: 'Amiri', serif; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+  <!-- ECRAN PIN PERSONNALISÉ PAR MATIÈRE -->
+  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform">
+      <div class="w-16 h-16 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+        <i class="fa-solid fa-chalkboard-user"></i>
+      </div>
+      <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Espace Enseignant</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-5 font-amiri text-base">اختر المادة وأدخل الرمز السري</p>
+      <div class="space-y-4">
+        
+        <div>
+          <select id="pin-matiere" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-4 py-3 text-sm font-bold outline-none text-slate-800 dark:text-white appearance-none cursor-pointer" dir="ltr">
+            <option value="">-- Choisir la matière / اختر المادة --</option>
+            <option value="الرياضيات">Mathématiques / رياضيات</option>
+            <option value="علوم الطبيعة">Sciences Naturelles / علوم الطبيعة</option>
+            <option value="علوم فيزيائية">Sciences Physiques / علوم فيزيائية</option>
+            <option value="إعلام آلي">Informatique / إعلام آلي</option>
+            <option value="هندسة مدنية">Génie Civil / هندسة مدنية</option>
+            <option value="هندسة كهربائية">Génie Électrique / هندسة كهربائية</option>
+            <option value="هندسة ميكانيكية">Génie Mécanique / هندسة ميكانيكية</option>
+            <option value="هندسة الطرائق">Génie des Procédés / هندسة الطرائق</option>
+            <option value="تسيير واقتصاد">Gestion & Économie / تسيير واقتصاد</option>
+            <option value="قانون">Droit / قانون</option>
+            <option value="لغة عربية">Langue Arabe / لغة عربية</option>
+            <option value="فرنسية">Langue Française / فرنسية</option>
+            <option value="إنجليزية">Langue Anglaise / إنجليزية</option>
+            <option value="ألمانية">Langue Allemande / ألمانية</option>
+            <option value="إسبانية">Langue Espagnole / إسبانية</option>
+            <option value="أمازيغية">Langue Amazighe / أمازيغية</option>
+            <option value="فلسفة">Philosophie / فلسفة</option>
+            <option value="تاريخ وجغرافيا">Histoire-Géographie / تاريخ وجغرافيا</option>
+            <option value="علوم إسلامية">Sciences Islamiques / علوم إسلامية</option>
+            <option value="تربية بدنية">EPS (Sport) / تربية بدنية</option>
+          </select>
+        </div>
+
+        <div>
+          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" />
+          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز خاطئ</p>
+        </div>
+        
+        <button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer transition-colors mt-2">Déverrouiller / دخول</button>
+      </div>
+    </div>
+  </div>
 
   <header class="bg-slate-900 dark:bg-slate-950 text-white shadow-md border-b border-slate-800">
     <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -44,6 +94,9 @@
         <a href="superviseur.html" class="text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 px-3.5 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
           <i class="fa-solid fa-shield-halved text-indigo-400"></i><span>Administration</span>
         </a>
+        <button type="button" id="btn-lock" class="text-xs font-semibold text-rose-300 bg-slate-800 hover:bg-rose-950/80 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-lock text-rose-400"></i><span>Verrouiller</span>
+        </button>
       </div>
     </div>
   </header>
@@ -68,8 +121,8 @@
           <input type="time" id="heure-cours" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed outline-none font-bold" readonly />
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Matière / المادة *</label>
-          <input type="text" id="matiere-cours" placeholder="Ex: Mathématiques" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all font-bold" required />
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Matière / المادة <i class="fa-solid fa-lock text-rose-500 text-[10px] ml-1" title="Verrouillé par le code PIN"></i></label>
+          <input type="text" id="matiere-cours" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed outline-none font-bold text-right" readonly dir="rtl" />
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Classe / القسم *</label>
@@ -96,6 +149,7 @@
             <tr>
               <th class="py-4 px-4 w-12 text-center text-slate-500 font-bold">N°</th>
               <th class="py-4 px-4 text-right text-slate-500 font-bold" dir="rtl">الاسم واللقب / Nom & Prénom</th>
+              
               <th class="py-4 px-2 text-center w-24 text-emerald-600 font-bold uppercase tracking-wider text-xs">Présent</th>
               <th class="py-4 px-2 text-center w-24 text-rose-600 font-bold uppercase tracking-wider text-xs">Absent</th>
               <th class="py-4 px-2 text-center w-24 text-amber-500 font-bold uppercase tracking-wider text-xs">Retard</th>
@@ -110,7 +164,7 @@
       <div class="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">
         <button type="button" id="btn-submit-appel" onclick="validerAppel()" class="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-teal-600/30 transition-all flex items-center gap-2 transform active:scale-95">
           <i class="fa-solid fa-paper-plane"></i>
-          <span>Enregistrer et Transmettre</span>
+          <span>Enregistrer et Transmettre à l'Administration</span>
         </button>
       </div>
     </div>
@@ -123,6 +177,33 @@
     
     let supabaseClient = null;
     let elevesActuels = [];
+    let __appInit = false;
+
+    // ==========================================
+    // 🔐 CODES PIN PAR MATIÈRE EXACTS
+    // ==========================================
+    const CODES_MATIERES = {
+      "الرياضيات": "1001",
+      "علوم الطبيعة": "1002",
+      "علوم فيزيائية": "1003",
+      "إعلام آلي": "1004",
+      "هندسة مدنية": "2001",
+      "هندسة كهربائية": "2002",
+      "هندسة ميكانيكية": "2003",
+      "هندسة الطرائق": "2004",
+      "تسيير واقتصاد": "2005",
+      "قانون": "2006",
+      "لغة عربية": "3001",
+      "فرنسية": "3002",
+      "إنجليزية": "3003",
+      "ألمانية": "3004",
+      "إسبانية": "3005",
+      "أمازيغية": "3006",
+      "فلسفة": "3007",
+      "تاريخ وجغرافيا": "3008",
+      "علوم إسلامية": "3009",
+      "تربية بدنية": "4001"
+    };
     
     try {
       if (typeof supabase === 'undefined') throw new Error("Supabase non chargé");
@@ -149,6 +230,50 @@
       updateDarkModeIcon(false);
     }
 
+    // Sécurisation (Code PIN par matière)
+    function debloquerEnseignant() {
+      const pinScreen = document.getElementById('pin-screen'); 
+      if (pinScreen) pinScreen.remove();
+      sessionStorage.setItem('enseignant_auth', 'true');
+      if (__appInit) return;
+      __appInit = true;
+      initPage();
+    }
+
+    function validerPinDirect() {
+      const selectMatiere = document.getElementById('pin-matiere');
+      const input = document.getElementById('input-pin');
+      const err = document.getElementById('pin-error');
+      const card = document.getElementById('pin-card');
+      
+      const matiere = selectMatiere.value;
+      let val = input ? input.value.trim() : '';
+
+      if (!matiere) {
+        err.textContent = "Veuillez choisir une matière / يرجى اختيار المادة";
+        err.classList.remove('hidden');
+        return;
+      }
+
+      // Convertir les chiffres arabes si le clavier est en arabe
+      const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+      val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
+
+      if (CODES_MATIERES[matiere] === val) { 
+        err.classList.add('hidden'); 
+        sessionStorage.setItem('enseignant_matiere', matiere); // On mémorise la matière validée
+        debloquerEnseignant(); 
+      } else { 
+        err.textContent = "Code incorrect / رمز خاطئ";
+        err.classList.remove('hidden'); 
+        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
+        if (input) { input.value = ''; input.focus(); } 
+      }
+    }
+    
+    document.getElementById('input-pin')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
+    document.getElementById('btn-lock')?.addEventListener('click', () => { sessionStorage.removeItem('enseignant_auth'); sessionStorage.removeItem('enseignant_matiere'); location.reload(); });
+
     // Fonction de verrouillage Date/Heure
     function verrouillerDateEtHeure() {
       const dateInput = document.getElementById('date-cours');
@@ -172,6 +297,13 @@
 
     async function initPage() {
       verrouillerDateEtHeure();
+      
+      // Auto-compléter la matière grâce au code PIN et la verrouiller
+      const savedMatiere = sessionStorage.getItem('enseignant_matiere');
+      const matiereInput = document.getElementById('matiere-cours');
+      if (savedMatiere) {
+        matiereInput.value = savedMatiere;
+      }
       
       if (!supabaseClient) return;
       try {
@@ -224,7 +356,7 @@
       }
     }
 
-    // Rendu HTML du tableau (avec carrés de texte colorés)
+    // Rendu HTML du tableau (Boutons "petit carré" cliquables)
     function afficherTableauAppel() {
       const tbody = document.getElementById('eleves-body');
       tbody.innerHTML = '';
@@ -235,6 +367,7 @@
       }
 
       elevesActuels.forEach((e, index) => {
+        // Le nom et prenom de Supabase (qui sont en arabe grâce au script)
         const nomPrincipal = `${e.nom || ''} ${e.prenom || ''}`.trim();
         const alerte = e.en_alerte || e.total_absences >= 3;
         
@@ -335,7 +468,6 @@
         alert("✅ L'appel a été enregistré et transmis à l'administration avec succès !");
         
         document.getElementById('classe-cours').value = "";
-        document.getElementById('matiere-cours').value = "";
         document.getElementById('zone-appel').classList.add('hidden');
         elevesActuels = [];
 
@@ -344,12 +476,14 @@
         alert("Erreur lors de l'enregistrement de l'appel. Vérifiez votre connexion.");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Enregistrer et Transmettre</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Enregistrer et Transmettre à l'Administration</span>`;
       }
     }
 
-    window.addEventListener('DOMContentLoaded', initPage);
-
+    // Affichage direct si on a déjà mis le code
+    if (sessionStorage.getItem('enseignant_auth') === 'true') {
+      debloquerEnseignant();
+    }
   </script>
 </body>
 </html>
