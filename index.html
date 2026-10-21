@@ -27,21 +27,24 @@
     
     .font-amiri { font-family: 'Amiri', serif; }
 
-    /* Styles d'impression intégrés */
+    /* Styles d'impression intégrés pour les DEUX tableaux */
     @media print {
       body * { visibility: hidden !important; }
+      
+      /* Zone Évaluation */
       body.print-liste #zone-impression-liste, body.print-liste #zone-impression-liste * { visibility: visible !important; }
       body.print-liste #zone-impression-liste { 
-        position: absolute !important; 
-        left: 0 !important; 
-        top: 0 !important; 
-        width: 100% !important; 
-        display: block !important; 
-        background: white !important; 
-        color: black !important; 
-        padding: 0 !important; 
-        margin: 0 !important; 
+        position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; 
+        display: block !important; background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; 
       }
+      
+      /* Zone Suivi Mensuel */
+      body.print-liste-suivi #zone-impression-liste-suivi, body.print-liste-suivi #zone-impression-liste-suivi * { visibility: visible !important; }
+      body.print-liste-suivi #zone-impression-liste-suivi { 
+        position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; 
+        display: block !important; background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; 
+      }
+
       @page { size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }
     }
   </style>
@@ -153,17 +156,22 @@
 
     <!-- Bloc Liste d'Appel -->
     <div id="zone-appel" class="hidden bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-300">
-      <div class="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col lg:flex-row justify-between items-center gap-4">
         <h2 class="text-lg font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
           <i class="fa-solid fa-users text-indigo-500"></i>
           <span>Liste d'appel / قائمة التلاميذ</span>
           <span id="count-eleves" class="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-lg ml-2 font-black shadow-inner">0</span>
         </h2>
         
-        <!-- BOUTON D'IMPRESSION LISTE D'ÉVALUATION EPS -->
-        <button type="button" onclick="imprimerListeClasse()" class="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm border border-slate-300 dark:border-slate-600">
-          <i class="fa-solid fa-print"></i> Imprimer la liste
-        </button>
+        <!-- BOUTONS D'IMPRESSION (DEUX OPTIONS) -->
+        <div class="flex gap-2 flex-wrap">
+          <button type="button" onclick="imprimerListeClasse()" class="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-300 dark:border-slate-600">
+            <i class="fa-solid fa-list-check text-indigo-500"></i> Fiche Évaluation
+          </button>
+          <button type="button" onclick="imprimerListeSuivi()" class="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-300 dark:border-slate-600">
+            <i class="fa-regular fa-calendar-days text-teal-500"></i> Fiche Suivi Mensuel
+          </button>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -194,12 +202,12 @@
 
   </main>
 
-  <!-- ============================================== -->
-  <!-- ZONE IMPRESSION CACHÉE (TABLEAU ÉVALUATION EPS)-->
-  <!-- ============================================== -->
+  <!-- ======================================================= -->
+  <!-- ZONE IMPRESSION CACHÉE 1 : TABLEAU ÉVALUATION (Le 1er)  -->
+  <!-- ======================================================= -->
   <div id="zone-impression-liste" class="hidden font-sans bg-white text-black max-w-5xl mx-auto" dir="ltr">
     
-    <!-- EN-TÊTE OFFICIEL BILINGUE (Depuis capture d'écran) -->
+    <!-- EN-TÊTE OFFICIEL BILINGUE -->
     <div class="pb-4 mb-4">
       <div class="flex justify-between items-center text-[10px] font-bold leading-tight">
         <div class="text-left w-1/3">
@@ -223,10 +231,10 @@
       </div>
     </div>
 
-    <!-- INFOS EPS (PES / Classe) -->
+    <!-- INFOS CLASSE -->
     <div class="flex justify-end items-end font-bold text-sm mb-4 border-t-2 border-black pt-4">
       <div class="text-left">
-        <p>PES / EPS : K.NASRI</p>
+        <p>Enseignant : <span class="font-black">.........................</span></p>
         <p class="mt-1">Classe : <span id="print-classe-fr" class="underline decoration-dotted underline-offset-4 font-black">.........................</span></p>
       </div>
     </div>
@@ -247,8 +255,68 @@
         <!-- Rempli par JavaScript -->
       </tbody>
     </table>
-
   </div>
+
+
+  <!-- ======================================================= -->
+  <!-- ZONE IMPRESSION CACHÉE 2 : TABLEAU SUIVI MENSUEL (Nouv) -->
+  <!-- ======================================================= -->
+  <div id="zone-impression-liste-suivi" class="hidden font-sans bg-white text-black max-w-5xl mx-auto" dir="ltr">
+    
+    <!-- EN-TÊTE OFFICIEL BILINGUE -->
+    <div class="pb-2 mb-2">
+      <div class="flex justify-between items-center text-[10px] font-bold leading-tight">
+        <div class="text-left w-1/3">
+          <p>RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE<br>ET POPULAIRE</p>
+          <p class="mt-0.5">MINISTÈRE DE L'ÉDUCATION NATIONALE</p>
+          <p class="mt-0.5">DIRECTION DE L'ÉDUCATION — BÉJAÏA</p>
+          <p class="mt-1 font-black text-indigo-950 text-sm">LYCÉE CHAABANE AAMAR — AOKAS</p>
+        </div>
+        <div class="w-1/3 flex flex-col items-center">
+          <div class="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center text-sm mb-1">
+            <i class="fa-solid fa-graduation-cap"></i>
+          </div>
+          <span class="text-[10px] font-black border border-black px-2 py-0.5 rounded">2026 / 2027</span>
+        </div>
+        <div class="text-right w-1/3 text-[11px]" dir="rtl">
+          <p>الجمهورية الجزائرية الديمقراطية الشعبية</p>
+          <p class="mt-0.5">وزارة التربية الوطنية</p>
+          <p class="mt-0.5">مديرية التربية لولاية بجاية</p>
+          <p class="mt-1 font-black text-indigo-950 text-sm">ثانوية شعبان أعمر — أوقاس</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFOS CLASSE -->
+    <div class="flex justify-between items-end font-bold text-sm mb-2 border-t-2 border-black pt-2">
+      <h3 class="font-black text-lg underline">Fiche de Suivi Mensuel - Trimestre 1</h3>
+      <div class="text-left">
+        <p>Enseignant : <span class="font-black">.........................</span></p>
+        <p class="mt-1">Classe : <span id="print-suivi-classe" class="underline decoration-dotted underline-offset-4 font-black">.........................</span></p>
+      </div>
+    </div>
+
+    <!-- TABLEAU DE SUIVI (OCT/NOV/DEC) -->
+    <table class="w-full text-sm border-collapse border border-black mt-2">
+      <thead>
+        <tr class="bg-white font-bold border-b border-black">
+          <th class="border-r border-black p-2 text-center w-1/4" rowspan="2">Nom et Prénom</th>
+          <th class="border-r border-black p-2 text-center" colspan="4">Octobre</th>
+          <th class="border-r border-black p-2 text-center" colspan="4">Novembre</th>
+          <th class="p-2 text-center" colspan="4">Décembre</th>
+        </tr>
+        <tr class="bg-white font-bold border-b border-black h-6">
+          <th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th>
+          <th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th>
+          <th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="border-r border-black w-8"></th><th class="w-8"></th>
+        </tr>
+      </thead>
+      <tbody id="print-tbody-suivi" class="divide-y divide-black">
+        <!-- Rempli par JavaScript -->
+      </tbody>
+    </table>
+  </div>
+
 
   <script>
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
@@ -570,7 +638,7 @@
     }
 
     // ==========================================
-    // LOGIQUE D'IMPRESSION DU TABLEAU D'ÉVALUATION
+    // LOGIQUE D'IMPRESSION 1 : TABLEAU ÉVALUATION
     // ==========================================
     window.imprimerListeClasse = function() {
       const classeId = document.getElementById('classe-cours').value;
@@ -586,7 +654,7 @@
       elevesActuels.forEach((e) => {
         rowsHtml += `
           <tr class="h-10">
-            <td class="border-r border-black p-2 font-bold text-center text-base" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
+            <td class="border-r border-black p-2 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
             <td class="border-r border-black p-2"></td>
             <td class="border-r border-black p-2"></td>
             <td class="border-r border-black p-2"></td>
@@ -602,6 +670,39 @@
       document.body.classList.add('print-liste');
       window.print();
       setTimeout(() => document.body.classList.remove('print-liste'), 1000);
+    };
+
+    // ==========================================
+    // LOGIQUE D'IMPRESSION 2 : TABLEAU SUIVI MENSUEL
+    // ==========================================
+    window.imprimerListeSuivi = function() {
+      const classeId = document.getElementById('classe-cours').value;
+      const selectClasse = document.getElementById('classe-cours');
+      const classeNomComplet = selectClasse.options[selectClasse.selectedIndex].text.split(' — ');
+      
+      if (!classeId || elevesActuels.length === 0) {
+        alert("Veuillez charger une classe avec des élèves avant d'imprimer.");
+        return;
+      }
+
+      let rowsHtml = '';
+      elevesActuels.forEach((e) => {
+        rowsHtml += `
+          <tr class="h-10">
+            <td class="border-r border-black p-1 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
+            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
+            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
+            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td></td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('print-suivi-classe').textContent = classeNomComplet[0];
+      document.getElementById('print-tbody-suivi').innerHTML = rowsHtml;
+
+      document.body.classList.add('print-liste-suivi');
+      window.print();
+      setTimeout(() => document.body.classList.remove('print-liste-suivi'), 1000);
     };
 
     if (sessionStorage.getItem('enseignant_auth') === 'true') {
