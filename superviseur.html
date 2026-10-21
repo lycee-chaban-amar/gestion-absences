@@ -544,7 +544,7 @@
 
         const heureAff = tr.dataset.heure || '--';
         const nomPr = `${pt.nom || ''} ${pt.prenom || ''}`.trim();
-        const nomSec = ""; // Masqué car les noms sont identiques
+        const nomSec = ""; 
         const isArchived = pt.archive === true;
 
         tr.innerHTML = `
@@ -799,7 +799,6 @@
       } catch (err) { alert(err.message); }
     };
 
-    // Ouvre le modal d'édition en allant chercher les vraies informations en direct dans 'eleves'
     window.ouvrirModalEditerEleve = async function(eleveId) {
       document.getElementById('edit-student-id').value = eleveId; 
       document.getElementById('modal-editer-eleve').classList.remove('hidden'); 
@@ -834,7 +833,6 @@
       
       if (!nom || !prenom) return;
       try { 
-        // On sauvegarde le nom en arabe dans les deux colonnes pour respecter la base de données sans faire d'erreur
         await supabaseClient.from('eleves').update({ 
           nom: nom, 
           prenom: prenom, 
@@ -1000,26 +998,62 @@
       
       const clsChoisie = filtreClasse ? filtreClasse.value : 'ALL';
       
-      const incidents = vuePointages.filter(p => { 
-        if (clsChoisie !== 'ALL' && String(p.classe_id) !== String(clsChoisie)) return false; 
-        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
-        return p.statut === 'A' || p.statut === 'R' || isJustifiedAbsence; 
-      });
-
-      let incHtml = incidents.length === 0 ? `<tr><td colspan="6" class="p-4 text-center font-bold">لم تُسجل أي غيابات.</td></tr>` : incidents.map((p, i) => {
+      const mapEleves = new Map();
+      
+      vuePointages.forEach(p => { 
+        if (p.archive) return;
+        if (clsChoisie !== 'ALL' && String(p.classe_id) !== String(clsChoisie)) return; 
+        
         const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
         const isAbsent = p.statut === 'A' || isJustifiedAbsence;
-        const h = (p.heure_debut && p.heure_debut.length >= 5) ? p.heure_debut.substring(0,5) : '';
+        const isRetard = p.statut === 'R';
         
-        let stT = 'حاضر'; 
-        if (isAbsent) { stT = 'غياب'; } 
-        else if (p.statut === 'R') { stT = 'تأخر'; }
-        
-        let just = '';
-        if (isAbsent || p.statut === 'R') { just = p.justifie ? (p.motif_justification || 'مبرر') : 'غير مبرر'; } 
-        else { just = p.justifie ? (p.motif_justification || 'تسوية') : 'حاضر'; }
+        if (isAbsent || isRetard) {
+          if (!mapEleves.has(p.eleve_id)) {
+            mapEleves.set(p.eleve_id, {
+              nom_ar: p.nom_ar || p.nom,
+              prenom_ar: p.prenom_ar || p.prenom,
+              classe_nom: p.classe_nom,
+              isAbsent: false,
+              isRetard: false,
+              seances: [],
+              justifications: []
+            });
+          }
+          const el = mapEleves.get(p.eleve_id);
+          
+          if (isAbsent) el.isAbsent = true;
+          if (isRetard) el.isRetard = true;
+          
+          const h = (p.heure_debut && p.heure_debut.length >= 5) ? p.heure_debut.substring(0,5) : '';
+          el.seances.push(`${p.matiere || ''} (${h})`);
+          
+          if (p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية') {
+            if (!el.justifications.includes(p.motif_justification)) {
+              el.justifications.push(p.motif_justification);
+            }
+          }
+        }
+      });
 
-        return `<tr><td class="border border-black p-1.5 text-center">${i + 1}</td><td class="border border-black p-1.5 font-bold">${escapeHtml(p.nom_ar || p.nom)} ${escapeHtml(p.prenom_ar || p.prenom)}</td><td class="border border-black p-1.5 text-center font-bold" dir="ltr">${escapeHtml(p.classe_nom)}</td><td class="border border-black p-1.5 text-center" dir="ltr">${escapeHtml(p.matiere)}<br>${h}</td><td class="border border-black p-1.5 text-center font-bold ${isAbsent ? 'text-rose-700' : (p.statut === 'R' ? 'text-amber-700' : 'text-emerald-700')}">${stT}</td><td class="border border-black p-1.5 text-center text-[11px]">${escapeHtml(just)}</td></tr>`;
+      const incidents = Array.from(mapEleves.values());
+
+      let incHtml = incidents.length === 0 ? `<tr><td colspan="6" class="p-4 text-center font-bold">لم تُسجل أي غيابات.</td></tr>` : incidents.map((p, i) => {
+        let stT = 'غياب';
+        let color = 'text-rose-700';
+        if (p.isAbsent && p.isRetard) { stT = 'غياب + تأخر'; }
+        else if (!p.isAbsent && p.isRetard) { stT = 'تأخر'; color = 'text-amber-700'; }
+        
+        let just = p.justifications.length > 0 ? p.justifications.join(' / ') : 'غير مبرر';
+        
+        return `<tr>
+          <td class="border border-black p-1.5 text-center">${i + 1}</td>
+          <td class="border border-black p-1.5 font-bold">${escapeHtml(p.nom_ar)} ${escapeHtml(p.prenom_ar)}</td>
+          <td class="border border-black p-1.5 text-center font-bold" dir="ltr">${escapeHtml(p.classe_nom)}</td>
+          <td class="border border-black p-1.5 text-center text-[10px]" dir="ltr">${escapeHtml(p.seances.join(' | '))}</td>
+          <td class="border border-black p-1.5 text-center font-bold ${color}">${stT}</td>
+          <td class="border border-black p-1.5 text-center text-[11px]">${escapeHtml(just)}</td>
+        </tr>`;
       }).join('');
 
       const page1 = `
