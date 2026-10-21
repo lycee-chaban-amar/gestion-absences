@@ -105,7 +105,6 @@
     
     <!-- Bloc Informations de la Séance -->
     <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
-      <div class="absolute top-0 right-0 bg-teal-500 text-white text-[10px] font-black uppercase tracking-widest py-1 px-4 rounded-bl-xl shadow-sm">Officiel</div>
       <h2 class="text-lg font-extrabold mb-5 text-slate-800 dark:text-white flex items-center gap-2">
         <i class="fa-solid fa-calendar-day text-teal-500"></i>
         <span>Informations de la séance / معلومات الحصة</span>
@@ -177,6 +176,7 @@
     
     let supabaseClient = null;
     let elevesActuels = [];
+    let absPendingSet = new Set();
     let __appInit = false;
 
     // ==========================================
@@ -338,17 +338,34 @@
       zoneAppel.classList.remove('hidden');
 
       try {
-        const { data, error } = await supabaseClient.from('eleves')
+        // 1. Charger les élèves de la classe
+        const { data: elevesData, error: errEleves } = await supabaseClient.from('eleves')
           .select('*')
           .eq('classe_id', classeId)
           .eq('actif', true)
           .order('nom');
           
-        if (error) throw error;
-        
-        elevesActuels = data || [];
+        if (errEleves) throw errEleves;
+        elevesActuels = elevesData || [];
+
+        // 2. Vérifier les absences non justifiées en cours
+        absPendingSet.clear();
+        if (elevesActuels.length > 0) {
+          const eleveIds = elevesActuels.map(e => e.id);
+          const { data: absData, error: errAbs } = await supabaseClient
+            .from('pointages')
+            .select('eleve_id')
+            .eq('statut', 'A')
+            .eq('justifie', false)
+            .eq('archive', false)
+            .in('eleve_id', eleveIds);
+            
+          if (!errAbs && absData) {
+            absData.forEach(d => absPendingSet.add(d.eleve_id));
+          }
+        }
+
         document.getElementById('count-eleves').textContent = elevesActuels.length;
-        
         afficherTableauAppel();
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-500 font-bold">Erreur de chargement. Veuillez réessayer.</td></tr>`;
@@ -367,9 +384,11 @@
       }
 
       elevesActuels.forEach((e, index) => {
-        // Le nom et prenom de Supabase (qui sont en arabe grâce au script)
         const nomPrincipal = `${e.nom || ''} ${e.prenom || ''}`.trim();
         const alerte = e.en_alerte || e.total_absences >= 3;
+        
+        // Vérifier s'il y a une absence non justifiée
+        const hasUnjustified = absPendingSet.has(e.id);
         
         const tr = document.createElement('tr');
         tr.className = "animate-table-row hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
@@ -379,7 +398,10 @@
           
           <td class="py-3 px-4 text-right" dir="rtl">
             <div class="font-bold text-slate-800 dark:text-white text-base">${escapeHtml(nomPrincipal)}</div>
-            ${alerte ? `<span class="bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full mt-1.5 inline-block font-bold">🚨 غياب متكرر (3 أيام)</span>` : ''}
+            <div class="flex flex-col gap-1 mt-1 items-start">
+                ${hasUnjustified ? `<span class="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-700 text-[10px] px-2 py-0.5 rounded-lg flex items-center gap-1.5 font-bold w-fit"><i class="fa-solid fa-triangle-exclamation"></i> غياب سابق غير مبرر (يجب إحضار تبرير)</span>` : ''}
+                ${alerte ? `<span class="bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full inline-block font-bold w-fit">🚨 غياب متكرر (3 أيام)</span>` : ''}
+            </div>
           </td>
           
           <td class="py-2 px-2 text-center">
