@@ -62,7 +62,7 @@
       <div class="space-y-4">
         
         <div>
-          <select id="pin-matiere" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-4 py-3 text-sm font-bold outline-none text-slate-800 dark:text-white appearance-none cursor-pointer" dir="ltr">
+          <select id="pin-matiere" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-4 py-3 text-sm font-bold outline-none text-slate-800 dark:text-white appearance-none cursor-pointer" dir="rtl">
             <option value="">-- Choisir la matière / اختر المادة --</option>
             <option value="الرياضيات">Mathématiques / رياضيات</option>
             <option value="علوم الطبيعة">Sciences Naturelles / علوم الطبيعة</option>
@@ -93,6 +93,33 @@
         </div>
         
         <button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer transition-colors mt-2">Déverrouiller / دخول</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AJOUT MANUEL D'UN ÉLÈVE -->
+  <div id="modal-ajout-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-indigo-500"></i><span>Ajouter un élève</span>
+        </h3>
+        <button type="button" onclick="fermerModalAjoutEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-4 text-sm" dir="rtl">
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">إضافة تلميذ غير موجود في القائمة لتسجيل غيابه.</p>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">اللقب (Nom) *</label>
+          <input type="text" id="new-eleve-nom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold outline-none text-slate-800 dark:text-white focus:border-indigo-500 transition-colors" required />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">الاسم (Prénom) *</label>
+          <input type="text" id="new-eleve-prenom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold outline-none text-slate-800 dark:text-white focus:border-indigo-500 transition-colors" required />
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700">
+        <button type="button" onclick="fermerModalAjoutEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button>
+        <button type="button" id="btn-save-new-eleve" onclick="enregistrerNouvelEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md flex items-center justify-center min-w-[100px]">إضافة</button>
       </div>
     </div>
   </div>
@@ -162,10 +189,13 @@
           <span id="count-eleves" class="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-lg ml-2 font-black shadow-inner">0</span>
         </h2>
         
-        <!-- BOUTONS D'IMPRESSION (DEUX OPTIONS) -->
+        <!-- BOUTONS D'IMPRESSION ET D'AJOUT -->
         <div class="flex gap-2 flex-wrap">
+          <button type="button" onclick="ouvrirModalAjoutEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-user-plus"></i> Ajouter un élève
+          </button>
           <button type="button" onclick="imprimerListeClasse()" class="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-300 dark:border-slate-600">
-            <i class="fa-solid fa-list-check text-indigo-500"></i> Fiche Évaluation
+            <i class="fa-solid fa-list-check text-emerald-500"></i> Fiche Évaluation
           </button>
           <button type="button" onclick="imprimerListeSuivi()" class="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-300 dark:border-slate-600">
             <i class="fa-regular fa-calendar-days text-teal-500"></i> Fiche Suivi Mensuel
@@ -702,6 +732,67 @@
       document.body.classList.add('print-liste-suivi');
       window.print();
       setTimeout(() => document.body.classList.remove('print-liste-suivi'), 1000);
+    };
+
+    // ==========================================
+    // LOGIQUE D'AJOUT MANUEL D'UN ÉLÈVE
+    // ==========================================
+    window.ouvrirModalAjoutEleve = function() {
+      const classeId = document.getElementById('classe-cours').value;
+      if (!classeId) {
+        alert("Veuillez d'abord sélectionner une classe.");
+        return;
+      }
+      document.getElementById('new-eleve-nom').value = '';
+      document.getElementById('new-eleve-prenom').value = '';
+      document.getElementById('modal-ajout-eleve').classList.remove('hidden');
+      document.getElementById('modal-ajout-eleve').classList.add('flex');
+    };
+
+    window.fermerModalAjoutEleve = function() {
+      document.getElementById('modal-ajout-eleve').classList.add('hidden');
+      document.getElementById('modal-ajout-eleve').classList.remove('flex');
+    };
+
+    window.enregistrerNouvelEleve = async function() {
+      const classeId = document.getElementById('classe-cours').value;
+      const nom = document.getElementById('new-eleve-nom').value.trim();
+      const prenom = document.getElementById('new-eleve-prenom').value.trim();
+      const btn = document.getElementById('btn-save-new-eleve');
+
+      if (!nom || !prenom) {
+        alert("Veuillez saisir le nom et le prénom / يرجى إدخال اللقب والاسم.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+      try {
+        const tempMatricule = 'TEMP-' + Date.now().toString().slice(-6);
+
+        const { error } = await supabaseClient.from('eleves').insert({
+          nom: nom,
+          prenom: prenom,
+          nom_ar: nom,
+          prenom_ar: prenom,
+          classe_id: classeId,
+          matricule: tempMatricule,
+          actif: true
+        });
+
+        if (error) throw error;
+
+        fermerModalAjoutEleve();
+        await chargerEleves(); // Recharge la liste immédiatement
+        alert("Élève ajouté avec succès ! / تم إضافة التلميذ بنجاح!");
+      } catch (err) {
+        console.error(err);
+        alert("Erreur lors de l'ajout: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "إضافة";
+      }
     };
 
     if (sessionStorage.getItem('enseignant_auth') === 'true') {
