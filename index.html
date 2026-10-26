@@ -1,802 +1,567 @@
 <!DOCTYPE html>
-<html lang="fr" dir="ltr" id="html-root">
+<html lang="fr" dir="ltr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Enseignant - ثانوية الشهيد شعبان اعمر</title>
-  
-  <meta name="theme-color" content="#0f172a">
+  <title>Feuille d'Appel Numérique — Lycée Chabane Amar</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-  
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet" />
+
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
-    button, select, input { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
-    button:active { transform: scale(0.96); }
-    @keyframes slideUpFade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .animate-table-row { animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    
-    @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
-    .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
-    
-    .font-amiri { font-family: 'Amiri', serif; }
-
-    /* Styles d'impression intégrés pour les DEUX tableaux */
     @media print {
-      body * { visibility: hidden !important; }
-      
-      /* Zone Évaluation */
-      body.print-liste #zone-impression-liste, body.print-liste #zone-impression-liste * { visibility: visible !important; }
-      body.print-liste #zone-impression-liste { 
-        position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; 
-        display: block !important; background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; 
-      }
-      
-      /* Zone Suivi Mensuel */
-      body.print-liste-suivi #zone-impression-liste-suivi, body.print-liste-suivi #zone-impression-liste-suivi * { visibility: visible !important; }
-      body.print-liste-suivi #zone-impression-liste-suivi { 
-        position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; 
-        display: block !important; background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; 
-      }
-
-      @page { size: A4 portrait; margin: 15mm 15mm 15mm 15mm; }
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: white !important; color: black !important; }
+      .print-card { box-shadow: none !important; border: 1px solid #ccc !important; }
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between">
 
-  <!-- ECRAN PIN PERSONNALISÉ PAR MATIÈRE -->
-  <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
-    <div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform">
-      <div class="w-16 h-16 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
-        <i class="fa-solid fa-chalkboard-user"></i>
-      </div>
-      <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Espace Enseignant</h2>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-5 font-amiri text-base">اختر المادة وأدخل الرمز السري</p>
-      <div class="space-y-4">
-        
-        <div>
-          <select id="pin-matiere" class="w-full bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-xl px-4 py-3 text-sm font-bold outline-none text-slate-800 dark:text-white appearance-none cursor-pointer" dir="rtl">
-            <option value="">-- Choisir la matière / اختر المادة --</option>
-            <option value="الرياضيات">Mathématiques / رياضيات</option>
-            <option value="علوم الطبيعة">Sciences Naturelles / علوم الطبيعة</option>
-            <option value="علوم فيزيائية">Sciences Physiques / علوم فيزيائية</option>
-            <option value="إعلام آلي">Informatique / إعلام آلي</option>
-            <option value="هندسة مدنية">Génie Civil / هندسة مدنية</option>
-            <option value="هندسة كهربائية">Génie Électrique / هندسة كهربائية</option>
-            <option value="هندسة ميكانيكية">Génie Mécanique / هندسة ميكانيكية</option>
-            <option value="هندسة الطرائق">Génie des Procédés / هندسة الطرائق</option>
-            <option value="تسيير واقتصاد">Gestion & Économie / تسيير واقتصاد</option>
-            <option value="قانون">Droit / قانون</option>
-            <option value="لغة عربية">Langue Arabe / لغة عربية</option>
-            <option value="فرنسية">Langue Française / فرنسية</option>
-            <option value="إنجليزية">Langue Anglaise / إنجليزية</option>
-            <option value="ألمانية">Langue Allemande / ألمانية</option>
-            <option value="إسبانية">Langue Espagnole / إسبانية</option>
-            <option value="أمازيغية">Langue Amazighe / أمازيغية</option>
-            <option value="فلسفة">Philosophie / فلسفة</option>
-            <option value="تاريخ وجغرافيا">Histoire-Géographie / تاريخ وجغرافيا</option>
-            <option value="علوم إسلامية">Sciences Islamiques / علوم إسلامية</option>
-            <option value="تربية بدنية">EPS (Sport) / تربية بدنية</option>
-          </select>
-        </div>
-
-        <div>
-          <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-600 rounded-2xl outline-none text-slate-800 dark:text-white" />
-          <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect / رمز خاطئ</p>
-        </div>
-        
-        <button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer transition-colors mt-2">Déverrouiller / دخول</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL AJOUT MANUEL D'UN ÉLÈVE -->
-  <div id="modal-ajout-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
-        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
-          <i class="fa-solid fa-user-plus text-indigo-500"></i><span>Ajouter un élève</span>
-        </h3>
-        <button type="button" onclick="fermerModalAjoutEleve()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      <div class="space-y-4 text-sm" dir="rtl">
-        <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">إضافة تلميذ غير موجود في القائمة لتسجيل غيابه.</p>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">اللقب (Nom) *</label>
-          <input type="text" id="new-eleve-nom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold outline-none text-slate-800 dark:text-white focus:border-indigo-500 transition-colors" required />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">الاسم (Prénom) *</label>
-          <input type="text" id="new-eleve-prenom" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-bold outline-none text-slate-800 dark:text-white focus:border-indigo-500 transition-colors" required />
-        </div>
-      </div>
-      <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700">
-        <button type="button" onclick="fermerModalAjoutEleve()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button>
-        <button type="button" id="btn-save-new-eleve" onclick="enregistrerNouvelEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md flex items-center justify-center min-w-[100px]">إضافة</button>
-      </div>
-    </div>
-  </div>
-
-  <header class="bg-slate-900 dark:bg-slate-950 text-white shadow-md border-b border-slate-800">
-    <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+  <!-- EN-TÊTE OFFICIEL -->
+  <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 shadow-xl no-print">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-xl bg-teal-600 flex items-center justify-center text-2xl shadow-md">
-          <i class="fa-solid fa-chalkboard-user"></i>
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-2xl text-white shadow-lg shadow-indigo-600/30">
+          <i class="fa-solid fa-graduation-cap"></i>
         </div>
-        <div class="border-l-2 border-slate-700 pl-4">
-          <h1 class="text-lg font-bold tracking-tight">Espace Enseignant <span class="text-teal-400 mx-1">|</span> فضاء الأستاذ</h1>
-          <p class="text-base text-teal-300 font-amiri mt-0.5">ثانوية الشهيد شعبان اعمر - ورقة الغياب الرقمية</p>
+        <div>
+          <h1 class="text-xl font-black tracking-wide text-white flex items-center gap-2">
+            LYCÉE CHABANE AMAR — AOKAS
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Module Enseignant</span>
+          </h1>
+          <p class="text-xs text-slate-400 font-bold" dir="rtl">ثانوية الشهيد شعبان أعمر — أوقاس | ورقة الغياب الرقمية</p>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button type="button" onclick="toggleDarkMode()" id="btn-darkmode" class="text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 px-3.5 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
-          <i class="fa-solid fa-moon text-amber-300" id="icon-darkmode"></i>
-        </button>
-        <a href="superviseur.html" class="text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 px-3.5 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
-          <i class="fa-solid fa-shield-halved text-indigo-400"></i><span>Administration</span>
+
+      <div class="flex items-center gap-6">
+        <div class="text-right">
+          <div id="horloge" class="text-2xl font-black font-mono text-indigo-400 tracking-wider">--:--:--</div>
+          <div id="date-du-jour" class="text-xs text-slate-400 font-bold">-- / -- / ----</div>
+        </div>
+        <div class="h-8 w-px bg-slate-800 hidden sm:block"></div>
+        <a href="superviseur.html" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold border border-slate-700 text-slate-200 transition shadow">
+          <i class="fa-solid fa-shield-halved text-indigo-400"></i>
+          <span>Espace Superviseur</span>
         </a>
-        <button type="button" id="btn-lock" class="text-xs font-semibold text-rose-300 bg-slate-800 hover:bg-rose-950/80 px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-1.5 transition">
-          <i class="fa-solid fa-lock text-rose-400"></i><span>Verrouiller</span>
-        </button>
       </div>
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+  <!-- CONTENU PRINCIPAL -->
+  <main class="max-w-7xl mx-auto w-full p-4 sm:p-6 flex-1 flex flex-col gap-6">
     
-    <!-- Bloc Informations de la Séance -->
-    <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
-      <h2 class="text-lg font-extrabold mb-5 text-slate-800 dark:text-white flex items-center gap-2">
-        <i class="fa-solid fa-calendar-day text-teal-500"></i>
-        <span>Informations de la séance / معلومات الحصة</span>
-      </h2>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- PANNEAU DE CONFIGURATION DE LA SÉANCE -->
+    <section class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl no-print">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- SÉLECTION CLASSE -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Date / التاريخ <i class="fa-solid fa-lock text-rose-500 text-[10px] ml-1" title="Verrouillé"></i></label>
-          <input type="date" id="date-cours" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed outline-none font-bold" readonly />
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Classe / القسم</label>
+          <div class="relative">
+            <select id="select-classe" onchange="chargerEleves()" class="w-full bg-slate-950 border border-slate-700 text-white font-bold rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition cursor-pointer">
+              <option value="">-- Sélectionner la division --</option>
+            </select>
+          </div>
         </div>
+
+        <!-- DATE DU COURS -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Heure / التوقيت <i class="fa-solid fa-lock text-rose-500 text-[10px] ml-1" title="Verrouillé"></i></label>
-          <input type="time" id="heure-cours" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed outline-none font-bold" readonly />
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Date du cours / التاريخ</label>
+          <input type="date" id="date-cours" class="w-full bg-slate-950 border border-slate-700 text-white font-bold rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition" />
         </div>
+
+        <!-- CRÉNEAU HORAIRE -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Matière / المادة <i class="fa-solid fa-lock text-rose-500 text-[10px] ml-1" title="Verrouillé par le code PIN"></i></label>
-          <input type="text" id="matiere-cours" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed outline-none font-bold text-right" readonly dir="rtl" />
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Classe / القسم *</label>
-          <select id="classe-cours" onchange="chargerEleves()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white outline-none cursor-pointer focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all font-bold">
-            <option value="">-- Sélectionner / اختر --</option>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Créneau / الحصة</label>
+          <select id="select-creneau" class="w-full bg-slate-950 border border-slate-700 text-white font-bold rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition">
+            <option value="08:00 - 09:00">08:00 — 09:00 (Matin)</option>
+            <option value="09:00 - 10:00">09:00 — 10:00 (Matin)</option>
+            <option value="10:00 - 11:00">10:00 — 11:00 (Matin)</option>
+            <option value="11:00 - 12:00">11:00 — 12:00 (Matin)</option>
+            <option value="13:30 - 14:30">13:30 — 14:30 (Après-midi)</option>
+            <option value="14:30 - 15:30">14:30 — 15:30 (Après-midi)</option>
+            <option value="15:30 - 16:30">15:30 — 16:30 (Après-midi)</option>
           </select>
         </div>
-      </div>
-    </div>
 
-    <!-- Bloc Liste d'Appel -->
-    <div id="zone-appel" class="hidden bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-300">
-      <div class="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col lg:flex-row justify-between items-center gap-4">
-        <h2 class="text-lg font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-          <i class="fa-solid fa-users text-indigo-500"></i>
-          <span>Liste d'appel / قائمة التلاميذ</span>
-          <span id="count-eleves" class="text-xs bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-lg ml-2 font-black shadow-inner">0</span>
-        </h2>
-        
-        <!-- BOUTONS D'IMPRESSION ET D'AJOUT -->
-        <div class="flex gap-2 flex-wrap">
-          <button type="button" onclick="ouvrirModalAjoutEleve()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-            <i class="fa-solid fa-user-plus"></i> Ajouter un élève
+        <!-- MATIÈRE -->
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Matière / المادة</label>
+          <input type="text" id="input-matiere" placeholder="Ex: Informatique, Mathématiques..." class="w-full bg-slate-950 border border-slate-700 text-white font-bold rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition" />
+        </div>
+
+      </div>
+
+      <!-- BARRE D'ACTIONS RAPIDES -->
+      <div class="mt-6 pt-5 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="marquerTous('P')" class="px-4 py-2 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded-xl text-xs font-black transition flex items-center gap-2">
+            <i class="fa-solid fa-check-double"></i>
+            <span>Tous Présents</span>
           </button>
-          <button type="button" onclick="imprimerListeClasse()" class="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-300 dark:border-slate-600">
-            <i class="fa-solid fa-list-check text-emerald-500"></i> Fiche Évaluation
+          <button type="button" onclick="ouvrirModalAjout()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-user-plus text-indigo-400"></i>
+            <span>Ajouter un élève</span>
           </button>
-          <button type="button" onclick="imprimerListeSuivi()" class="bg-white hover:bg-slate-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm border border-slate-300 dark:border-slate-600">
-            <i class="fa-regular fa-calendar-days text-teal-500"></i> Fiche Suivi Mensuel
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="imprimerFicheSuivi()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-print text-indigo-400"></i>
+            <span>Fiche Mensuelle</span>
+          </button>
+          <button type="button" onclick="imprimerEvaluation()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-2">
+            <i class="fa-solid fa-file-pen text-indigo-400"></i>
+            <span>Fiche d'Évaluation</span>
+          </button>
+          <button type="button" onclick="enregistrerAppel()" id="btn-save" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black shadow-lg shadow-indigo-600/30 transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Enregistrer l'Appel</span>
           </button>
         </div>
       </div>
+    </section>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-            <tr>
-              <th class="py-4 px-4 w-12 text-center text-slate-500 font-bold">N°</th>
-              <th class="py-4 px-4 text-right text-slate-500 font-bold" dir="rtl">الاسم واللقب / Nom & Prénom</th>
-              
-              <th class="py-4 px-2 text-center w-24 text-emerald-600 font-bold uppercase tracking-wider text-xs">Présent</th>
-              <th class="py-4 px-2 text-center w-24 text-rose-600 font-bold uppercase tracking-wider text-xs">Absent</th>
-              <th class="py-4 px-2 text-center w-24 text-amber-500 font-bold uppercase tracking-wider text-xs">Retard</th>
+    <!-- ZONE TABLEAU D'APPEL -->
+    <section class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex-1 flex flex-col">
+      <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/60 backdrop-blur">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center font-black">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div>
+            <h2 id="titre-liste-eleves" class="text-sm font-black uppercase text-white tracking-wide">Liste des élèves</h2>
+            <p class="text-xs text-slate-500">Le cumul inclut toutes les séances d'absence du parcours scolaire.</p>
+          </div>
+        </div>
+
+        <!-- COMPTEURS DYNAMIQUES -->
+        <div class="flex items-center gap-4 text-xs font-black">
+          <div class="text-emerald-400">Présents: <span id="compteur-p" class="text-white text-sm">0</span></div>
+          <div class="text-rose-400">Absents: <span id="compteur-a" class="text-white text-sm">0</span></div>
+          <div class="text-amber-400">Retards: <span id="compteur-r" class="text-white text-sm">0</span></div>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto flex-1">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="bg-slate-950 text-slate-400 uppercase text-xs tracking-wider border-b border-slate-800 font-black">
+              <th class="py-3 px-4 w-12 text-center">N°</th>
+              <th class="py-3 px-4">Élève / التلميذ</th>
+              <th class="py-3 px-4">Matricule</th>
+              <th class="py-3 px-4 text-center">Cumul Parcours</th>
+              <th class="py-3 px-4 text-center">Statut Alerte</th>
+              <th class="py-3 px-4 text-center">Pointage Séance</th>
             </tr>
           </thead>
-          <tbody id="eleves-body" class="divide-y divide-slate-100 dark:divide-slate-700">
-            <!-- Rempli en Javascript -->
+          <tbody id="tbody-eleves" class="divide-y divide-slate-800/60 font-semibold">
+            <tr>
+              <td colspan="6" class="text-center py-16 text-slate-500">
+                <i class="fa-solid fa-arrow-pointer text-3xl mb-3 block text-slate-600"></i>
+                Veuillez sélectionner une division pour charger les élèves.
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
-
-      <div class="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-        <button type="button" id="btn-submit-appel" onclick="validerAppel()" class="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-teal-600/30 transition-all flex items-center gap-2 transform active:scale-95">
-          <i class="fa-solid fa-paper-plane"></i>
-          <span>Enregistrer et Transmettre à l'Administration</span>
-        </button>
-      </div>
-    </div>
+    </section>
 
   </main>
 
-  <!-- ======================================================= -->
-  <!-- ZONE IMPRESSION CACHÉE 1 : TABLEAU ÉVALUATION (Le 1er)  -->
-  <!-- ======================================================= -->
-  <div id="zone-impression-liste" class="hidden font-sans bg-white text-black max-w-5xl mx-auto" dir="ltr">
-    
-    <!-- EN-TÊTE OFFICIEL BILINGUE -->
-    <div class="pb-4 mb-4">
-      <div class="flex justify-between items-center text-[10px] font-bold leading-tight">
-        <div class="text-left w-1/3">
-          <p>RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE<br>ET POPULAIRE</p>
-          <p class="mt-0.5">MINISTÈRE DE L'ÉDUCATION NATIONALE</p>
-          <p class="mt-0.5">DIRECTION DE L'ÉDUCATION — BÉJAÏA</p>
-          <p class="mt-1 font-black text-indigo-950 text-sm">LYCÉE CHAABANE AAMAR — AOKAS</p>
+  <!-- MODAL D'AJOUT MANUEL D'UN ÉLÈVE DANS LA CLASSE -->
+  <div id="modal-ajout-eleve" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl">
+      <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
+        <h3 class="text-base font-black text-white flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-indigo-400"></i>
+          <span>Ajouter un élève à la division</span>
+        </h3>
+        <button type="button" onclick="fermerModalAjout()" class="text-slate-500 hover:text-white transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1">Nom (Français)</label>
+          <input type="text" id="ajout-nom" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500" />
         </div>
-        <div class="w-1/3 flex flex-col items-center">
-          <div class="w-12 h-12 rounded-full border border-slate-300 flex items-center justify-center text-lg mb-1">
-            <i class="fa-solid fa-graduation-cap"></i>
-          </div>
-          <span class="text-[11px] font-black border border-black px-2 py-0.5 rounded">2026 / 2027</span>
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1">Prénom (Français)</label>
+          <input type="text" id="ajout-prenom" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500" />
         </div>
-        <div class="text-right w-1/3 text-[11px]" dir="rtl">
-          <p>الجمهورية الجزائرية الديمقراطية الشعبية</p>
-          <p class="mt-0.5">وزارة التربية الوطنية</p>
-          <p class="mt-0.5">مديرية التربية لولاية بجاية</p>
-          <p class="mt-1 font-black text-indigo-950 text-sm">ثانوية شعبان أعمر — أوقاس</p>
+        <div>
+          <label class="block text-xs font-bold text-slate-400 mb-1">Matricule officiel</label>
+          <input type="text" id="ajout-matricule" placeholder="Ex: 2026-1050" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500" />
         </div>
       </div>
-    </div>
 
-    <!-- INFOS CLASSE -->
-    <div class="flex justify-end items-end font-bold text-sm mb-4 border-t-2 border-black pt-4">
-      <div class="text-left">
-        <p>Enseignant : <span class="font-black">.........................</span></p>
-        <p class="mt-1">Classe : <span id="print-classe-fr" class="underline decoration-dotted underline-offset-4 font-black">.........................</span></p>
+      <div class="mt-6 flex justify-end gap-3 pt-3 border-t border-slate-800">
+        <button type="button" onclick="fermerModalAjout()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs font-bold text-slate-300">Annuler</button>
+        <button type="button" onclick="sauvegarderNouvelEleve()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black">Enregistrer</button>
       </div>
     </div>
-
-    <!-- TABLEAU D'ÉVALUATION -->
-    <table class="w-full text-sm border-collapse border border-black mt-4">
-      <thead>
-        <tr class="bg-white font-bold border-b border-black">
-          <th class="border-r border-black p-3 text-center w-1/3">Nom et Prénom</th>
-          <th class="border-r border-black p-3 text-center w-32">Évaluation continue</th>
-          <th class="border-r border-black p-3 text-center w-28">Devoir</th>
-          <th class="border-r border-black p-3 text-center w-32">Composition</th>
-          <th class="border-r border-black p-3 text-center w-28">Moyenne</th>
-          <th class="p-3 text-center w-32">Observations</th>
-        </tr>
-      </thead>
-      <tbody id="print-tbody" class="divide-y divide-black">
-        <!-- Rempli par JavaScript -->
-      </tbody>
-    </table>
   </div>
-
-
-  <!-- ======================================================= -->
-  <!-- ZONE IMPRESSION CACHÉE 2 : TABLEAU SUIVI MENSUEL (Nouv) -->
-  <!-- ======================================================= -->
-  <div id="zone-impression-liste-suivi" class="hidden font-sans bg-white text-black max-w-5xl mx-auto" dir="ltr">
-    
-    <!-- EN-TÊTE OFFICIEL BILINGUE -->
-    <div class="pb-2 mb-2">
-      <div class="flex justify-between items-center text-[10px] font-bold leading-tight">
-        <div class="text-left w-1/3">
-          <p>RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE<br>ET POPULAIRE</p>
-          <p class="mt-0.5">MINISTÈRE DE L'ÉDUCATION NATIONALE</p>
-          <p class="mt-0.5">DIRECTION DE L'ÉDUCATION — BÉJAÏA</p>
-          <p class="mt-1 font-black text-indigo-950 text-sm">LYCÉE CHAABANE AAMAR — AOKAS</p>
-        </div>
-        <div class="w-1/3 flex flex-col items-center">
-          <div class="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center text-sm mb-1">
-            <i class="fa-solid fa-graduation-cap"></i>
-          </div>
-          <span class="text-[10px] font-black border border-black px-2 py-0.5 rounded">2026 / 2027</span>
-        </div>
-        <div class="text-right w-1/3 text-[11px]" dir="rtl">
-          <p>الجمهورية الجزائرية الديمقراطية الشعبية</p>
-          <p class="mt-0.5">وزارة التربية الوطنية</p>
-          <p class="mt-0.5">مديرية التربية لولاية بجاية</p>
-          <p class="mt-1 font-black text-indigo-950 text-sm">ثانوية شعبان أعمر — أوقاس</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- INFOS CLASSE -->
-    <div class="flex justify-between items-end font-bold text-sm mb-2 border-t-2 border-black pt-2">
-      <h3 class="font-black text-lg underline">Fiche de Suivi Mensuel - Trimestre 1</h3>
-      <div class="text-left">
-        <p>Enseignant : <span class="font-black">.........................</span></p>
-        <p class="mt-1">Classe : <span id="print-suivi-classe" class="underline decoration-dotted underline-offset-4 font-black">.........................</span></p>
-      </div>
-    </div>
-
-    <!-- TABLEAU DE SUIVI (OCT/NOV/DEC) -->
-    <table class="w-full text-sm border-collapse border border-black mt-2">
-      <thead>
-        <tr class="bg-white font-bold border-b border-black">
-          <th class="border-r border-black p-2 text-center w-1/4" rowspan="2">Nom et Prénom</th>
-          <th class="border-r border-black p-2 text-center" colspan="5">Octobre</th>
-          <th class="border-r border-black p-2 text-center" colspan="5">Novembre</th>
-          <th class="p-2 text-center" colspan="5">Décembre</th>
-        </tr>
-        <tr class="bg-white font-bold border-b border-black h-6">
-          <th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th>
-          <th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th>
-          <th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="border-r border-black w-7"></th><th class="w-7"></th>
-        </tr>
-      </thead>
-      <tbody id="print-tbody-suivi" class="divide-y divide-black">
-        <!-- Rempli par JavaScript -->
-      </tbody>
-    </table>
-  </div>
-
 
   <script>
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
-    
-    let supabaseClient = null;
-    let elevesActuels = [];
-    let absPendingSet = new Set();
-    let __appInit = false;
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ==========================================
-    // 🔐 CODES PIN PAR MATIÈRE EXACTS
-    // ==========================================
-    const CODES_MATIERES = {
-      "الرياضيات": "1001",
-      "علوم الطبيعة": "1002",
-      "علوم فيزيائية": "1003",
-      "إعلام آلي": "1004",
-      "هندسة مدنية": "2001",
-      "هندسة كهربائية": "2002",
-      "هندسة ميكانيكية": "2003",
-      "هندسة الطرائق": "2004",
-      "تسيير واقتصاد": "2005",
-      "قانون": "2006",
-      "لغة عربية": "3001",
-      "فرنسية": "3002",
-      "إنجليزية": "3003",
-      "ألمانية": "3004",
-      "إسبانية": "3005",
-      "أمازيغية": "3006",
-      "فلسفة": "3007",
-      "تاريخ وجغرافيا": "3008",
-      "علوم إسلامية": "3009",
-      "تربية بدنية": "4001"
-    };
-    
-    try {
-      if (typeof supabase === 'undefined') throw new Error("Supabase non chargé");
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch(e) { 
-      console.error(e); 
-      alert("Erreur de connexion au serveur. Vérifiez votre connexion internet.");
+    let elevesEnCours = [];
+    let pointagesLocaux = {}; // eleve_id -> 'P' | 'A' | 'R'
+
+    // Initialisation
+    window.addEventListener('DOMContentLoaded', async () => {
+      initialiserHorloge();
+      document.getElementById('date-cours').value = new Date().toISOString().split('T')[0];
+      await chargerClasses();
+    });
+
+    function initialiserHorloge() {
+      const update = () => {
+        const d = new Date();
+        document.getElementById('horloge').textContent = d.toTimeString().split(' ')[0];
+        document.getElementById('date-du-jour').textContent = d.toLocaleDateString('fr-FR', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+      };
+      setInterval(update, 1000);
+      update();
     }
 
-    function toggleDarkMode() {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      updateDarkModeIcon(isDark);
-    }
-    function updateDarkModeIcon(isDark) {
-      const icon = document.getElementById('icon-darkmode');
-      if (icon) icon.className = isDark ? 'fa-solid fa-sun text-amber-300' : 'fa-solid fa-moon text-amber-300';
-    }
-    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-      updateDarkModeIcon(true);
-    } else {
-      updateDarkModeIcon(false);
-    }
+    // Charger les classes de l'établissement
+    async function chargerClasses() {
+      const { data: classes, error } = await supabaseClient
+        .from('classes')
+        .select('id, nom_court')
+        .order('nom_court');
 
-    function debloquerEnseignant() {
-      const pinScreen = document.getElementById('pin-screen'); 
-      if (pinScreen) pinScreen.remove();
-      sessionStorage.setItem('enseignant_auth', 'true');
-      if (__appInit) return;
-      __appInit = true;
-      initPage();
-    }
-
-    function validerPinDirect() {
-      const selectMatiere = document.getElementById('pin-matiere');
-      const input = document.getElementById('input-pin');
-      const err = document.getElementById('pin-error');
-      const card = document.getElementById('pin-card');
-      
-      const matiere = selectMatiere.value;
-      let val = input ? input.value.trim() : '';
-
-      if (!matiere) {
-        err.textContent = "Veuillez choisir une matière / يرجى اختيار المادة";
-        err.classList.remove('hidden');
+      if (error) {
+        console.error("Erreur lors de la récupération des classes:", error);
         return;
       }
 
-      const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
-      val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
-
-      if (CODES_MATIERES[matiere] === val) { 
-        err.classList.add('hidden'); 
-        sessionStorage.setItem('enseignant_matiere', matiere);
-        debloquerEnseignant(); 
-      } else { 
-        err.textContent = "Code incorrect / رمز خاطئ";
-        err.classList.remove('hidden'); 
-        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
-        if (input) { input.value = ''; input.focus(); } 
-      }
-    }
-    
-    document.getElementById('input-pin')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } });
-    document.getElementById('btn-lock')?.addEventListener('click', () => { sessionStorage.removeItem('enseignant_auth'); sessionStorage.removeItem('enseignant_matiere'); location.reload(); });
-
-    function verrouillerDateEtHeure() {
-      const dateInput = document.getElementById('date-cours');
-      const heureInput = document.getElementById('heure-cours');
-      const now = new Date();
-      const tzOffset = now.getTimezoneOffset() * 60000;
-      const localISODate = (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
-      
-      dateInput.value = localISODate;
-      const hours = now.getHours().toString().padStart(2, '0');
-      heureInput.value = `${hours}:00`;
+      const sel = document.getElementById('select-classe');
+      sel.innerHTML = '<option value="">-- Sélectionner la division --</option>';
+      classes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.nom_court;
+        sel.appendChild(opt);
+      });
     }
 
-    function escapeHtml(s) {
-      if (s === null || s === undefined) return '';
-      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    async function initPage() {
-      verrouillerDateEtHeure();
-      
-      const savedMatiere = sessionStorage.getItem('enseignant_matiere');
-      const matiereInput = document.getElementById('matiere-cours');
-      if (savedMatiere) {
-        matiereInput.value = savedMatiere;
-      }
-      
-      if (!supabaseClient) return;
-      try {
-        const { data, error } = await supabaseClient.from('classes').select('*').order('nom_court');
-        if (error) throw error;
-        
-        const selectClasse = document.getElementById('classe-cours');
-        if (data) {
-          data.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = `${c.nom_court} — ${c.nom_complet}`;
-            selectClasse.appendChild(opt);
-          });
-        }
-      } catch (err) {
-        console.error("Erreur chargement classes:", err);
-      }
-    }
-
+    // Charger les élèves + Cumul de l'ensemble du parcours scolaire + Déclencheur alerte 3 jours consécutifs
     async function chargerEleves() {
-      const classeId = document.getElementById('classe-cours').value;
-      const zoneAppel = document.getElementById('zone-appel');
-      const tbody = document.getElementById('eleves-body');
-      
+      const classeId = document.getElementById('select-classe').value;
+      const tbody = document.getElementById('tbody-eleves');
+
       if (!classeId) {
-        zoneAppel.classList.add('hidden');
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-16 text-slate-500">Veuillez sélectionner une division pour charger les élèves.</td></tr>`;
+        elevesEnCours = [];
+        majCompteurs();
         return;
       }
-      
-      tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-center"><i class="fa-solid fa-spinner fa-spin text-3xl text-teal-500"></i><p class="text-sm text-slate-500 mt-3 font-bold">Chargement de la liste...</p></td></tr>`;
-      zoneAppel.classList.remove('hidden');
+
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-16 text-slate-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block text-indigo-500"></i>Chargement des dossiers et du cumul historique...</td></tr>`;
 
       try {
-        const { data: elevesData, error: errEleves } = await supabaseClient.from('eleves')
-          .select('*')
+        // 1. Récupération des élèves de la classe
+        const { data: eleves, error: errEleves } = await supabaseClient
+          .from('eleves')
+          .select('id, nom, prenom, matricule, classe_id')
           .eq('classe_id', classeId)
           .eq('actif', true)
-          .order('nom');
-          
-        if (errEleves) throw errEleves;
-        elevesActuels = elevesData || [];
+          .order('nom', { ascending: true });
 
-        absPendingSet.clear();
-        if (elevesActuels.length > 0) {
-          const eleveIds = elevesActuels.map(e => e.id);
-          const { data: absData, error: errAbs } = await supabaseClient
+        if (errEleves) throw errEleves;
+
+        const eleveIds = eleves.map(e => e.id);
+        const cumulsGlobal = {};
+        const datesAbsencesParEleve = {};
+
+        // 2. Calcul du cumul d'absences sur TOUT LE PARCOURS SCOLAIRE
+        if (eleveIds.length > 0) {
+          const { data: pointagesHistorique, error: errPointages } = await supabaseClient
             .from('pointages')
-            .select('eleve_id')
-            .eq('statut', 'A')
-            .eq('justifie', false)
-            .eq('archive', false)
-            .in('eleve_id', eleveIds);
-            
-          if (!errAbs && absData) {
-            absData.forEach(d => absPendingSet.add(d.eleve_id));
+            .select(`
+              eleve_id,
+              statut,
+              justifie,
+              seances ( date_cours )
+            `)
+            .in('eleve_id', eleveIds)
+            .eq('statut', 'A');
+
+          if (!errPointages && pointagesHistorique) {
+            pointagesHistorique.forEach(p => {
+              // Cumul total de toutes les séances d'absence du parcours
+              cumulsGlobal[p.eleve_id] = (cumulsGlobal[p.eleve_id] || 0) + 1;
+
+              // Enregistrement des dates pour l'évaluation des 3 jours consécutifs non justifiés
+              if (!p.justifie && p.seances?.date_cours) {
+                if (!datesAbsencesParEleve[p.eleve_id]) {
+                  datesAbsencesParEleve[p.eleve_id] = new Set();
+                }
+                datesAbsencesParEleve[p.eleve_id].add(p.seances.date_cours);
+              }
+            });
           }
         }
 
-        document.getElementById('count-eleves').textContent = elevesActuels.length;
+        // 3. Détermination de l'alerte strictly sur 3 jours consécutifs
+        elevesEnCours = eleves.map(e => {
+          const datesSet = datesAbsencesParEleve[e.id] || new Set();
+          const datesTriees = Array.from(datesSet).sort((a, b) => new Date(b) - new Date(a));
+          const alerte3Jours = verifierTroisJoursConsecutifs(datesTriees);
+
+          return {
+            ...e,
+            cumul_scolaire: cumulsGlobal[e.id] || 0,
+            en_alerte: alerte3Jours
+          };
+        });
+
+        // Initialisation de l'appel par défaut (tous Présents)
+        pointagesLocaux = {};
+        elevesEnCours.forEach(e => {
+          pointagesLocaux[e.id] = 'P';
+        });
+
         afficherTableauAppel();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-rose-500 font-bold">Erreur de chargement. Veuillez réessayer.</td></tr>`;
-        console.error(err);
+        console.error("Erreur chargement:", err);
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-rose-500 font-bold">Erreur de chargement: ${err.message}</td></tr>`;
       }
     }
 
+    // Vérification de 3 jours consécutifs d'absence (ignorant le week-end ven/sam)
+    function verifierTroisJoursConsecutifs(datesDesc) {
+      if (!datesDesc || datesDesc.length < 3) return false;
+      let consecutifs = 1;
+
+      for (let i = 0; i < datesDesc.length - 1; i++) {
+        const dCourante = new Date(datesDesc[i]);
+        const dPrecedente = new Date(datesDesc[i + 1]);
+        const diffJours = Math.round((dCourante - dPrecedente) / (1000 * 60 * 60 * 24));
+
+        // 1 jour calendaire ou 3 jours si coupure du week-end
+        const estApresWeekend = (diffJours === 3 && dCourante.getDay() === 0); // Dimanche en Algérie
+        if (diffJours === 1 || estApresWeekend) {
+          consecutifs++;
+          if (consecutifs >= 3) return true;
+        } else {
+          consecutifs = 1;
+        }
+      }
+      return false;
+    }
+
     function afficherTableauAppel() {
-      const tbody = document.getElementById('eleves-body');
+      const tbody = document.getElementById('tbody-eleves');
       tbody.innerHTML = '';
-      
-      if (elevesActuels.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="py-8 text-center text-slate-500 font-bold">Cette classe ne contient aucun élève actif.</td></tr>`;
+
+      if (elevesEnCours.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-12 text-slate-500">Aucun élève enregistré dans cette division.</td></tr>`;
+        majCompteurs();
         return;
       }
 
-      elevesActuels.forEach((e, index) => {
-        const nomPrincipal = `${e.nom || ''} ${e.prenom || ''}`.trim();
-        const alerte = e.en_alerte || e.total_absences >= 3;
-        const hasUnjustified = absPendingSet.has(e.id);
-        
+      elevesEnCours.forEach((e, idx) => {
         const tr = document.createElement('tr');
-        tr.className = "animate-table-row hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
-        
+        tr.className = "hover:bg-slate-800/40 transition";
+
+        const statut = pointagesLocaux[e.id] || 'P';
+
+        // Alerte STRICTEMENT sur 3 jours consécutifs
+        const estEnAlerte = e.en_alerte === true;
+
         tr.innerHTML = `
-          <td class="py-3 px-4 text-center font-bold text-slate-400 border-r border-slate-100 dark:border-slate-800">${index + 1}</td>
-          
-          <td class="py-3 px-4 text-right" dir="rtl">
-            <div class="font-bold text-slate-800 dark:text-white text-base">${escapeHtml(nomPrincipal)}</div>
-            <div class="flex flex-col gap-1 mt-1 items-start">
-                ${hasUnjustified ? `<span class="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-700 text-[10px] px-2 py-0.5 rounded-lg flex items-center gap-1.5 font-bold w-fit"><i class="fa-solid fa-triangle-exclamation"></i> غياب سابق غير مبرر (يجب إحضار تبرير)</span>` : ''}
-                ${alerte ? `<span class="bg-rose-600 text-white text-[10px] px-2 py-0.5 rounded-full inline-block font-bold w-fit">🚨 غياب متكرر (3 أيام)</span>` : ''}
+          <td class="py-3 px-4 text-center font-mono text-slate-500">${idx + 1}</td>
+          <td class="py-3 px-4">
+            <div class="font-bold text-white uppercase">${e.nom} ${e.prenom}</div>
+          </td>
+          <td class="py-3 px-4 font-mono text-xs text-slate-400">${e.matricule || 'N/A'}</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black ${
+              e.cumul_scolaire > 0 ? 'bg-indigo-950 text-indigo-300 border border-indigo-800' : 'bg-slate-800 text-slate-400'
+            }">
+              ${e.cumul_scolaire} h
+            </span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            ${estEnAlerte 
+              ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-rose-500/20 text-rose-400 border border-rose-500/30 animate-pulse">
+                   <i class="fa-solid fa-triangle-exclamation"></i> 3J Consécutifs
+                 </span>`
+              : `<span class="text-slate-600 text-xs font-bold">—</span>`
+            }
+          </td>
+          <td class="py-3 px-4">
+            <div class="flex items-center justify-center gap-2">
+              <button type="button" onclick="setStatut(${e.id}, 'P')" class="w-10 h-9 rounded-xl font-black text-xs transition ${
+                statut === 'P' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-400' : 'bg-slate-800 text-slate-400 hover:text-white'
+              }">P</button>
+              <button type="button" onclick="setStatut(${e.id}, 'A')" class="w-10 h-9 rounded-xl font-black text-xs transition ${
+                statut === 'A' ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30 ring-2 ring-rose-400' : 'bg-slate-800 text-slate-400 hover:text-white'
+              }">A</button>
+              <button type="button" onclick="setStatut(${e.id}, 'R')" class="w-10 h-9 rounded-xl font-black text-xs transition ${
+                statut === 'R' ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 ring-2 ring-amber-400' : 'bg-slate-800 text-slate-400 hover:text-white'
+              }">R</button>
             </div>
-          </td>
-          
-          <td class="py-2 px-2 text-center">
-            <label class="cursor-pointer flex justify-center">
-              <input type="radio" name="statut_${e.id}" value="P" checked class="peer sr-only" />
-              <div class="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-500 peer-checked:border-emerald-500 peer-checked:bg-emerald-500 peer-checked:text-white dark:peer-checked:text-white font-black text-sm transition-all hover:bg-emerald-50 dark:hover:bg-emerald-900/20 shadow-sm">
-                حاضر
-              </div>
-            </label>
-          </td>
-          
-          <td class="py-2 px-2 text-center">
-            <label class="cursor-pointer flex justify-center">
-              <input type="radio" name="statut_${e.id}" value="A" class="peer sr-only" />
-              <div class="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-500 peer-checked:border-rose-600 peer-checked:bg-rose-600 peer-checked:text-white dark:peer-checked:text-white font-black text-sm transition-all hover:bg-rose-50 dark:hover:bg-rose-900/20 shadow-sm">
-                غائب
-              </div>
-            </label>
-          </td>
-          
-          <td class="py-2 px-2 text-center">
-            <label class="cursor-pointer flex justify-center">
-              <input type="radio" name="statut_${e.id}" value="R" class="peer sr-only" />
-              <div class="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-amber-500 dark:text-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-white dark:peer-checked:text-white font-black text-sm transition-all hover:bg-amber-50 dark:hover:bg-amber-900/20 shadow-sm">
-                متأخر
-              </div>
-            </label>
           </td>
         `;
         tbody.appendChild(tr);
       });
+
+      majCompteurs();
     }
 
-    async function validerAppel() {
-      const dateCours = document.getElementById('date-cours').value;
-      const heureCours = document.getElementById('heure-cours').value;
-      const matiere = document.getElementById('matiere-cours').value.trim();
-      const classeId = document.getElementById('classe-cours').value;
-      const btn = document.getElementById('btn-submit-appel');
+    function setStatut(eleveId, statut) {
+      pointagesLocaux[eleveId] = statut;
+      afficherTableauAppel();
+    }
 
-      if (!matiere) {
-        alert("Veuillez saisir la matière enseignée.");
-        document.getElementById('matiere-cours').focus();
+    function marquerTous(statut) {
+      elevesEnCours.forEach(e => {
+        pointagesLocaux[e.id] = statut;
+      });
+      afficherTableauAppel();
+    }
+
+    function majCompteurs() {
+      let p = 0, a = 0, r = 0;
+      Object.values(pointagesLocaux).forEach(s => {
+        if (s === 'P') p++;
+        else if (s === 'A') a++;
+        else if (s === 'R') r++;
+      });
+      document.getElementById('compteur-p').textContent = p;
+      document.getElementById('compteur-a').textContent = a;
+      document.getElementById('compteur-r').textContent = r;
+    }
+
+    // Enregistrement de la séance et des pointages
+    async function enregistrerAppel() {
+      const classeId = document.getElementById('select-classe').value;
+      const dateCours = document.getElementById('date-cours').value;
+      const creneau = document.getElementById('select-creneau').value;
+      const matiere = document.getElementById('input-matiere').value.trim() || 'Séance standard';
+
+      if (!classeId) {
+        alert("Veuillez sélectionner une division.");
         return;
       }
-      if (!classeId) return;
+      if (elevesEnCours.length === 0) {
+        alert("Aucun élève à enregistrer.");
+        return;
+      }
 
+      const btn = document.getElementById('btn-save');
       btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement en cours...`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement...`;
 
       try {
-        const { data: seanceData, error: errSeance } = await supabaseClient
+        // 1. Insertion de la séance
+        const { data: seance, error: errSeance } = await supabaseClient
           .from('seances')
           .insert({
-            date_cours: dateCours,
-            heure_debut: heureCours,
-            matiere: matiere,
             classe_id: classeId,
-            enseignant: 'Professeur'
+            date_cours: dateCours,
+            heure_debut: creneau.split(' - ')[0],
+            matiere: matiere
           })
           .select()
           .single();
 
         if (errSeance) throw errSeance;
-        const seanceId = seanceData.id;
 
-        const pointages = [];
-        elevesActuels.forEach(e => {
-          const radioChecked = document.querySelector(`input[name="statut_${e.id}"]:checked`);
-          if (radioChecked) {
-            pointages.push({
-              seance_id: seanceId,
-              eleve_id: e.id,
-              statut: radioChecked.value,
-              justifie: false,
-              archive: false
-            });
-          }
-        });
+        // 2. Insertion en lot des pointages
+        const records = elevesEnCours.map(e => ({
+          seance_id: seance.id,
+          eleve_id: e.id,
+          statut: pointagesLocaux[e.id] || 'P',
+          justifie: false,
+          archive: false
+        }));
 
-        if (pointages.length > 0) {
-          const { error: errPt } = await supabaseClient.from('pointages').insert(pointages);
-          if (errPt) throw errPt;
-        }
+        const { error: errPointages } = await supabaseClient
+          .from('pointages')
+          .insert(records);
 
-        alert("✅ L'appel a été enregistré et transmis à l'administration avec succès !");
-        
-        document.getElementById('classe-cours').value = "";
-        document.getElementById('zone-appel').classList.add('hidden');
-        elevesActuels = [];
+        if (errPointages) throw errPointages;
 
-      } catch (error) {
-        console.error(error);
-        alert("Erreur lors de l'enregistrement de l'appel. Vérifiez votre connexion.");
+        alert("Feuille d'appel enregistrée avec succès !");
+        await chargerEleves(); // Actualise les cumuls historiques
+      } catch (err) {
+        alert("Erreur lors de l'enregistrement : " + err.message);
       } finally {
         btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Enregistrer et Transmettre à l'Administration</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i><span>Enregistrer l'Appel</span>`;
       }
     }
 
-    // ==========================================
-    // LOGIQUE D'IMPRESSION 1 : TABLEAU ÉVALUATION
-    // ==========================================
-    window.imprimerListeClasse = function() {
-      const classeId = document.getElementById('classe-cours').value;
-      const selectClasse = document.getElementById('classe-cours');
-      const classeNomComplet = selectClasse.options[selectClasse.selectedIndex].text.split(' — ');
-      
-      if (!classeId || elevesActuels.length === 0) {
-        alert("Veuillez charger une classe avec des élèves avant d'imprimer.");
-        return;
-      }
-
-      let rowsHtml = '';
-      elevesActuels.forEach((e) => {
-        rowsHtml += `
-          <tr class="h-10">
-            <td class="border-r border-black p-2 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
-            <td class="border-r border-black p-2"></td>
-            <td class="border-r border-black p-2"></td>
-            <td class="border-r border-black p-2"></td>
-            <td class="border-r border-black p-2"></td>
-            <td class="p-2"></td>
-          </tr>
-        `;
-      });
-
-      document.getElementById('print-classe-fr').textContent = classeNomComplet[0];
-      document.getElementById('print-tbody').innerHTML = rowsHtml;
-
-      document.body.classList.add('print-liste');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-liste'), 1000);
-    };
-
-    // ==========================================
-    // LOGIQUE D'IMPRESSION 2 : TABLEAU SUIVI MENSUEL
-    // ==========================================
-    window.imprimerListeSuivi = function() {
-      const classeId = document.getElementById('classe-cours').value;
-      const selectClasse = document.getElementById('classe-cours');
-      const classeNomComplet = selectClasse.options[selectClasse.selectedIndex].text.split(' — ');
-      
-      if (!classeId || elevesActuels.length === 0) {
-        alert("Veuillez charger une classe avec des élèves avant d'imprimer.");
-        return;
-      }
-
-      let rowsHtml = '';
-      elevesActuels.forEach((e) => {
-        rowsHtml += `
-          <tr class="h-10">
-            <td class="border-r border-black p-1 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
-            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
-            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
-            <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td></td>
-          </tr>
-        `;
-      });
-
-      document.getElementById('print-suivi-classe').textContent = classeNomComplet[0];
-      document.getElementById('print-tbody-suivi').innerHTML = rowsHtml;
-
-      document.body.classList.add('print-liste-suivi');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-liste-suivi'), 1000);
-    };
-
-    // ==========================================
-    // LOGIQUE D'AJOUT MANUEL D'UN ÉLÈVE
-    // ==========================================
-    window.ouvrirModalAjoutEleve = function() {
-      const classeId = document.getElementById('classe-cours').value;
+    // Modal Ajout Manuel d'un Élève
+    function ouvrirModalAjout() {
+      const classeId = document.getElementById('select-classe').value;
       if (!classeId) {
-        alert("Veuillez d'abord sélectionner une classe.");
+        alert("Veuillez d'abord sélectionner une division.");
         return;
       }
-      document.getElementById('new-eleve-nom').value = '';
-      document.getElementById('new-eleve-prenom').value = '';
       document.getElementById('modal-ajout-eleve').classList.remove('hidden');
-      document.getElementById('modal-ajout-eleve').classList.add('flex');
-    };
+    }
 
-    window.fermerModalAjoutEleve = function() {
+    function fermerModalAjout() {
       document.getElementById('modal-ajout-eleve').classList.add('hidden');
-      document.getElementById('modal-ajout-eleve').classList.remove('flex');
-    };
+      document.getElementById('ajout-nom').value = '';
+      document.getElementById('ajout-prenom').value = '';
+      document.getElementById('ajout-matricule').value = '';
+    }
 
-    window.enregistrerNouvelEleve = async function() {
-      const classeId = document.getElementById('classe-cours').value;
-      const nom = document.getElementById('new-eleve-nom').value.trim();
-      const prenom = document.getElementById('new-eleve-prenom').value.trim();
-      const btn = document.getElementById('btn-save-new-eleve');
+    async function sauvegarderNouvelEleve() {
+      const classeId = document.getElementById('select-classe').value;
+      const nom = document.getElementById('ajout-nom').value.trim();
+      const prenom = document.getElementById('ajout-prenom').value.trim();
+      const matricule = document.getElementById('ajout-matricule').value.trim();
 
       if (!nom || !prenom) {
-        alert("Veuillez saisir le nom et le prénom / يرجى إدخال اللقب والاسم.");
+        alert("Veuillez renseigner le nom et le prénom de l'élève.");
         return;
       }
 
-      btn.disabled = true;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
-
-      try {
-        const tempMatricule = 'TEMP-' + Date.now().toString().slice(-6);
-
-        const { error } = await supabaseClient.from('eleves').insert({
+      const { error } = await supabaseClient
+        .from('eleves')
+        .insert({
+          classe_id: classeId,
           nom: nom,
           prenom: prenom,
-          nom_ar: nom,
-          prenom_ar: prenom,
-          classe_id: classeId,
-          matricule: tempMatricule,
+          matricule: matricule || null,
           actif: true
         });
 
-        if (error) throw error;
-
-        fermerModalAjoutEleve();
-        await chargerEleves(); // Recharge la liste immédiatement
-        alert("Élève ajouté avec succès ! / تم إضافة التلميذ بنجاح!");
-      } catch (err) {
-        console.error(err);
-        alert("Erreur lors de l'ajout: " + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = "إضافة";
+      if (error) {
+        alert("Erreur : " + error.message);
+        return;
       }
-    };
 
-    if (sessionStorage.getItem('enseignant_auth') === 'true') {
-      debloquerEnseignant();
+      fermerModalAjout();
+      await chargerEleves();
+    }
+
+    // Impressions officielles
+    function imprimerEvaluation() {
+      window.print();
+    }
+
+    function imprimerFicheSuivi() {
+      window.print();
     }
   </script>
 </body>
