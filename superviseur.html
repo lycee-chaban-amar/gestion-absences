@@ -219,7 +219,7 @@
         <canvas id="chartRepartition"></canvas>
       </div>
       <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm h-64 relative">
-        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Absences par Classe</h3>
+        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Absences par Classe <span class="text-[10px] font-normal text-slate-400 text-indigo-500">(Cliquez sur une barre pour filtrer)</span></h3>
         <canvas id="chartClasses"></canvas>
       </div>
     </div>
@@ -473,9 +473,6 @@
         const { data: kpiData } = await supabaseClient.rpc('get_kpis_jour', { p_date: d });
 
         vuePointages = vueData || [];
-        if (vuePointages.length > 0) {
-          vuePointages.sort((a, b) => String(b.pointage_id || b.id || '').localeCompare(String(a.pointage_id || a.id || '')));
-        }
         
         pointagesSelectionnes.clear(); if(checkAllMaster) checkAllMaster.checked = false; mettreAJourBarreSelection();
 
@@ -518,14 +515,35 @@
         registreBody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-slate-400 dark:text-slate-500 font-bold"><i class="fa-solid fa-check text-emerald-500 text-2xl mb-2 block"></i>Aucun enregistrement.</td></tr>`;
         return;
       }
+
+      // 1. Tri des données : Par Classe (alphabétique) puis par Nom d'élève
+      fData.sort((a, b) => {
+        const classeA = a.classe_nom || 'Z-Sans Classe';
+        const classeB = b.classe_nom || 'Z-Sans Classe';
+        if (classeA !== classeB) return classeA.localeCompare(classeB);
+        
+        const nomA = (a.nom + ' ' + a.prenom).toLowerCase();
+        const nomB = (b.nom + ' ' + b.prenom).toLowerCase();
+        return nomA.localeCompare(nomB);
+      });
+
       registreBody.innerHTML = '';
+      
+      let classeActuelle = null;
+      let indexGlobal = 1;
+
       fData.forEach((pt, i) => {
-        // Alerte STRICTEMENT sur 3 jours consécutifs (suppression de l'alerte sur 3 heures d'absence)
+        // 2. Insertion d'un en-tête visuel à chaque changement de classe
+        if (pt.classe_nom !== classeActuelle) {
+          classeActuelle = pt.classe_nom;
+          const trHeader = document.createElement('tr');
+          trHeader.className = "bg-indigo-100 dark:bg-indigo-900/60 border-y-2 border-indigo-200 dark:border-indigo-700";
+          trHeader.innerHTML = `<td colspan="9" class="py-2.5 px-4 font-black text-indigo-800 dark:text-indigo-300 uppercase tracking-wider text-xs"><i class="fa-solid fa-bookmark mr-2"></i> Division : ${classeActuelle || 'Sans classe'}</td>`;
+          registreBody.appendChild(trHeader);
+        }
+
         const al = pt.en_alerte === true;
-        
-        // Cumul calculé sur tout le parcours scolaire
         const tot = pt.total_absences || 0;
-        
         const pid = pt.pointage_id || pt.id, eleveId = pt.eleve_id;
         const isChecked = pointagesSelectionnes.has(String(pid));
         
@@ -558,7 +576,7 @@
           <td class="py-3 px-3 text-center">
             <input type="checkbox" value="${pid}" ${isChecked ? 'checked' : ''} onchange="toggleSelectRow('${escJs(pid)}', this.checked)" class="row-checkbox w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 cursor-pointer accent-indigo-600" />
           </td>
-          <td class="py-3 px-2 text-center text-xs font-bold text-slate-400 dark:text-slate-500">${i + 1}</td>
+          <td class="py-3 px-2 text-center text-xs font-bold text-slate-400 dark:text-slate-500">${indexGlobal++}</td>
           <td class="py-3 px-4">
             <div class="font-bold text-slate-900 dark:text-white cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline transition" onclick="ouvrirMiniHist(${eleveId}, '${escJs(nomPr)}')">${escapeHtml(nomPr)}</div>
             <div class="text-xs text-slate-500 dark:text-slate-400">${escapeHtml(nomSec)}</div>
@@ -618,10 +636,15 @@
       const ctxCls = document.getElementById('chartClasses');
       if(!ctxRep || !ctxCls) return;
 
-      let p=0, a=0, r=0; const parClasse = {};
+      let p=0, a=0, r=0; const parClasse = {}; const mapClasseId = {};
       vuePointages.filter(pt => !pt.archive).forEach(pt => {
         const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
-        if(pt.statut==='A' || isJustifiedAbsence) { a++; parClasse[pt.classe_nom] = (parClasse[pt.classe_nom]||0)+1; }
+        if(pt.statut==='A' || isJustifiedAbsence) { 
+          a++; 
+          const cNom = pt.classe_nom || 'Sans classe';
+          parClasse[cNom] = (parClasse[cNom]||0)+1; 
+          mapClasseId[cNom] = pt.classe_id;
+        }
         else if(pt.statut==='R') r++;
         else if(pt.statut==='P') p++;
       });
@@ -658,8 +681,39 @@
 
       chartCls = new Chart(ctxCls, {
         type: 'bar',
-        data: { labels: Object.keys(parClasse), datasets: [{ label: 'Absences', data: Object.values(parClasse), backgroundColor: '#f43f5e', borderRadius: 4 }] },
-        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor }, grid: { color: isDark ? '#334155' : '#e2e8f0' } }, x: { ticks: { color: textColor }, grid: { display: false } } }, plugins: { legend: { display: false } } }
+        data: { 
+          labels: Object.keys(parClasse), 
+          datasets: [{ 
+            label: 'Absences', 
+            data: Object.values(parClasse), 
+            backgroundColor: '#f43f5e', 
+            borderRadius: 4 
+          }] 
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          onHover: (event, chartElement) => {
+            event.native.target.style.cursor = chartElement.length ? 'pointer' : 'default';
+          },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const classeCliquee = Object.keys(parClasse)[elements[0].index];
+              const cId = mapClasseId[classeCliquee];
+              const selectClasse = document.getElementById('filtre-classe');
+              if (selectClasse && cId) {
+                selectClasse.value = cId;
+                filtrerTableau(); 
+                document.getElementById('registre-body').scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }
+          },
+          scales: { 
+            y: { beginAtZero: true, ticks: { stepSize: 1, color: textColor }, grid: { color: isDark ? '#334155' : '#e2e8f0' } }, 
+            x: { ticks: { color: textColor }, grid: { display: false } } 
+          }, 
+          plugins: { legend: { display: false } } 
+        }
       });
     }
 
