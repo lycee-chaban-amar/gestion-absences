@@ -93,7 +93,6 @@
             <option value="">-- Choisir la nouvelle classe --</option>
           </select>
         </div>
-        
       </div>
       <div class="flex justify-end gap-2 mt-6 pt-3 border-t border-slate-100 dark:border-slate-700">
         <button type="button" onclick="fermerModalTransfertGlobal()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Annuler</button>
@@ -157,10 +156,9 @@
     </div>
   </div>
 
-  <!-- ECRAN PIN AVEC ICONE BOUCLIER -->
+  <!-- ECRAN PIN SÉCURISÉ (VÉRIFICATION SERVEUR PAR RPC) -->
   <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform">
-      
       <div class="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
         <i class="fa-solid fa-shield-halved"></i>
       </div>
@@ -180,7 +178,6 @@
   <header class="bg-slate-900 dark:bg-slate-950 text-white shadow-md border-b border-slate-800 transition-colors">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-4">
-        
         <div class="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-2xl shadow-md">
           <i class="fa-solid fa-shield-halved"></i>
         </div>
@@ -219,7 +216,7 @@
         <canvas id="chartRepartition"></canvas>
       </div>
       <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm h-64 relative">
-        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Absences par Classe <span class="text-[10px] font-normal text-slate-400 text-indigo-500">(Cliquez sur une barre pour filtrer)</span></h3>
+        <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Absences par Classe <span class="text-[10px] font-normal text-indigo-500">(Cliquez sur une barre pour filtrer la classe)</span></h3>
         <canvas id="chartClasses"></canvas>
       </div>
     </div>
@@ -318,8 +315,6 @@
 
     if (filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
 
-    const PIN_MASQUE = "MjYyNg==";
-
     function escapeHtml(s) {
       if (s === null || s === undefined) return '';
       return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -359,19 +354,39 @@
       initialiserApplication().catch(err => { console.error(err); });
     }
 
-    function validerPinDirect() {
+    // Authentification sécurisée via RPC Supabase
+    async function validerPinDirect() {
       const input = document.getElementById('input-pin'), err = document.getElementById('pin-error'), card = document.getElementById('pin-card');
+      const btn = document.getElementById('btn-valider-pin');
       let val = input ? input.value.trim() : '';
       const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
       val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
 
-      if (val === atob(PIN_MASQUE)) { 
-        if (err) err.classList.add('hidden'); 
-        debloquerSuperviseur(); 
-      } else { 
-        if (err) err.classList.remove('hidden'); 
-        if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
-        if (input) { input.value = ''; input.focus(); } 
+      if (!val) return;
+
+      btn.disabled = true;
+      btn.textContent = "Vérification...";
+
+      try {
+        const { data: estValide, error } = await supabaseClient
+          .rpc('verifier_pin', { p_role: 'superviseur', p_pin: val });
+
+        if (error) throw error;
+
+        if (estValide === true) { 
+          if (err) err.classList.add('hidden'); 
+          debloquerSuperviseur(); 
+        } else { 
+          if (err) { err.textContent = "Code incorrect"; err.classList.remove('hidden'); }
+          if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
+          if (input) { input.value = ''; input.focus(); } 
+        }
+      } catch (e) {
+        console.error(e);
+        if (err) { err.textContent = "Erreur de connexion réseau"; err.classList.remove('hidden'); }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Déverrouiller";
       }
     }
     
@@ -508,6 +523,7 @@
       });
     }
 
+    // Affichage organisé par division avec séparateurs visuels
     function renderTableau() {
       const fData = obtenirDonneesFiltrees();
       document.getElementById('registre-count').textContent = `${fData.length} ligne(s)`;
@@ -516,7 +532,7 @@
         return;
       }
 
-      // 1. Tri des données : Par Classe (alphabétique) puis par Nom d'élève
+      // Tri alphabétique par classe puis par nom d'élève
       fData.sort((a, b) => {
         const classeA = a.classe_nom || 'Z-Sans Classe';
         const classeB = b.classe_nom || 'Z-Sans Classe';
@@ -532,8 +548,8 @@
       let classeActuelle = null;
       let indexGlobal = 1;
 
-      fData.forEach((pt, i) => {
-        // 2. Insertion d'un en-tête visuel à chaque changement de classe
+      fData.forEach((pt) => {
+        // En-tête séparateur par division
         if (pt.classe_nom !== classeActuelle) {
           classeActuelle = pt.classe_nom;
           const trHeader = document.createElement('tr');
@@ -555,7 +571,7 @@
         else if (pt.statut === 'R') stHtml = `<span class="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-clock"></i> Retard</span>`;
         else stHtml = `<span class="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full font-bold text-xs"><i class="fa-solid fa-user-check"></i> Présent</span>`;
 
-        let bg = al ? 'bg-rose-50 dark:bg-rose-900/20 border-l-4 border-l-rose-500' : (i % 2 === 0 ? 'bg-white dark:bg-slate-800' : 'bg-slate-50/70 dark:bg-slate-800/50');
+        let bg = al ? 'bg-rose-50 dark:bg-rose-900/20 border-l-4 border-l-rose-500' : 'bg-white dark:bg-slate-800';
         if (isChecked) bg = 'bg-indigo-50/80 dark:bg-indigo-900/30 border-l-4 border-l-indigo-600';
         
         const tr = document.createElement('tr');
@@ -631,6 +647,7 @@
     };
     window.deselectionnerTout = function() { pointagesSelectionnes.clear(); if (checkAllMaster) checkAllMaster.checked = false; renderTableau(); mettreAJourBarreSelection(); };
 
+    // Graphiques avec clic interactif sur les barres
     function renderGraphiques() {
       const ctxRep = document.getElementById('chartRepartition');
       const ctxCls = document.getElementById('chartClasses');
@@ -703,7 +720,7 @@
               const selectClasse = document.getElementById('filtre-classe');
               if (selectClasse && cId) {
                 selectClasse.value = cId;
-                filtrerTableau(); 
+                renderTableau(); 
                 document.getElementById('registre-body').scrollIntoView({ behavior: 'smooth', block: 'center' });
               }
             }
