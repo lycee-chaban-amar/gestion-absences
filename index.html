@@ -154,8 +154,8 @@
           <input type="date" id="date-cours" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed outline-none font-bold" readonly />
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Heure / التوقيت <i class="fa-solid fa-lock text-rose-500 text-[10px] ml-1"></i></label>
-          <input type="time" id="heure-cours" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed outline-none font-bold" readonly />
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Heure / التوقيت</label>
+          <input type="time" id="heure-cours" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white cursor-pointer outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all font-bold" />
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Matière / المادة <i class="fa-solid fa-lock text-rose-500 text-[10px] ml-1"></i></label>
@@ -411,7 +411,7 @@
       location.reload(); 
     });
 
-    function verrouillerDateEtHeure() {
+    function initialiserDateEtHeure() {
       const dateInput = document.getElementById('date-cours');
       const heureInput = document.getElementById('heure-cours');
       const now = new Date();
@@ -429,7 +429,7 @@
     }
 
     async function initPage() {
-      verrouillerDateEtHeure();
+      initialiserDateEtHeure();
       
       const savedMatiere = sessionStorage.getItem('enseignant_matiere');
       const matiereInput = document.getElementById('matiere-cours');
