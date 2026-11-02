@@ -7,15 +7,15 @@
   
   <meta name="theme-color" content="#0f172a">
   
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
+  <script src="[https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js](https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js)"></script>
+  <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
   
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)" />
+  <link href="[https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap](https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap)" rel="stylesheet">
+  <link href="[https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap](https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap)" rel="stylesheet">
   
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
@@ -358,7 +358,7 @@
   <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-lg font-bold font-amiri">ثانوية الشهيد شعبان اعمر</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p>أوقاس في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
 
   <script>
-    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
+    const SUPABASE_URL = '[https://eixdnxponkbsmelircjm.supabase.co](https://eixdnxponkbsmelircjm.supabase.co)';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     
     let supabaseClient = null;
@@ -627,7 +627,7 @@
         const pid = pt.pointage_id || pt.id, eleveId = pt.eleve_id;
         const isChecked = pointagesSelectionnes.has(String(pid));
         
-        const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && p.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
+        const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
         const isAbsent = pt.statut === 'A' || isJustifiedAbsence;
 
         let stHtml = '';
@@ -852,9 +852,9 @@
         `تاريخ اليوم: ${dateStr}\n\n` +
         `يرجى من أساتذة الأقسام التالية تسجيل الحضور والغياب في أقرب وقت:\n` +
         classesManquantes.map(c => `• *${c}*`).join('\n') +
-        `\n\n🔗 رابط المنصة: https://lycee-chaban-amar.github.io/index.html`;
+        `\n\n🔗 رابط المنصة: [https://lycee-chaban-amar.github.io/index.html](https://lycee-chaban-amar.github.io/index.html)`;
 
-      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+      const url = `[https://api.whatsapp.com/send?text=$](https://api.whatsapp.com/send?text=$){encodeURIComponent(message)}`;
       window.open(url, '_blank');
     };
 
@@ -1202,6 +1202,14 @@
       });
 
       const incidents = Array.from(mapEleves.values());
+      const totalElevesAbsents = incidents.filter(p => p.isAbsent).length;
+      const totalElevesRetards = incidents.filter(p => !p.isAbsent && p.isRetard).length;
+      
+      let totalHeuresAbsence = 0;
+      incidents.forEach(p => {
+        if (p.isAbsent) totalHeuresAbsence += p.seances.length;
+      });
+
       let incHtml = incidents.length === 0 ? `<tr><td colspan="6" class="p-4 text-center font-bold">لم تُسجل أي غيابات.</td></tr>` : incidents.map((p, i) => {
         let stT = 'غياب';
         let color = 'text-rose-700';
@@ -1229,8 +1237,11 @@
         </div>
         <div class="flex justify-between items-center gap-2 mb-6 w-full" dir="rtl">
           <div class="print-kpi-box text-center w-1/4">الحصص المنجزة : ${currentKpis.total_seances || 0}</div>
-          <div class="print-kpi-box text-center w-1/4">الغيابات : ${currentKpis.total_absents || 0}</div>
-          <div class="print-kpi-box text-center w-1/4">التأخرات : ${currentKpis.total_retards || 0}</div>
+          <div class="print-kpi-box text-center w-1/4">
+            التلاميذ الغائبون : <span class="font-black text-rose-700">${totalElevesAbsents}</span>
+            <span class="text-[10px] text-slate-500 block">(${totalHeuresAbsence} حصة)</span>
+          </div>
+          <div class="print-kpi-box text-center w-1/4">التأخرات : ${totalElevesRetards}</div>
           <div class="print-kpi-box text-center w-1/4">نسبة الحضور : ${currentKpis.taux_presence || 0}%</div>
         </div>
         <table class="border-collapse border border-black print-table mb-8">
