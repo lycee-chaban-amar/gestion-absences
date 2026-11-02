@@ -7,7 +7,7 @@
   
   <meta name="theme-color" content="#0f172a">
   
-  <!-- Sécurité CSS immédiate anti-débordement -->
+  <!-- Sécurité CSS anti-débordement des fenêtres -->
   <style>
     .hidden { display: none !important; }
   </style>
@@ -229,7 +229,7 @@
     </div>
   </div>
 
-  <!-- MODAL CLASSES NON APPELÉES -->
+  <!-- MODAL CLASSES NON APPELÉES AVEC NUMÉRO DE SALLE -->
   <div id="modal-non-appeles" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0">
@@ -521,7 +521,7 @@
       if (!supabaseClient) return;
       try {
         if (classesCache.length === 0) {
-          const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet').order('nom_court');
+          const { data } = await supabaseClient.from('classes').select('id, nom_court, nom_complet, salle').order('nom_court');
           classesCache = data || [];
         }
         if (filtreClasse) {
@@ -617,6 +617,7 @@
         return;
       }
 
+      // Tri par division puis par nom
       fData.sort((a, b) => {
         const classeA = a.classe_nom || 'Z-Sans Classe';
         const classeB = b.classe_nom || 'Z-Sans Classe';
@@ -816,12 +817,13 @@
       const modal = document.getElementById('modal-non-appeles');
       const content = document.getElementById('non-appeles-content');
       content.innerHTML = '<div class="text-center py-8 text-indigo-500"><i class="fa-solid fa-spinner fa-spin text-2xl"></i></div>';
-      modal.classList.remove('hidden'); modal.classList.add('flex');
+      modal.classList.remove('hidden'); 
+      modal.classList.add('flex');
 
       try {
         const { data: eleves } = await supabaseClient.from('eleves').select('classe_id').eq('actif', true);
         const totalParClasse = {};
-        (eleves||[]).forEach(e => { totalParClasse[e.classe_id] = (totalParClasse[e.classe_id] || 0) + 1; });
+        (eleves || []).forEach(e => { totalParClasse[e.classe_id] = (totalParClasse[e.classe_id] || 0) + 1; });
 
         const appelesParClasse = {};
         vuePointages.filter(pt => !pt.archive).forEach(pt => {
@@ -834,7 +836,12 @@
           const total = totalParClasse[cls.id] || 0;
           const appeles = appelesParClasse[cls.id] ? appelesParClasse[cls.id].size : 0;
           if (total > 0 && appeles < total) {
-            classesNonAppelees.push({ nom: cls.nom_court, manquants: total - appeles, total: total });
+            classesNonAppelees.push({ 
+              nom: cls.nom_court, 
+              salle: cls.salle || '', 
+              manquants: total - appeles, 
+              total: total 
+            });
           }
         });
 
@@ -844,32 +851,56 @@
         }
 
         classesNonAppelees.sort((a, b) => b.manquants - a.manquants);
-        let html = '<ul class="space-y-2">';
+        
+        let html = '<ul class="space-y-2.5">';
         classesNonAppelees.forEach(c => {
-          html += `<li class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 p-3 rounded-xl"><div><div class="font-bold text-slate-800 dark:text-white text-xs">${escapeHtml(c.nom)}</div><div class="text-[11px] text-slate-500 mt-0.5">Total: ${c.total} élèves</div></div><span class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-lg text-xs font-black">${c.manquants} manquant(s)</span></li>`;
+          const salleBadge = c.salle 
+            ? `<span class="badge-salle bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-door-open text-indigo-500"></i> الحجرة ${escapeHtml(c.salle)}</span>`
+            : `<span class="badge-salle bg-slate-100 dark:bg-slate-700 text-slate-500 px-2 py-1 rounded-xl text-xs font-bold shrink-0">بدون حجرة</span>`;
+
+          html += `
+            <li class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 p-3 rounded-2xl gap-3">
+              <div class="flex items-center gap-3">
+                ${salleBadge}
+                <div>
+                  <div class="font-black text-slate-800 dark:text-white text-xs">${escapeHtml(c.nom)}</div>
+                  <div class="text-[11px] text-slate-500 mt-0.5">Total : ${c.total} élèves</div>
+                </div>
+              </div>
+              <span class="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2.5 py-1 rounded-xl text-xs font-black shrink-0">
+                ${c.manquants} manquant(s)
+              </span>
+            </li>
+          `;
         });
         content.innerHTML = html + '</ul>';
-      } catch (err) { content.innerHTML = `<p class="text-center text-rose-500 font-bold">Erreur: ${escapeHtml(err.message)}</p>`; }
+      } catch (err) { 
+        content.innerHTML = `<p class="text-center text-rose-500 font-bold">Erreur : ${escapeHtml(err.message)}</p>`; 
+      }
     };
     
     window.partagerRappelWhatsApp = function() {
       const dateStr = document.getElementById('filtre-date') ? document.getElementById('filtre-date').value : new Date().toLocaleDateString('fr-FR');
-      const classesManquantes = [];
+      const lignesManquantes = [];
       
-      document.querySelectorAll('#non-appeles-content li .text-xs').forEach(el => {
-        classesManquantes.push(el.textContent.trim());
+      document.querySelectorAll('#non-appeles-content li').forEach(li => {
+        const nom = li.querySelector('.font-black.text-xs')?.textContent.trim();
+        const salle = li.querySelector('.badge-salle')?.textContent.trim();
+        if (nom) {
+          lignesManquantes.push(salle ? `• *${nom}* (${salle})` : `• *${nom}*`);
+        }
       });
 
-      if (classesManquantes.length === 0) {
+      if (lignesManquantes.length === 0) {
         alert("Toutes les classes ont déjà fait l'appel !");
         return;
       }
 
       const message = `📢 *ثانوية الشهيد شعبان اعمر - تذكير بتسجيل الغياب*\n` +
-        `تاريخ اليوم: ${dateStr}\n\n` +
-        `يرجى من أساتذة الأقسام التالية تسجيل الحضور والغياب في أقرب وقت:\n` +
-        classesManquantes.map(c => `• *${c}*`).join('\n') +
-        `\n\n🔗 رابط المنصة: https://lycee-chaban-amar.github.io/index.html`;
+        `تاريخ اليوم : ${dateStr}\n\n` +
+        `يرجى من الأساتذة أو المساعدين التربويين التوجه للحجرات التالية لتسجيل الغياب :\n` +
+        lignesManquantes.join('\n') +
+        `\n\n🔗 رابط المنصة : https://lycee-chaban-amar.github.io/index.html`;
 
       const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
@@ -980,7 +1011,7 @@
           });
         }
         pointagesSelectionnes.clear(); 
-        await fetchDonnees();
+        await fetchDonnees(); 
       } catch (err) { alert(err.message); }
     };
 
