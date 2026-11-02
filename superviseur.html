@@ -7,15 +7,21 @@
   
   <meta name="theme-color" content="#0f172a">
   
-  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+  <!-- Sécurité CSS immédiate anti-débordement -->
+  <style>
+    .hidden { display: none !important; }
+  </style>
+
+  <!-- Bibliothèques externes -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
-  <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
-  <script src="[https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js](https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js)"></script>
-  <script src="[https://cdn.jsdelivr.net/npm/chart.js](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css)" />
-  <link href="[https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap](https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap)" rel="stylesheet">
-  <link href="[https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap](https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap)" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   
   <style>
     body { font-family: 'Cairo', system-ui, -apple-system, sans-serif; }
@@ -125,6 +131,7 @@
     </div>
   </div>
 
+  <!-- MODAL DÉTAILS DES APPELS -->
   <div id="modal-details-appels" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0">
@@ -145,6 +152,7 @@
     </div>
   </div>
 
+  <!-- MODAL MINI HISTORIQUE -->
   <div id="modal-mini-hist" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row">
       <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2 mb-3">
@@ -155,6 +163,7 @@
     </div>
   </div>
 
+  <!-- MODAL MODIFIER POINTAGE -->
   <div id="modal-modifier" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
@@ -188,6 +197,7 @@
     </div>
   </div>
 
+  <!-- MODAL EDITER ELEVE -->
   <div id="modal-editer-eleve" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
@@ -219,6 +229,7 @@
     </div>
   </div>
 
+  <!-- MODAL CLASSES NON APPELÉES -->
   <div id="modal-non-appeles" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0">
@@ -251,6 +262,7 @@
     </div>
   </div>
 
+  <!-- HEADER -->
   <header class="bg-slate-900 dark:bg-slate-950 text-white shadow-md border-b border-slate-800 transition-colors">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-4">
@@ -269,6 +281,7 @@
     </div>
   </header>
 
+  <!-- CONTENU PRINCIPAL -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
       <div onclick="ouvrirModalDetailsAppels()" class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md transition group">
@@ -282,6 +295,7 @@
       <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm col-span-2 lg:col-span-1"><div class="flex justify-between text-emerald-500 mb-1"><span class="text-xs font-bold uppercase tracking-wider">Taux Présence</span><i class="fa-solid fa-chart-pie text-emerald-500"></i></div><div class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400" id="kpi-taux">--%</div><p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1">Moyenne</p></div>
     </div>
 
+    <!-- GRAPHIQUES -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
       <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm h-64 relative">
         <h3 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">Répartition du Jour <span class="text-[10px] font-normal text-slate-400">(Cliquez sur le gris)</span></h3>
@@ -293,6 +307,7 @@
       </div>
     </div>
 
+    <!-- BARRE DE FILTRES -->
     <div class="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row justify-between gap-4">
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
         <div><label class="block text-xs font-bold mb-1 text-slate-600 dark:text-slate-400">Date</label><input type="date" id="filtre-date" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-800 dark:text-white outline-none cursor-pointer" /></div>
@@ -317,6 +332,7 @@
       </div>
     </div>
 
+    <!-- ACTIONS GROUPÉES -->
     <div id="barre-actions-groupees" class="hidden bg-indigo-900 dark:bg-indigo-950 text-white p-3.5 rounded-2xl shadow-lg flex-wrap items-center justify-between gap-3 border border-indigo-700 animate-table-row">
       <div class="flex items-center gap-2.5 text-sm font-bold"><span class="w-7 h-7 rounded-full bg-indigo-700 flex items-center justify-center text-xs font-black" id="count-selected">0</span><span>sélectionné(s)</span></div>
       <div class="flex items-center gap-2 flex-wrap">
@@ -326,6 +342,7 @@
       </div>
     </div>
 
+    <!-- REGISTRE -->
     <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm transition-colors">
       <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center flex-wrap gap-2">
         <h2 class="font-bold text-slate-800 dark:text-white">Registre des Absences</h2>
@@ -352,13 +369,14 @@
     </div>
   </main>
 
+  <!-- ZONES D'IMPRESSION -->
   <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
   <div id="zone-impression-fiche-eleve" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
   <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10"><div class="text-center border-b pb-3 mb-4"><h3 class="font-bold font-amiri text-xl">ثانوية الشهيد شعبان اعمر</h3><h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée</h2></div><div id="billet-details" class="space-y-3 text-sm"></div><div class="mt-6 pt-4 border-t flex justify-between text-xs"><p>Édité le : <span id="billet-date-emission"></span></p><p class="font-bold">Visa Administration</p></div></div>
   <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-lg font-bold font-amiri">ثانوية الشهيد شعبان اعمر</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p>أوقاس في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
 
   <script>
-    const SUPABASE_URL = '[https://eixdnxponkbsmelircjm.supabase.co](https://eixdnxponkbsmelircjm.supabase.co)';
+    const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     
     let supabaseClient = null;
@@ -599,7 +617,6 @@
         return;
       }
 
-      // Tri par division puis par nom
       fData.sort((a, b) => {
         const classeA = a.classe_nom || 'Z-Sans Classe';
         const classeB = b.classe_nom || 'Z-Sans Classe';
@@ -852,9 +869,9 @@
         `تاريخ اليوم: ${dateStr}\n\n` +
         `يرجى من أساتذة الأقسام التالية تسجيل الحضور والغياب في أقرب وقت:\n` +
         classesManquantes.map(c => `• *${c}*`).join('\n') +
-        `\n\n🔗 رابط المنصة: [https://lycee-chaban-amar.github.io/index.html](https://lycee-chaban-amar.github.io/index.html)`;
+        `\n\n🔗 رابط المنصة: https://lycee-chaban-amar.github.io/index.html`;
 
-      const url = `[https://api.whatsapp.com/send?text=$](https://api.whatsapp.com/send?text=$){encodeURIComponent(message)}`;
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
       window.open(url, '_blank');
     };
 
