@@ -225,9 +225,10 @@
         <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-slate-500"></i><span>Classes non appelées</span></h3>
         <button type="button" onclick="fermerModalNonAppeles()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <div id="non-appeles-content" class="overflow-y-auto flex-1 text-sm"></div>
-      <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 text-right">
-        <button type="button" onclick="fermerModalNonAppeles()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
+      <div id="non-appeles-content" class="overflow-y-auto flex-1 text-sm mb-4"></div>
+      <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 flex justify-between items-center gap-2">
+        <button type="button" onclick="partagerRappelWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-brands fa-whatsapp text-base"></i> WhatsApp</button>
+        <button type="button" onclick="fermerModalNonAppeles()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
       </div>
     </div>
   </div>
@@ -626,7 +627,7 @@
         const pid = pt.pointage_id || pt.id, eleveId = pt.eleve_id;
         const isChecked = pointagesSelectionnes.has(String(pid));
         
-        const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
+        const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && p.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
         const isAbsent = pt.statut === 'A' || isJustifiedAbsence;
 
         let stHtml = '';
@@ -833,6 +834,30 @@
         content.innerHTML = html + '</ul>';
       } catch (err) { content.innerHTML = `<p class="text-center text-rose-500 font-bold">Erreur: ${escapeHtml(err.message)}</p>`; }
     };
+    
+    window.partagerRappelWhatsApp = function() {
+      const dateStr = document.getElementById('filtre-date') ? document.getElementById('filtre-date').value : new Date().toLocaleDateString('fr-FR');
+      const classesManquantes = [];
+      
+      document.querySelectorAll('#non-appeles-content li .text-xs').forEach(el => {
+        classesManquantes.push(el.textContent.trim());
+      });
+
+      if (classesManquantes.length === 0) {
+        alert("Toutes les classes ont déjà fait l'appel !");
+        return;
+      }
+
+      const message = `📢 *ثانوية الشهيد شعبان اعمر - تذكير بتسجيل الغياب*\n` +
+        `تاريخ اليوم: ${dateStr}\n\n` +
+        `يرجى من أساتذة الأقسام التالية تسجيل الحضور والغياب في أقرب وقت:\n` +
+        classesManquantes.map(c => `• *${c}*`).join('\n') +
+        `\n\n🔗 رابط المنصة: https://lycee-chaban-amar.github.io/index.html`;
+
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
+    };
+
     window.fermerModalNonAppeles = function() { document.getElementById('modal-non-appeles').classList.add('hidden'); document.getElementById('modal-non-appeles').classList.remove('flex'); };
 
     window.ouvrirMiniHist = async function(eleveId, nom) {
@@ -1136,14 +1161,14 @@
     };
 
     function construireHtmlRapportComplet() {
-      const d = filtreDate.value;
+      const d = filtreDate ? filtreDate.value : new Date().toISOString().split('T')[0];
       const dateObj = new Date(d);
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-      const dateStrAr = dateObj.toLocaleDateString('ar-DZ', options);
+      const dateStrAr = isNaN(dateObj.getTime()) ? d : dateObj.toLocaleDateString('ar-DZ', options);
       const clsChoisie = filtreClasse ? filtreClasse.value : 'ALL';
       const mapEleves = new Map();
       
-      vuePointages.forEach(p => { 
+      (vuePointages || []).forEach(p => { 
         if (p.archive) return;
         if (clsChoisie !== 'ALL' && String(p.classe_id) !== String(clsChoisie)) return; 
         
@@ -1154,9 +1179,9 @@
         if (isAbsent || isRetard) {
           if (!mapEleves.has(p.eleve_id)) {
             mapEleves.set(p.eleve_id, {
-              nom_ar: p.nom_ar || p.nom,
-              prenom_ar: p.prenom_ar || p.prenom,
-              classe_nom: p.classe_nom,
+              nom_ar: p.nom_ar || p.nom || '',
+              prenom_ar: p.prenom_ar || p.prenom || '',
+              classe_nom: p.classe_nom || '',
               isAbsent: false,
               isRetard: false,
               seances: [],
@@ -1214,56 +1239,43 @@
         </table>
       `;
 
-      const classes1AS = classesCache.filter(c => c.nom_court.startsWith('1AS'));
-      const classes2AS = classesCache.filter(c => c.nom_court.startsWith('2AS'));
-      const classes3AS = classesCache.filter(c => c.nom_court.startsWith('3AS'));
+      const classes1AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('1AS'));
+      const classes2AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('2AS'));
+      const classes3AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('3AS'));
       
+      const maxColonnes = Math.max(9, classes1AS.length, classes2AS.length, classes3AS.length);
+
       const getAbs = (classeNom) => {
-        return vuePointages.filter(p => {
+        return (vuePointages || []).filter(p => {
           if (p.classe_nom !== classeNom) return false;
           const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
           return p.statut === 'A' || isJustifiedAbsence;
         }).length;
       };
 
-      let rowsNiveaux = `
-        <tr>
-          <td rowspan="2" class="font-bold bg-gray-50">السنة الأولى ثانوي</td>
-          <td class="font-bold">الأفواج</td>
-          ${classes1AS.map(c => `<td class="text-xs">${c.nom_court}</td>`).join('')}
-          ${Array(9 - classes1AS.length).fill('<td></td>').join('')}
-          <td rowspan="2"></td>
-        </tr>
-        <tr>
-          <td class="font-bold">عدد الغياب</td>
-          ${classes1AS.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
-          ${Array(9 - classes1AS.length).fill('<td></td>').join('')}
-        </tr>
-        <tr>
-          <td rowspan="2" class="font-bold bg-gray-50">السنة الثانية ثانوي</td>
-          <td class="font-bold">الأفواج</td>
-          ${classes2AS.map(c => `<td class="text-xs">${c.nom_court}</td>`).join('')}
-          ${Array(9 - classes2AS.length).fill('<td></td>').join('')}
-          <td rowspan="2"></td>
-        </tr>
-        <tr>
-          <td class="font-bold">عدد الغياب</td>
-          ${classes2AS.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
-          ${Array(9 - classes2AS.length).fill('<td></td>').join('')}
-        </tr>
-        <tr>
-          <td rowspan="2" class="font-bold bg-gray-50">السنة الثالثة ثانوي</td>
-          <td class="font-bold">الأفواج</td>
-          ${classes3AS.map(c => `<td class="text-xs">${c.nom_court}</td>`).join('')}
-          ${Array(9 - classes3AS.length).fill('<td></td>').join('')}
-          <td rowspan="2"></td>
-        </tr>
-        <tr>
-          <td class="font-bold">عدد الغياب</td>
-          ${classes3AS.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
-          ${Array(9 - classes3AS.length).fill('<td></td>').join('')}
-        </tr>
-      `;
+      const genererLignesNiveau = (titre, classesNiveau) => {
+        const vides = Math.max(0, maxColonnes - classesNiveau.length);
+        const tdVides = Array(vides).fill('<td></td>').join('');
+        const totalAbsNiveau = classesNiveau.reduce((acc, c) => acc + getAbs(c.nom_court), 0);
+        return `
+          <tr>
+            <td rowspan="2" class="font-bold bg-gray-50">${titre}</td>
+            <td class="font-bold">الأفواج</td>
+            ${classesNiveau.map(c => `<td class="text-xs font-bold">${escapeHtml(c.nom_court)}</td>`).join('')}
+            ${tdVides}
+            <td rowspan="2" class="font-black text-sm">${totalAbsNiveau}</td>
+          </tr>
+          <tr>
+            <td class="font-bold">عدد الغياب</td>
+            ${classesNiveau.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
+            ${tdVides}
+          </tr>
+        `;
+      };
+
+      const rowsNiveaux = genererLignesNiveau('السنة الأولى ثانوي', classes1AS) +
+                          genererLignesNiveau('السنة الثانية ثانوي', classes2AS) +
+                          genererLignesNiveau('السنة الثالثة ثانوي', classes3AS);
 
       const page2 = `
         <div class="page-break"></div>
@@ -1289,7 +1301,7 @@
                 <tr class="bg-gray-100">
                   <th class="w-[15%]">السنة</th>
                   <th class="w-[15%]">الأفواج</th>
-                  <th colspan="9">الغيابات</th>
+                  <th colspan="${maxColonnes}">الغيابات</th>
                   <th class="w-[10%]">المجموع</th>
                 </tr>
               </thead>
