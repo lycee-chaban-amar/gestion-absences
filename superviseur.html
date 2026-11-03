@@ -279,7 +279,7 @@
         <div class="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-2xl shadow-md"><i class="fa-solid fa-shield-halved"></i></div>
         <div class="border-l-2 border-slate-700 pl-4">
           <h1 class="text-lg font-bold tracking-tight">Espace Vie Scolaire <span class="text-indigo-400 mx-1">|</span> فضاء الاستشارة</h1>
-          <p class="text-base text-indigo-300 font-amiri mt-0.5">ثانوية الشهيد شعبان اعمر - متابعة الغيابات والتأخرات</p>
+          <p class="text-base text-indigo-300 font-amiri mt-0.5"><span class="dyn-etab-ar">ثانوية الشهيد شعبان اعمر</span> - متابعة الغيابات والتأخرات</p>
           <p class="text-xs text-slate-400">Suivi des absences et des retards</p>
         </div>
       </div>
@@ -382,10 +382,11 @@
   <!-- ZONES D'IMPRESSION -->
   <div id="zone-impression-rapport" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
   <div id="zone-impression-fiche-eleve" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
-  <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10"><div class="text-center border-b pb-3 mb-4"><h3 class="font-bold font-amiri text-xl">ثانوية الشهيد شعبان اعمر</h3><h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée</h2></div><div id="billet-details" class="space-y-3 text-sm"></div><div class="mt-6 pt-4 border-t flex justify-between text-xs"><p>Édité le : <span id="billet-date-emission"></span></p><p class="font-bold">Visa Administration</p></div></div>
-  <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-lg font-bold font-amiri">ثانوية الشهيد شعبان اعمر</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p>أوقاس في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
+  <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10"><div class="text-center border-b pb-3 mb-4"><h3 class="font-bold font-amiri text-xl dyn-etab-ar">ثانوية الشهيد شعبان اعمر</h3><h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée</h2></div><div id="billet-details" class="space-y-3 text-sm"></div><div class="mt-6 pt-4 border-t flex justify-between text-xs"><p>Édité le : <span id="billet-date-emission"></span></p><p class="font-bold">Visa Administration</p></div></div>
+  <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-lg font-bold font-amiri dyn-etab-ar">ثانوية الشهيد شعبان اعمر</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p><span class="dyn-commune-ar">أوقاس</span> في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
 
   <script>
+    // Clés Supabase figées dans le code
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     
@@ -396,6 +397,15 @@
     let totalElevesEtablissement = 0;
     let __appInit = false;
     let chartRep = null, chartCls = null;
+
+    let etabConfig = {
+      nom_ar: 'ثانوية الشهيد شعبان اعمر',
+      nom_fr: 'LYCÉE CHAABANE AAMAR — AOKAS',
+      commune_ar: 'أوقاس',
+      wilaya_ar: 'مديرية التربية لولاية بجاية',
+      wilaya_fr: "DIRECTION DE L'ÉDUCATION — BÉJAÏA",
+      annee_scolaire: '2026 / 2027'
+    };
 
     let currentKpis = { total_seances: 0, total_absents: 0, total_retards: 0, total_alertes: 0, taux_presence: 0 };
 
@@ -413,7 +423,14 @@
     const checkAllMaster = document.getElementById('checkbox-select-all');
     const btnExportExcel = document.getElementById('btn-export-excel');
 
-    if (filtreDate) filtreDate.value = new Date().toISOString().split('T')[0];
+    // Date locale exacte (corrigée du décalage UTC)
+    function obtenirDateLocaleISO() {
+      const now = new Date();
+      const tzOffset = now.getTimezoneOffset() * 60000;
+      return (new Date(Date.now() - tzOffset)).toISOString().split('T')[0];
+    }
+
+    if (filtreDate) filtreDate.value = obtenirDateLocaleISO();
 
     function escapeHtml(s) {
       if (s === null || s === undefined) return '';
@@ -493,7 +510,21 @@
       location.reload(); 
     });
 
+    async function chargerParametresEtablissement() {
+      if (!supabaseClient) return;
+      try {
+        const { data } = await supabaseClient.from('parametres_etablissement').select('*').eq('id', 1).maybeSingle();
+        if (data) {
+          etabConfig = { ...etabConfig, ...data };
+          document.querySelectorAll('.dyn-etab-ar').forEach(el => el.textContent = etabConfig.nom_ar);
+          document.querySelectorAll('.dyn-commune-ar').forEach(el => el.textContent = etabConfig.commune_ar);
+          document.title = `Superviseur - ${etabConfig.nom_ar}`;
+        }
+      } catch (err) {}
+    }
+
     async function initialiserApplication() { 
+      await chargerParametresEtablissement();
       await chargerTotalEleves();
       await loadClassesBilingues(); 
       await fetchDonnees(); 
@@ -675,7 +706,7 @@
         tr.dataset.statut = pt.statut || ''; tr.dataset.eleveId = eleveId || ''; tr.dataset.tot = tot;
 
         const heureAff = tr.dataset.heure || '--';
-        const nomPr = `${pt.nom || ''} ${pt.prenom || ''}`.trim();
+        const nomPr = `${pt.nom_ar || pt.nom || ''} ${pt.prenom_ar || pt.prenom || ''}`.trim();
         const isArchived = pt.archive === true;
 
         tr.innerHTML = `
@@ -689,7 +720,7 @@
           </td>
           <td class="py-3 px-3"><span class="bg-indigo-50 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-700 px-2 py-1 rounded-lg font-bold text-xs">${escapeHtml(pt.classe_nom)}</span></td>
           <td class="py-3 px-3 text-xs"><div class="font-bold text-slate-700 dark:text-slate-200">${escapeHtml(pt.matiere)}</div><div class="text-slate-500 dark:text-slate-400">${heureAff}</div></td>
-          <td class="py-3 px-3 text-center"><span class="px-2 py-1 rounded-lg font-black text-xs ${al ? 'bg-rose-200 dark:bg-rose-900/50 text-rose-900 dark:text-rose-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}" title="Cumul d'absence sur tout le parcours scolaire">${tot}</span></td>
+          <td class="py-3 px-3 text-center"><span class="px-2 py-1 rounded-lg font-black text-xs ${al ? 'bg-rose-200 dark:bg-rose-900/50 text-rose-900 dark:text-rose-300' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300'}" title="Cumul d'absence">${tot}</span></td>
           <td class="py-3 px-3 text-center">${stHtml}</td>
           <td class="py-3 px-3 text-center text-xs">
             ${isAbsent || pt.statut === 'R'
@@ -736,28 +767,46 @@
     };
     window.deselectionnerTout = function() { pointagesSelectionnes.clear(); if (checkAllMaster) checkAllMaster.checked = false; renderTableau(); mettreAJourBarreSelection(); };
 
+    // Graphiques corrigés : calcul sur les élèves uniques pointés dans la journée
     function renderGraphiques() {
       const ctxRep = document.getElementById('chartRepartition');
       const ctxCls = document.getElementById('chartClasses');
       if(!ctxRep || !ctxCls) return;
 
-      let p=0, a=0, r=0; const parClasse = {}; const mapClasseId = {};
+      const statutParEleve = new Map();
+      const parClasse = {};
+      const mapClasseId = {};
+
       vuePointages.filter(pt => !pt.archive).forEach(pt => {
         const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
-        if(pt.statut==='A' || isJustifiedAbsence) { 
-          a++; 
+        const isAbsent = pt.statut === 'A' || isJustifiedAbsence;
+
+        if (isAbsent) {
           const cNom = pt.classe_nom || 'Sans classe';
-          parClasse[cNom] = (parClasse[cNom]||0)+1; 
+          parClasse[cNom] = (parClasse[cNom] || 0) + 1;
           mapClasseId[cNom] = pt.classe_id;
+          statutParEleve.set(pt.eleve_id, 'A');
+        } else if (pt.statut === 'R') {
+          if (statutParEleve.get(pt.eleve_id) !== 'A') {
+            statutParEleve.set(pt.eleve_id, 'R');
+          }
+        } else if (pt.statut === 'P') {
+          if (!statutParEleve.has(pt.eleve_id)) {
+            statutParEleve.set(pt.eleve_id, 'P');
+          }
         }
-        else if(pt.statut==='R') r++;
-        else if(pt.statut==='P') p++;
       });
 
-      const totalAppeles = p + a + r;
-      const totalAttendu = totalElevesEtablissement > 0 ? totalElevesEtablissement : totalAppeles;
-      let nonAppeles = totalAttendu - totalAppeles;
-      if (nonAppeles < 0) nonAppeles = 0; 
+      let p = 0, a = 0, r = 0;
+      statutParEleve.forEach(st => {
+        if (st === 'A') a++;
+        else if (st === 'R') r++;
+        else p++;
+      });
+
+      const totalElevesAppeles = statutParEleve.size;
+      const totalAttendu = totalElevesEtablissement > 0 ? totalElevesEtablissement : totalElevesAppeles;
+      const nonAppeles = Math.max(0, totalAttendu - totalElevesAppeles);
 
       if(chartRep) chartRep.destroy();
       if(chartCls) chartCls.destroy();
@@ -889,7 +938,7 @@
     };
     
     window.partagerRappelWhatsApp = function() {
-      const dateStr = document.getElementById('filtre-date') ? document.getElementById('filtre-date').value : new Date().toLocaleDateString('fr-FR');
+      const dateStr = document.getElementById('filtre-date') ? document.getElementById('filtre-date').value : obtenirDateLocaleISO();
       const lignesManquantes = [];
       
       document.querySelectorAll('#non-appeles-content li').forEach(li => {
@@ -905,7 +954,7 @@
         return;
       }
 
-      const message = `📢 *ثانوية الشهيد شعبان اعمر - تذكير بتسجيل الغياب*\n` +
+      const message = `📢 *${etabConfig.nom_ar} - تذكير بتسجيل الغياب*\n` +
         `تاريخ اليوم : ${dateStr}\n\n` +
         `يرجى من الأساتذة أو المساعدين التربويين التوجه للحجرات التالية لتسجيل الغياب :\n` +
         lignesManquantes.join('\n') +
@@ -938,7 +987,6 @@
     };
     window.fermerMiniHist = function() { document.getElementById('modal-mini-hist').classList.add('hidden'); document.getElementById('modal-mini-hist').classList.remove('flex'); };
 
-    // BOÎTE DE DIALOGUE AVEC LA NOUVELLE COLONNE SALLE
     window.ouvrirModalDetailsAppels = async function() {
       const dateCible = filtreDate.value; 
       if (!dateCible) return;
@@ -1043,19 +1091,17 @@
       } catch (err) { alert(err.message); }
     };
 
+    // Justification groupée en un seul appel RPC (sans écraser les retards)
     window.justifierSelectionGroupee = async function() {
       const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
       const motif = prompt('Motif :', 'Accord administration'); if (motif === null) return;
       try {
-        for (const id of ids) {
-          await supabaseClient.rpc('modifier_pointage_securise', {
-            p_token: getSessionToken(),
-            p_pointage_id: parseInt(id),
-            p_statut: 'A',
-            p_justifie: true,
-            p_motif: motif || 'Justifié'
-          });
-        }
+        const { error } = await supabaseClient.rpc('justifier_pointages_groupe_securise', {
+          p_token: getSessionToken(),
+          p_pointage_ids: ids.map(x => parseInt(x)),
+          p_motif: motif || 'Justifié'
+        });
+        if (error) throw error;
         pointagesSelectionnes.clear(); 
         await fetchDonnees(); 
       } catch (err) { alert(err.message); }
@@ -1104,7 +1150,7 @@
     window.ouvrirModalModifier = function(pid) {
       const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(pid)); if (!pt) return;
       document.getElementById('edit-pointage-id').value = pid; 
-      document.getElementById('edit-eleve-nom').textContent = pt.nom + " " + pt.prenom;
+      document.getElementById('edit-eleve-nom').textContent = (pt.nom_ar || pt.nom) + " " + (pt.prenom_ar || pt.prenom);
       document.getElementById('edit-statut').value = pt.statut; 
       document.getElementById('edit-justifie-' + (pt.justifie ? 'oui' : 'non')).checked = true;
       document.getElementById('edit-motif').value = pt.motif_justification || '';
@@ -1124,29 +1170,43 @@
       try {
         const { data: st } = await supabaseClient.from('eleves').select('*').eq('id', eleveId).single();
         if(st) {
-          document.getElementById('edit-student-nom').value = st.nom || ''; 
-          document.getElementById('edit-student-prenom').value = st.prenom || ''; 
+          document.getElementById('edit-student-nom').value = st.nom_ar || st.nom || ''; 
+          document.getElementById('edit-student-prenom').value = st.prenom_ar || st.prenom || ''; 
           document.getElementById('edit-student-tel').value = st.telephone_parent || '';
         }
       } catch (err) { console.error(err); }
     };
     window.fermerModalEditerEleve = function() { document.getElementById('modal-editer-eleve').classList.add('hidden'); document.getElementById('modal-editer-eleve').classList.remove('flex'); };
 
+    // Archivage sécurisé par RPC
     window.marquerEleveTransfereDepuisModal = async function() { 
       const eleveId = document.getElementById('edit-student-id').value; 
       if (!eleveId || !confirm('Archiver cet élève ?')) return; 
-      try { await supabaseClient.from('eleves').update({ actif: false }).eq('id', eleveId); fermerModalEditerEleve(); await fetchDonnees(); } catch (err) {} 
+      try { 
+        const { error } = await supabaseClient.rpc('archiver_eleve_securise', {
+          p_token: getSessionToken(),
+          p_eleve_id: parseInt(eleveId)
+        });
+        if (error) throw error;
+        fermerModalEditerEleve(); 
+        await chargerTotalEleves();
+        await fetchDonnees(); 
+      } catch (err) { alert('Erreur : ' + err.message); } 
     };
     
+    // Suppression définitive sécurisée par RPC
     window.supprimerEleveDefinitifDepuisModal = async function() { 
       const eleveId = document.getElementById('edit-student-id').value; 
       if (!eleveId || !confirm('Supprimer définitivement ?')) return; 
       try { 
-        await supabaseClient.from('billets_entree').delete().eq('eleve_id', eleveId);
-        await supabaseClient.from('pointages').delete().eq('eleve_id', eleveId); 
-        const { error } = await supabaseClient.from('eleves').delete().eq('id', eleveId); 
+        const { error } = await supabaseClient.rpc('supprimer_eleve_securise', {
+          p_token: getSessionToken(),
+          p_eleve_id: parseInt(eleveId)
+        });
         if (error) throw error;
-        fermerModalEditerEleve(); await fetchDonnees(); 
+        fermerModalEditerEleve(); 
+        await chargerTotalEleves();
+        await fetchDonnees(); 
       } catch (err) { alert('Erreur suppression : ' + err.message); } 
     };
 
@@ -1193,7 +1253,7 @@
         
         conteneur.innerHTML = `
           <div class="text-center border-b-2 border-black dark:border-slate-600 pb-3 mb-4">
-            <p class="font-bold text-sm font-amiri text-slate-800 dark:text-white">ثانوية الشهيد شعبان اعمر</p>
+            <p class="font-bold text-sm font-amiri text-slate-800 dark:text-white">${escapeHtml(etabConfig.nom_ar)}</p>
             <div class="mt-2 border-2 border-black dark:border-slate-600 px-6 py-1 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white mx-auto" style="width: max-content; max-width: 100%;"><h2 class="font-black text-lg">بطاقة المتابعة الفردية</h2></div>
           </div>
           <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -1214,7 +1274,7 @@
     window.lancerImpressionFicheEleve = function() { document.body.classList.add('print-fiche-eleve'); window.print(); setTimeout(() => document.body.classList.remove('print-fiche-eleve'), 1000); };
 
     window.imprimerBillet = async function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, eleveId) {
-      const d = date || new Date().toISOString().split('T')[0];
+      const d = date || obtenirDateLocaleISO();
       try {
         const { data: ex } = await supabaseClient.from('billets_entree').select('id').eq('eleve_id', eleveId).eq('date_billet', d).limit(1);
         if (!ex || ex.length === 0) await supabaseClient.from('billets_entree').insert({ eleve_id: eleveId, date_billet: d, heure_emission: new Date().toTimeString().split(' ')[0], statut_origine: statut || 'A', motif: 'Régularisation' });
@@ -1255,7 +1315,7 @@
     };
 
     function construireHtmlRapportComplet() {
-      const d = filtreDate ? filtreDate.value : new Date().toISOString().split('T')[0];
+      const d = filtreDate ? filtreDate.value : obtenirDateLocaleISO();
       const dateObj = new Date(d);
       const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
       const dateStrAr = isNaN(dateObj.getTime()) ? d : dateObj.toLocaleDateString('ar-DZ', options);
@@ -1324,8 +1384,8 @@
       const page1 = `
         <div class="text-center mb-4">
           <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
-          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية - مديرية التربية لولاية بجاية</p>
-          <p class="font-bold text-xl mt-1 font-amiri">ثانوية الشهيد شعبان اعمر</p>
+          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية - ${escapeHtml(etabConfig.wilaya_ar)}</p>
+          <p class="font-bold text-xl mt-1 font-amiri">${escapeHtml(etabConfig.nom_ar)}</p>
           <div class="mt-3 border-2 border-black inline-block px-12 py-1"><h2 class="font-black text-lg">التقرير اليومي للغيابات والتأخرات</h2></div>
           <p class="font-bold text-sm mt-3">تاريخ اليوم : ${dateStrAr}</p>
         </div>
@@ -1388,13 +1448,13 @@
           <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
           <p class="font-bold text-xs mt-1">وزارة التربية الوطنية</p>
           <div class="flex justify-between items-end mt-2">
-             <p class="font-bold text-xs w-1/3 text-right">مديرية التربية لولاية بجاية</p>
+             <p class="font-bold text-xs w-1/3 text-right">${escapeHtml(etabConfig.wilaya_ar)}</p>
              <div class="w-1/3 text-center">
                 <h2 class="font-black text-lg">التقرير اليومي لمستشار التربية</h2>
                 <p class="font-bold text-xs mt-2">التاريخ : ${dateStrAr}</p>
              </div>
              <div class="w-1/3 text-left">
-                <p class="font-bold text-lg font-amiri">ثانوية الشهيد شعبان اعمر</p>
+                <p class="font-bold text-lg font-amiri">${escapeHtml(etabConfig.nom_ar)}</p>
              </div>
           </div>
         </div>
@@ -1436,7 +1496,7 @@
         
         <div class="flex justify-between items-end mt-8 pt-4">
           <p class="font-bold text-sm w-2/3 text-right">ملاحظات مختلفة: ..................................................................................</p>
-          <p class="font-bold text-sm w-1/3 text-left">أوقاس في : ${new Date().toLocaleDateString('ar-DZ')}</p>
+          <p class="font-bold text-sm w-1/3 text-left">${escapeHtml(etabConfig.commune_ar)} في : ${new Date().toLocaleDateString('ar-DZ')}</p>
         </div>
 
         <div class="grid grid-cols-3 gap-4 text-center text-sm font-bold mt-12 pt-4 px-4 border-t border-dashed border-black">
@@ -1468,7 +1528,7 @@
           const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
           const isAbsent = p.statut === 'A' || isJustifiedAbsence;
           return { 
-            "N°": i + 1, "Date": p.date_cours, "Division": p.classe_nom, "Nom": p.nom, "Prénom": p.prenom, "Matière": p.matiere, 
+            "N°": i + 1, "Date": p.date_cours, "Division": p.classe_nom, "Nom": p.nom_ar || p.nom, "Prénom": p.prenom_ar || p.prenom, "Matière": p.matiere, 
             "Statut": isAbsent ? 'Absent' : (p.statut === 'R' ? 'Retard' : 'Présent'), 
             "Justifié": p.justifie ? "OUI" : "NON", "Motif": p.motif_justification || '' 
           };
