@@ -145,14 +145,36 @@
   </header>
 
   <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+    
+    <!-- NOUVELLE BANNIÈRE DE RAPPEL POUR LES ENSEIGNANTS -->
+    <div id="banner-rappel" class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-3xl p-5 shadow-lg border border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-table-row">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl text-white shrink-0 shadow-inner">
+          <i class="fa-solid fa-bullhorn"></i>
+        </div>
+        <div class="text-white">
+          <h3 class="font-extrabold text-base tracking-wide">Rappel quotidien / تذكير يومي</h3>
+          <p class="text-sm opacity-90 mt-0.5">N'oubliez pas de passer l'appel pour vos classes à <span class="font-black underline decoration-wavy decoration-2 underline-offset-2 dyn-etab-ar">ثانوية الشهيد شعبان اعمر</span>.</p>
+        </div>
+      </div>
+      <button type="button" onclick="document.getElementById('banner-rappel').remove()" class="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap shadow-sm">
+        Compris / فهمت
+      </button>
+    </div>
+
     <!-- Bloc Informations de la Séance -->
     <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
-      <h2 class="text-lg font-extrabold mb-5 text-slate-800 dark:text-white flex items-center gap-2">
+      <!-- Décoration subtile en arrière-plan -->
+      <div class="absolute -right-10 -top-10 text-slate-50 dark:text-slate-800/50 opacity-50 pointer-events-none">
+        <i class="fa-solid fa-calendar-check text-9xl"></i>
+      </div>
+
+      <h2 class="text-lg font-extrabold mb-5 text-slate-800 dark:text-white flex items-center gap-2 relative z-10">
         <i class="fa-solid fa-calendar-day text-teal-500"></i>
         <span>Informations de la séance / معلومات الحصة</span>
       </h2>
       
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
         <div>
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Date / التاريخ <i class="fa-solid fa-lock text-rose-500 text-[10px] ml-1"></i></label>
           <input type="date" id="date-cours" class="w-full bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed outline-none font-bold" readonly />
@@ -167,7 +189,7 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5">Classe / القسم *</label>
-          <select id="classe-cours" onchange="chargerEleves()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl px-4 py-2.5 text-sm text-slate-800 dark:text-white outline-none cursor-pointer focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all font-bold">
+          <select id="classe-cours" onchange="chargerEleves()" class="w-full bg-teal-50 dark:bg-teal-900/20 border-2 border-teal-300 dark:border-teal-700 rounded-xl px-4 py-2.5 text-sm text-teal-800 dark:text-teal-200 outline-none cursor-pointer focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 transition-all font-bold">
             <option value="">-- Sélectionner / اختر --</option>
           </select>
         </div>
@@ -175,7 +197,7 @@
     </div>
 
     <!-- Bloc Liste d'Appel -->
-    <div id="zone-appel" class="hidden bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-300">
+    <div id="zone-appel" class="hidden bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden transition-all duration-300 relative pb-20">
       <div class="p-6 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col lg:flex-row justify-between items-center gap-4">
         <h2 class="text-lg font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
           <i class="fa-solid fa-users text-indigo-500"></i>
@@ -211,8 +233,9 @@
         </table>
       </div>
 
-      <div class="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">
-        <button type="button" id="btn-submit-appel" onclick="validerAppel()" class="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-teal-600/30 transition-all flex items-center gap-2 transform active:scale-95">
+      <!-- BOUTON D'ENREGISTREMENT FLOTTANT (FIXE EN BAS) -->
+      <div class="absolute bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 flex justify-end shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-20">
+        <button type="button" id="btn-submit-appel" onclick="validerAppel()" class="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-lg shadow-teal-600/30 transition-all flex items-center justify-center gap-2 transform active:scale-95">
           <i class="fa-solid fa-paper-plane"></i>
           <span>Enregistrer et Transmettre à l'Administration</span>
         </button>
@@ -440,6 +463,7 @@
         const { data } = await supabaseClient.from('parametres_etablissement').select('*').eq('id', 1).maybeSingle();
         if (data) {
           if (data.date_debut_trimestre) dateDebutTrimestre = data.date_debut_trimestre;
+          // C'est ici que le nom est injecté automatiquement dans TOUS les éléments ayant la classe .dyn-etab-ar
           document.querySelectorAll('.dyn-etab-ar').forEach(el => el.textContent = data.nom_ar);
           document.querySelectorAll('.dyn-etab-fr').forEach(el => el.textContent = data.nom_fr);
           document.querySelectorAll('.dyn-wilaya-ar').forEach(el => el.textContent = data.wilaya_ar);
@@ -479,7 +503,6 @@
       }
     }
 
-    // Algorithme d'alerte 3 jours figé sur le week-end (Vendredi / Samedi)
     function verifierAlerte3JoursConsecutifs(datesAbsenceDesc) {
       if (!datesAbsenceDesc || datesAbsenceDesc.length < 3) return false;
       let consecutifs = 1;
@@ -607,25 +630,25 @@
             </div>
           </td>
           <td class="py-2 px-2 text-center">
-            <label class="cursor-pointer flex justify-center">
+            <label class="cursor-pointer flex justify-center group">
               <input type="radio" name="statut_${e.id}" value="P" checked class="peer sr-only" />
-              <div class="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-500 peer-checked:border-emerald-500 peer-checked:bg-emerald-500 peer-checked:text-white font-black text-sm shadow-sm">
+              <div class="w-14 h-12 flex items-center justify-center rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-500 peer-checked:border-emerald-500 peer-checked:bg-emerald-500 peer-checked:text-white peer-checked:shadow-md font-black text-sm shadow-sm group-hover:border-emerald-300 transition-all">
                 حاضر
               </div>
             </label>
           </td>
           <td class="py-2 px-2 text-center">
-            <label class="cursor-pointer flex justify-center">
+            <label class="cursor-pointer flex justify-center group">
               <input type="radio" name="statut_${e.id}" value="A" class="peer sr-only" />
-              <div class="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-500 peer-checked:border-rose-600 peer-checked:bg-rose-600 peer-checked:text-white font-black text-sm shadow-sm">
+              <div class="w-14 h-12 flex items-center justify-center rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-500 peer-checked:border-rose-600 peer-checked:bg-rose-600 peer-checked:text-white peer-checked:shadow-md font-black text-sm shadow-sm group-hover:border-rose-300 transition-all">
                 غائب
               </div>
             </label>
           </td>
           <td class="py-2 px-2 text-center">
-            <label class="cursor-pointer flex justify-center">
+            <label class="cursor-pointer flex justify-center group">
               <input type="radio" name="statut_${e.id}" value="R" class="peer sr-only" />
-              <div class="w-12 h-12 flex items-center justify-center rounded-lg border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-amber-500 dark:text-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-white font-black text-sm shadow-sm">
+              <div class="w-14 h-12 flex items-center justify-center rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-amber-500 dark:text-amber-500 peer-checked:border-amber-500 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:shadow-md font-black text-sm shadow-sm group-hover:border-amber-300 transition-all">
                 متأخر
               </div>
             </label>
@@ -768,7 +791,6 @@
       document.getElementById('modal-ajout-eleve').classList.remove('flex');
     };
 
-    // Ajout d'élève sécurisé par RPC
     window.enregistrerNouvelEleve = async function() {
       const classeId = document.getElementById('classe-cours').value;
       const nom = document.getElementById('new-eleve-nom').value.trim();
