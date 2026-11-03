@@ -621,11 +621,36 @@
         pointagesSelectionnes.clear(); if(checkAllMaster) checkAllMaster.checked = false; mettreAJourBarreSelection();
 
         currentKpis = kpiData || { total_seances: 0, total_absents: 0, total_retards: 0, total_alertes: 0, taux_presence: 0 };
+        
+        // --- CORRECTION DU CALCUL DES KPIs ET DU TAUX DE PRÉSENCE (Basé sur les élèves uniques) ---
+        let pCount = 0, aCount = 0, rCount = 0;
+        const statutMap = new Map();
+        
+        vuePointages.filter(pt => !pt.archive).forEach(pt => {
+            const isJustifiedAbsence = pt.statut === 'P' && pt.justifie && pt.motif_justification && pt.motif_justification !== 'Régularisé' && pt.motif_justification !== 'تسوية';
+            const isAbsent = pt.statut === 'A' || isJustifiedAbsence;
+            
+            if (isAbsent) statutMap.set(pt.eleve_id, 'A');
+            else if (pt.statut === 'R' && statutMap.get(pt.eleve_id) !== 'A') statutMap.set(pt.eleve_id, 'R');
+            else if (pt.statut === 'P' && !statutMap.has(pt.eleve_id)) statutMap.set(pt.eleve_id, 'P');
+        });
+        
+        statutMap.forEach(st => {
+            if (st === 'P') pCount++;
+            else if (st === 'A') aCount++;
+            else if (st === 'R') rCount++;
+        });
+        
+        currentKpis.total_absents = aCount;
+        currentKpis.total_retards = rCount;
+        currentKpis.taux_presence = (pCount + aCount + rCount) > 0 ? Math.round((pCount / (pCount + aCount + rCount)) * 100) : 0;
+        // -----------------------------------------------------------------------------------------
+
         document.getElementById('kpi-seances').textContent = currentKpis.total_seances || 0;
         document.getElementById('kpi-absents').textContent = currentKpis.total_absents || 0;
         document.getElementById('kpi-retards').textContent = currentKpis.total_retards || 0;
         document.getElementById('kpi-alertes').textContent = currentKpis.total_alertes || 0;
-        document.getElementById('kpi-taux').textContent = (currentKpis.taux_presence !== undefined && currentKpis.taux_presence !== null) ? `${currentKpis.taux_presence}%` : '--%';
+        document.getElementById('kpi-taux').textContent = `${currentKpis.taux_presence}%`;
         
         renderTableau();
         renderGraphiques();
@@ -767,7 +792,7 @@
     };
     window.deselectionnerTout = function() { pointagesSelectionnes.clear(); if (checkAllMaster) checkAllMaster.checked = false; renderTableau(); mettreAJourBarreSelection(); };
 
-    // Graphiques corrigés : calcul sur les élèves uniques pointés dans la journée
+    // Graphiques corrigés
     function renderGraphiques() {
       const ctxRep = document.getElementById('chartRepartition');
       const ctxCls = document.getElementById('chartClasses');
@@ -1091,17 +1116,31 @@
       } catch (err) { alert(err.message); }
     };
 
-    // Justification groupée en un seul appel RPC (sans écraser les retards)
+    // --- CORRECTION : Justification groupée préservant le statut d'origine (Retard ou Absence) ---
     window.justifierSelectionGroupee = async function() {
       const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
       const motif = prompt('Motif :', 'Accord administration'); if (motif === null) return;
+      
       try {
-        const { error } = await supabaseClient.rpc('justifier_pointages_groupe_securise', {
-          p_token: getSessionToken(),
-          p_pointage_ids: ids.map(x => parseInt(x)),
-          p_motif: motif || 'Justifié'
+        const promises = ids.map(id => {
+            const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(id));
+            if (!pt) return Promise.resolve({ error: null });
+            
+            // Utilisation de modifier_pointage_securise pour conserver le statut exact ('A' ou 'R')
+            return supabaseClient.rpc('modifier_pointage_securise', {
+                p_token: getSessionToken(),
+                p_pointage_id: parseInt(id),
+                p_statut: pt.statut, // <-- Préserve le statut original (évite d'écraser les retards)
+                p_justifie: true,
+                p_motif: motif || 'Justifié'
+            });
         });
-        if (error) throw error;
+        
+        const results = await Promise.all(promises);
+        for (const res of results) {
+            if (res.error) throw res.error;
+        }
+        
         pointagesSelectionnes.clear(); 
         await fetchDonnees(); 
       } catch (err) { alert(err.message); }
@@ -1178,7 +1217,6 @@
     };
     window.fermerModalEditerEleve = function() { document.getElementById('modal-editer-eleve').classList.add('hidden'); document.getElementById('modal-editer-eleve').classList.remove('flex'); };
 
-    // Archivage sécurisé par RPC
     window.marquerEleveTransfereDepuisModal = async function() { 
       const eleveId = document.getElementById('edit-student-id').value; 
       if (!eleveId || !confirm('Archiver cet élève ?')) return; 
@@ -1194,7 +1232,6 @@
       } catch (err) { alert('Erreur : ' + err.message); } 
     };
     
-    // Suppression définitive sécurisée par RPC
     window.supprimerEleveDefinitifDepuisModal = async function() { 
       const eleveId = document.getElementById('edit-student-id').value; 
       if (!eleveId || !confirm('Supprimer définitivement ?')) return; 
