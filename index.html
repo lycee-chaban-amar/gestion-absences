@@ -146,22 +146,6 @@
 
   <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
     
-    <!-- NOUVELLE BANNIÈRE DE RAPPEL POUR LES ENSEIGNANTS -->
-    <div id="banner-rappel" class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-3xl p-5 shadow-lg border border-amber-400 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-table-row">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center text-2xl text-white shrink-0 shadow-inner">
-          <i class="fa-solid fa-bullhorn"></i>
-        </div>
-        <div class="text-white">
-          <h3 class="font-extrabold text-base tracking-wide">Rappel quotidien / تذكير يومي</h3>
-          <p class="text-sm opacity-90 mt-0.5">N'oubliez pas de passer l'appel pour vos classes à <span class="font-black underline decoration-wavy decoration-2 underline-offset-2 dyn-etab-ar">ثانوية الشهيد شعبان اعمر</span>.</p>
-        </div>
-      </div>
-      <button type="button" onclick="document.getElementById('banner-rappel').remove()" class="text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-5 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap shadow-sm">
-        Compris / فهمت
-      </button>
-    </div>
-
     <!-- Bloc Informations de la Séance -->
     <div class="bg-white dark:bg-slate-800 p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
       <!-- Décoration subtile en arrière-plan -->
@@ -463,7 +447,6 @@
         const { data } = await supabaseClient.from('parametres_etablissement').select('*').eq('id', 1).maybeSingle();
         if (data) {
           if (data.date_debut_trimestre) dateDebutTrimestre = data.date_debut_trimestre;
-          // C'est ici que le nom est injecté automatiquement dans TOUS les éléments ayant la classe .dyn-etab-ar
           document.querySelectorAll('.dyn-etab-ar').forEach(el => el.textContent = data.nom_ar);
           document.querySelectorAll('.dyn-etab-fr').forEach(el => el.textContent = data.nom_fr);
           document.querySelectorAll('.dyn-wilaya-ar').forEach(el => el.textContent = data.wilaya_ar);
