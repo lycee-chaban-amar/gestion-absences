@@ -7,6 +7,10 @@
   
   <meta name="theme-color" content="#0f172a">
   
+  <style>
+    .hidden { display: none !important; }
+  </style>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -123,7 +127,7 @@
         </div>
         <div class="border-l-2 border-slate-700 pl-4">
           <h1 class="text-lg font-bold tracking-tight">Espace Enseignant <span class="text-teal-400 mx-1">|</span> فضاء الأستاذ</h1>
-          <p class="text-base text-teal-300 font-amiri mt-0.5">ثانوية الشهيد شعبان اعمر - ورقة الغياب الرقمية</p>
+          <p class="text-base text-teal-300 font-amiri mt-0.5"><span class="dyn-etab-ar">ثانوية الشهيد شعبان اعمر</span> - ورقة الغياب الرقمية</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -223,20 +227,20 @@
         <div class="text-left w-1/3">
           <p>RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE</p>
           <p class="mt-0.5">MINISTÈRE DE L'ÉDUCATION NATIONALE</p>
-          <p class="mt-0.5">DIRECTION DE L'ÉDUCATION — BÉJAÏA</p>
-          <p class="mt-1 font-black text-indigo-950 text-sm">LYCÉE CHAABANE AAMAR — AOKAS</p>
+          <p class="mt-0.5 dyn-wilaya-fr">DIRECTION DE L'ÉDUCATION — BÉJAÏA</p>
+          <p class="mt-1 font-black text-indigo-950 text-sm dyn-etab-fr">LYCÉE CHAABANE AAMAR — AOKAS</p>
         </div>
         <div class="w-1/3 flex flex-col items-center">
           <div class="w-12 h-12 rounded-full border border-slate-300 flex items-center justify-center text-lg mb-1">
             <i class="fa-solid fa-graduation-cap"></i>
           </div>
-          <span class="text-[11px] font-black border border-black px-2 py-0.5 rounded">2026 / 2027</span>
+          <span class="text-[11px] font-black border border-black px-2 py-0.5 rounded dyn-annee">2026 / 2027</span>
         </div>
         <div class="text-right w-1/3 text-[11px]" dir="rtl">
           <p>الجمهورية الجزائرية الديمقراطية الشعبية</p>
           <p class="mt-0.5">وزارة التربية الوطنية</p>
-          <p class="mt-0.5">مديرية التربية لولاية بجاية</p>
-          <p class="mt-1 font-black text-indigo-950 text-sm">ثانوية شعبان أعمر — أوقاس</p>
+          <p class="mt-0.5 dyn-wilaya-ar">مديرية التربية لولاية بجاية</p>
+          <p class="mt-1 font-black text-indigo-950 text-sm dyn-etab-ar">ثانوية الشهيد شعبان اعمر</p>
         </div>
       </div>
     </div>
@@ -268,20 +272,20 @@
         <div class="text-left w-1/3">
           <p>RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE</p>
           <p class="mt-0.5">MINISTÈRE DE L'ÉDUCATION NATIONALE</p>
-          <p class="mt-0.5">DIRECTION DE L'ÉDUCATION — BÉJAÏA</p>
-          <p class="mt-1 font-black text-indigo-950 text-sm">LYCÉE CHAABANE AAMAR — AOKAS</p>
+          <p class="mt-0.5 dyn-wilaya-fr">DIRECTION DE L'ÉDUCATION — BÉJAÏA</p>
+          <p class="mt-1 font-black text-indigo-950 text-sm dyn-etab-fr">LYCÉE CHAABANE AAMAR — AOKAS</p>
         </div>
         <div class="w-1/3 flex flex-col items-center">
           <div class="w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center text-sm mb-1">
             <i class="fa-solid fa-graduation-cap"></i>
           </div>
-          <span class="text-[10px] font-black border border-black px-2 py-0.5 rounded">2026 / 2027</span>
+          <span class="text-[10px] font-black border border-black px-2 py-0.5 rounded dyn-annee">2026 / 2027</span>
         </div>
         <div class="text-right w-1/3 text-[11px]" dir="rtl">
           <p>الجمهورية الجزائرية الديمقراطية الشعبية</p>
           <p class="mt-0.5">وزارة التربية الوطنية</p>
-          <p class="mt-0.5">مديرية التربية لولاية بجاية</p>
-          <p class="mt-1 font-black text-indigo-950 text-sm">ثانوية شعبان أعمر — أوقاس</p>
+          <p class="mt-0.5 dyn-wilaya-ar">مديرية التربية لولاية بجاية</p>
+          <p class="mt-1 font-black text-indigo-950 text-sm dyn-etab-ar">ثانوية الشهيد شعبان اعمر</p>
         </div>
       </div>
     </div>
@@ -311,6 +315,7 @@
   </div>
 
   <script>
+    // Clés Supabase figées dans le code
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     
@@ -318,6 +323,7 @@
     let elevesActuels = [];
     let absPendingSet = new Set();
     let __appInit = false;
+    let dateDebutTrimestre = '2026-09-01';
 
     try {
       if (typeof supabase === 'undefined') throw new Error("Supabase non chargé");
@@ -428,8 +434,25 @@
       return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    async function chargerParametresEtablissement() {
+      if (!supabaseClient) return;
+      try {
+        const { data } = await supabaseClient.from('parametres_etablissement').select('*').eq('id', 1).maybeSingle();
+        if (data) {
+          if (data.date_debut_trimestre) dateDebutTrimestre = data.date_debut_trimestre;
+          document.querySelectorAll('.dyn-etab-ar').forEach(el => el.textContent = data.nom_ar);
+          document.querySelectorAll('.dyn-etab-fr').forEach(el => el.textContent = data.nom_fr);
+          document.querySelectorAll('.dyn-wilaya-ar').forEach(el => el.textContent = data.wilaya_ar);
+          document.querySelectorAll('.dyn-wilaya-fr').forEach(el => el.textContent = data.wilaya_fr);
+          document.querySelectorAll('.dyn-annee').forEach(el => el.textContent = data.annee_scolaire);
+          document.title = `Enseignant - ${data.nom_ar}`;
+        }
+      } catch (err) {}
+    }
+
     async function initPage() {
       initialiserDateEtHeure();
+      await chargerParametresEtablissement();
       
       const savedMatiere = sessionStorage.getItem('enseignant_matiere');
       const matiereInput = document.getElementById('matiere-cours');
@@ -456,6 +479,7 @@
       }
     }
 
+    // Algorithme d'alerte 3 jours figé sur le week-end (Vendredi / Samedi)
     function verifierAlerte3JoursConsecutifs(datesAbsenceDesc) {
       if (!datesAbsenceDesc || datesAbsenceDesc.length < 3) return false;
       let consecutifs = 1;
@@ -508,9 +532,11 @@
 
           const { data: absHistorique, error: errAbs } = await supabaseClient
             .from('pointages')
-            .select('eleve_id, statut, justifie, seances(date_cours)')
+            .select('eleve_id, statut, justifie, seances!inner(date_cours)')
             .in('eleve_id', eleveIds)
-            .eq('statut', 'A');
+            .eq('statut', 'A')
+            .eq('archive', false)
+            .gte('seances.date_cours', dateDebutTrimestre);
             
           if (!errAbs && absHistorique) {
             absHistorique.forEach(pt => {
@@ -558,7 +584,7 @@
       }
 
       elevesActuels.forEach((e, index) => {
-        const nomPrincipal = `${e.nom || ''} ${e.prenom || ''}`.trim();
+        const nomPrincipal = `${e.nom_ar || e.nom || ''} ${e.prenom_ar || e.prenom || ''}`.trim();
         const alerte = e.en_alerte_3j === true;
         const hasUnjustified = absPendingSet.has(e.id);
         const cumulScolaire = e.total_absences_parcours || 0;
@@ -675,9 +701,10 @@
 
       let rowsHtml = '';
       elevesActuels.forEach((e) => {
+        const nomComplet = `${e.nom_ar || e.nom || ''} ${e.prenom_ar || e.prenom || ''}`.trim();
         rowsHtml += `
           <tr class="h-10">
-            <td class="border-r border-black p-2 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
+            <td class="border-r border-black p-2 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(nomComplet)}</td>
             <td class="border-r border-black p-2"></td>
             <td class="border-r border-black p-2"></td>
             <td class="border-r border-black p-2"></td>
@@ -706,9 +733,10 @@
 
       let rowsHtml = '';
       elevesActuels.forEach((e) => {
+        const nomComplet = `${e.nom_ar || e.nom || ''} ${e.prenom_ar || e.prenom || ''}`.trim();
         rowsHtml += `
           <tr class="h-10">
-            <td class="border-r border-black p-1 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(e.nom)} ${escapeHtml(e.prenom)}</td>
+            <td class="border-r border-black p-1 font-bold text-center text-[13px]" dir="rtl">${escapeHtml(nomComplet)}</td>
             <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
             <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td>
             <td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td class="border-r border-black"></td><td></td>
@@ -740,11 +768,13 @@
       document.getElementById('modal-ajout-eleve').classList.remove('flex');
     };
 
+    // Ajout d'élève sécurisé par RPC
     window.enregistrerNouvelEleve = async function() {
       const classeId = document.getElementById('classe-cours').value;
       const nom = document.getElementById('new-eleve-nom').value.trim();
       const prenom = document.getElementById('new-eleve-prenom').value.trim();
       const btn = document.getElementById('btn-save-new-eleve');
+      const token = getSessionToken();
 
       if (!nom || !prenom) {
         alert("Veuillez saisir le nom et le prénom.");
@@ -755,15 +785,11 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
 
       try {
-        const tempMatricule = 'TEMP-' + Date.now().toString().slice(-6);
-        const { error } = await supabaseClient.from('eleves').insert({
-          nom: nom,
-          prenom: prenom,
-          nom_ar: nom,
-          prenom_ar: prenom,
-          classe_id: classeId,
-          matricule: tempMatricule,
-          actif: true
+        const { error } = await supabaseClient.rpc('ajouter_eleve_securise', {
+          p_token: token,
+          p_classe_id: parseInt(classeId),
+          p_nom: nom,
+          p_prenom: prenom
         });
 
         if (error) throw error;
