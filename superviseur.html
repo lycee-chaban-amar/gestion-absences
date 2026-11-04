@@ -137,7 +137,7 @@
     </div>
   </div>
 
-  <!-- MODAL DÉTAILS DES APPELS (AVEC NUMÉRO DE SALLE) -->
+  <!-- MODAL DÉTAILS DES APPELS -->
   <div id="modal-details-appels" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0">
@@ -264,7 +264,7 @@
     </div>
   </div>
 
-  <!-- ECRAN PIN SÉCURISÉ (VÉRIFICATION SERVEUR PAR RPC) -->
+  <!-- ECRAN PIN SÉCURISÉ -->
   <div id="pin-screen" class="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
     <div id="pin-card" class="bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-100 dark:border-slate-700 transition-transform">
       <div class="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
@@ -395,14 +395,10 @@
   <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10"><div class="text-center border-b pb-3 mb-4"><h3 class="font-bold font-amiri text-xl dyn-etab-ar">ثانوية الشهيد شعبان اعمر</h3><h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée</h2></div><div id="billet-details" class="space-y-3 text-sm"></div><div class="mt-6 pt-4 border-t flex justify-between text-xs"><p>Édité le : <span id="billet-date-emission"></span></p><p class="font-bold">Visa Administration</p></div></div>
   <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-lg font-bold font-amiri dyn-etab-ar">ثانوية الشهيد شعبان اعمر</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p><span class="dyn-commune-ar">أوقاس</span> في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
   
-  <!-- ZONE D'IMPRESSION POUR LE RAPPORT DES CLASSES NON APPELÉES -->
   <div id="zone-impression-non-appeles" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
-
-  <!-- ZONE D'IMPRESSION POUR LES DÉTAILS DES APPELS -->
   <div id="zone-impression-details-appels" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
 
   <script>
-    // Clés Supabase figées dans le code
     const SUPABASE_URL = 'https://eixdnxponkbsmelircjm.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable__9tG8Pj4aZ14hJxh5b-vug_DmTQb7ww';
     
@@ -820,7 +816,6 @@
     };
     window.deselectionnerTout = function() { pointagesSelectionnes.clear(); if (checkAllMaster) checkAllMaster.checked = false; renderTableau(); mettreAJourBarreSelection(); };
 
-    // Graphiques corrigés
     function renderGraphiques() {
       const ctxRep = document.getElementById('chartRepartition');
       const ctxCls = document.getElementById('chartClasses');
@@ -924,7 +919,7 @@
       });
     }
 
-    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES AVEC VUE SQL
+    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES
     window.ouvrirModalNonAppeles = async function() {
       const modal = document.getElementById('modal-non-appeles');
       const content = document.getElementById('non-appeles-content');
@@ -938,21 +933,26 @@
         const joursSemaine = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
         const nomJour = joursSemaine[dateObj.getDay()];
 
-        // Récupération des cours prévus ce jour-là
+        // 1. Récupération des cours prévus ce jour-là
         const { data: planningJour } = await supabaseClient
           .from('v_planning_cours')
           .select('*')
           .eq('jour_semaine', nomJour);
 
-        // Map classe_id -> Enseignant & Matière
+        // Map classe_id -> Enseignant & Matière & Horaires
         const profParClasse = {};
+        const heureDebutParClasse = {};
+        const heureFinParClasse = {};
+        
         (planningJour || []).forEach(pl => {
           if (!profParClasse[pl.classe_id]) {
             profParClasse[pl.classe_id] = `${pl.enseignant_nom} (${pl.matiere})`;
+            heureDebutParClasse[pl.classe_id] = pl.heure_debut;
+            heureFinParClasse[pl.classe_id] = pl.heure_fin;
           }
         });
 
-        // Décompte des élèves actifs et appelés
+        // 2. Décompte des élèves actifs et appelés
         const { data: eleves } = await supabaseClient.from('eleves').select('classe_id').eq('actif', true);
         const totalParClasse = {};
         (eleves || []).forEach(e => { totalParClasse[e.classe_id] = (totalParClasse[e.classe_id] || 0) + 1; });
@@ -972,6 +972,8 @@
               nom: cls.nom_court, 
               salle: cls.salle || '', 
               prof: profParClasse[cls.id] || 'Non assigné',
+              heure_debut: heureDebutParClasse[cls.id] || null,
+              heure_fin: heureFinParClasse[cls.id] || null,
               manquants: total - appeles, 
               total: total 
             });
@@ -1027,12 +1029,14 @@
       let rows = '';
       classesNonAppeleesData.forEach((c, i) => {
         const nomSalle = c.salle ? c.salle.replace('الحجرة', '').trim() : '---';
+        const horaire = c.heure_debut && c.heure_fin ? `من ${c.heure_debut.substring(0,5)} إلى ${c.heure_fin.substring(0,5)}` : '---';
+
         rows += `<tr>
           <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
           <td class="border border-black p-2 font-bold" dir="ltr">${escapeHtml(c.nom)}</td>
           <td class="border border-black p-2 text-center font-bold">${escapeHtml(nomSalle)}</td>
           <td class="border border-black p-2 text-center font-bold text-[11px]">${escapeHtml(c.prof)}</td>
-          <td class="border border-black p-2 text-center">${c.total}</td>
+          <td class="border border-black p-2 text-center font-bold text-[11px]" dir="rtl">${escapeHtml(horaire)}</td>
           <td class="border border-black p-2 text-center font-black text-rose-700 text-lg">${c.manquants}</td>
         </tr>`;
       });
@@ -1050,7 +1054,7 @@
         
         <div class="flex justify-end mb-4">
           <div class="border-2 border-black px-4 py-2 font-bold text-sm">
-            إجمالي التلاميذ غير الممسوكين : <span class="text-rose-700 text-lg">${totalManquants}</span> تلميذ
+            إجمالي التلاميذ غير المسجلين : <span class="text-rose-700 text-lg">${totalManquants}</span> تلميذ
           </div>
         </div>
 
@@ -1061,8 +1065,8 @@
               <th class="border border-black p-2">القسم</th>
               <th class="border border-black p-2">الحجرة</th>
               <th class="border border-black p-2">الأستاذ(ة)</th>
-              <th class="border border-black p-2">إجمالي التلاميذ</th>
-              <th class="border border-black p-2">التلاميذ غير الممسوكين</th>
+              <th class="border border-black p-2">التوقيت</th>
+              <th class="border border-black p-2">التلاميذ غير المسجلين</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -1194,7 +1198,6 @@
       }
     };
     
-    // NOUVELLE FONCTION D'IMPRESSION DES DÉTAILS DES APPELS POUR LE DIRECTEUR
     window.imprimerDetailsAppels = function() {
       if (!detailsAppelsData || detailsAppelsData.length === 0) {
         alert("Aucun appel à imprimer pour cette date.");
@@ -1261,7 +1264,6 @@
 
     window.fermerModalDetailsAppels = function() { document.getElementById('modal-details-appels').classList.add('hidden'); document.getElementById('modal-details-appels').classList.remove('flex'); };
 
-    // ACTIONS SÉCURISÉES VIA LES PROCÉDURES RPC
     window.enregistrerModificationPointage = async function() {
       const token = getSessionToken();
       const id = document.getElementById('edit-pointage-id').value;
