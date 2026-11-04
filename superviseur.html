@@ -488,7 +488,6 @@
       initialiserApplication().catch(err => { console.error(err); });
     }
 
-    // --- CORRECTION DU BOUTON DE DÉVERROUILLAGE ---
     async function validerPinDirect() {
       const input = document.getElementById('input-pin');
       const err = document.getElementById('pin-error');
@@ -499,20 +498,17 @@
       const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
       val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
 
-      // 1. Si l'utilisateur clique sans entrer de code
       if (!val) {
         if (err) { err.textContent = "Veuillez entrer le code / يرجى إدخال الرمز"; err.classList.remove('hidden'); }
         if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
         return;
       }
 
-      // 2. Vérification de la connexion Supabase
       if (!supabaseClient) {
         if (err) { err.textContent = "Erreur de connexion au serveur."; err.classList.remove('hidden'); }
         return;
       }
 
-      // 3. Effet de chargement sur le bouton
       btn.disabled = true;
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Vérification...</span>`;
 
@@ -1236,4 +1232,522 @@
       setTimeout(() => document.body.classList.remove('print-details-appels'), 1000);
     };
 
-    window.fer
+    window.fermerModalDetailsAppels = function() { document.getElementById('modal-details-appels').classList.add('hidden'); document.getElementById('modal-details-appels').classList.remove('flex'); };
+
+    // ACTIONS SÉCURISÉES VIA LES PROCÉDURES RPC
+    window.enregistrerModificationPointage = async function() {
+      const token = getSessionToken();
+      const id = document.getElementById('edit-pointage-id').value;
+      const statut = document.getElementById('edit-statut').value;
+      const justifie = document.getElementById('edit-justifie-oui').checked;
+      const motif = document.getElementById('edit-motif').value.trim();
+
+      try {
+        const { error } = await supabaseClient.rpc('modifier_pointage_securise', {
+          p_token: token,
+          p_pointage_id: parseInt(id),
+          p_statut: statut,
+          p_justifie: justifie,
+          p_motif: motif || null
+        });
+
+        if (error) throw error;
+        fermerModalModifier();
+        await fetchDonnees();
+      } catch (err) { alert(err.message); }
+    };
+
+    window.supprimerPointage = async function(id) { 
+      if (!confirm('Déplacer vers la corbeille ?')) return; 
+      try { 
+        const { error } = await supabaseClient.rpc('archiver_pointage_securise', {
+          p_token: getSessionToken(),
+          p_pointage_ids: [parseInt(id)]
+        });
+        if (error) throw error;
+        await fetchDonnees(); 
+      } catch (err) { alert(err.message); } 
+    };
+
+    window.supprimerSelectionGroupee = async function() {
+      const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
+      if (!confirm(`Archiver ces ${ids.length} enregistrements ?`)) return;
+      try { 
+        const { error } = await supabaseClient.rpc('archiver_pointage_securise', {
+          p_token: getSessionToken(),
+          p_pointage_ids: ids.map(x => parseInt(x))
+        });
+        if (error) throw error;
+        pointagesSelectionnes.clear(); 
+        await fetchDonnees(); 
+      } catch (err) { alert(err.message); }
+    };
+
+    window.justifierSelectionGroupee = async function() {
+      const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
+      const motif = prompt('Motif :', 'Accord administration'); if (motif === null) return;
+      
+      try {
+        const promises = ids.map(id => {
+            const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(id));
+            if (!pt) return Promise.resolve({ error: null });
+            
+            return supabaseClient.rpc('modifier_pointage_securise', {
+                p_token: getSessionToken(),
+                p_pointage_id: parseInt(id),
+                p_statut: pt.statut,
+                p_justifie: true,
+                p_motif: motif || 'Justifié'
+            });
+        });
+        
+        const results = await Promise.all(promises);
+        for (const res of results) {
+            if (res.error) throw res.error;
+        }
+        
+        pointagesSelectionnes.clear(); 
+        await fetchDonnees(); 
+      } catch (err) { alert(err.message); }
+    };
+
+    window.enregistrerModificationEleve = async function() {
+      const eleveId = document.getElementById('edit-student-id').value;
+      const nom = document.getElementById('edit-student-nom').value.trim();
+      const prenom = document.getElementById('edit-student-prenom').value.trim();
+      const tel = document.getElementById('edit-student-tel').value.trim();
+      
+      if (!nom || !prenom) return;
+      try { 
+        const { error } = await supabaseClient.rpc('modifier_eleve_securise', {
+          p_token: getSessionToken(),
+          p_eleve_id: parseInt(eleveId),
+          p_nom: nom,
+          p_prenom: prenom,
+          p_tel: tel
+        });
+        if (error) throw error;
+        fermerModalEditerEleve(); 
+        await fetchDonnees(); 
+      } catch (err) { alert(err.message); }
+    };
+
+    window.confirmerTransfertGlobal = async function() { 
+      const eleveId = document.getElementById('transfert-select-eleve').value; 
+      const nouvelleClasseId = document.getElementById('transfert-select-nouvelle-classe').value;
+      if (!eleveId || !nouvelleClasseId) { alert("Veuillez sélectionner l'élève et la classe."); return; }
+      if (!confirm('Confirmer le transfert ?')) return; 
+      
+      try { 
+        const { error } = await supabaseClient.rpc('transferer_eleve_securise', {
+          p_token: getSessionToken(),
+          p_eleve_id: parseInt(eleveId),
+          p_nouvelle_classe_id: parseInt(nouvelleClasseId)
+        });
+        if (error) throw error;
+        fermerModalTransfertGlobal(); 
+        await fetchDonnees(); 
+        alert("Transfert effectué avec succès !");
+      } catch (err) { alert("Erreur : " + err.message); } 
+    };
+
+    window.ouvrirModalModifier = function(pid) {
+      const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(pid)); if (!pt) return;
+      document.getElementById('edit-pointage-id').value = pid; 
+      document.getElementById('edit-eleve-nom').textContent = (pt.nom_ar || pt.nom) + " " + (pt.prenom_ar || pt.prenom);
+      document.getElementById('edit-statut').value = pt.statut; 
+      document.getElementById('edit-justifie-' + (pt.justifie ? 'oui' : 'non')).checked = true;
+      document.getElementById('edit-motif').value = pt.motif_justification || '';
+      document.getElementById('modal-modifier').classList.remove('hidden'); document.getElementById('modal-modifier').classList.add('flex');
+    };
+    window.fermerModalModifier = function() { document.getElementById('modal-modifier').classList.add('hidden'); document.getElementById('modal-modifier').classList.remove('flex'); };
+
+    window.ouvrirModalEditerEleve = async function(eleveId) {
+      document.getElementById('edit-student-id').value = eleveId; 
+      document.getElementById('modal-editer-eleve').classList.remove('hidden'); 
+      document.getElementById('modal-editer-eleve').classList.add('flex');
+      
+      document.getElementById('edit-student-nom').value = "..."; 
+      document.getElementById('edit-student-prenom').value = "..."; 
+      document.getElementById('edit-student-tel').value = "...";
+
+      try {
+        const { data: st } = await supabaseClient.from('eleves').select('*').eq('id', eleveId).single();
+        if(st) {
+          document.getElementById('edit-student-nom').value = st.nom_ar || st.nom || ''; 
+          document.getElementById('edit-student-prenom').value = st.prenom_ar || st.prenom || ''; 
+          document.getElementById('edit-student-tel').value = st.telephone_parent || '';
+        }
+      } catch (err) { console.error(err); }
+    };
+    window.fermerModalEditerEleve = function() { document.getElementById('modal-editer-eleve').classList.add('hidden'); document.getElementById('modal-editer-eleve').classList.remove('flex'); };
+
+    window.marquerEleveTransfereDepuisModal = async function() { 
+      const eleveId = document.getElementById('edit-student-id').value; 
+      if (!eleveId || !confirm('Archiver cet élève ?')) return; 
+      try { 
+        const { error } = await supabaseClient.rpc('archiver_eleve_securise', {
+          p_token: getSessionToken(),
+          p_eleve_id: parseInt(eleveId)
+        });
+        if (error) throw error;
+        fermerModalEditerEleve(); 
+        await chargerTotalEleves();
+        await fetchDonnees(); 
+      } catch (err) { alert('Erreur : ' + err.message); } 
+    };
+    
+    window.supprimerEleveDefinitifDepuisModal = async function() { 
+      const eleveId = document.getElementById('edit-student-id').value; 
+      if (!eleveId || !confirm('Supprimer définitivement ?')) return; 
+      try { 
+        const { error } = await supabaseClient.rpc('supprimer_eleve_securise', {
+          p_token: getSessionToken(),
+          p_eleve_id: parseInt(eleveId)
+        });
+        if (error) throw error;
+        fermerModalEditerEleve(); 
+        await chargerTotalEleves();
+        await fetchDonnees(); 
+      } catch (err) { alert('Erreur suppression : ' + err.message); } 
+    };
+
+    window.ouvrirFicheEleve = async function(eleveId) {
+      const modal = document.getElementById('modal-fiche-eleve'), conteneur = document.getElementById('conteneur-fiche-eleve');
+      conteneur.innerHTML = `<div class="py-12 text-center text-indigo-600"><i class="fa-solid fa-circle-notch fa-spin text-3xl"></i></div>`;
+      modal.classList.remove('hidden'); modal.classList.add('flex');
+      try {
+        const { data: el } = await supabaseClient.from('eleves').select('*, classes (nom_court, nom_complet)').eq('id', eleveId).single();
+        const { data: pts } = await supabaseClient.from('pointages').select('id, statut, justifie, motif_justification, seances (date_cours, heure_debut, matiere)').eq('eleve_id', eleveId).eq('archive', false).order('id', { ascending: false });
+        const h = pts || []; let totalAbs = 0, totalRet = 0;
+        h.forEach(p => { 
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          if(p.statut === 'A' || isJustifiedAbsence) totalAbs++; 
+          if(p.statut === 'R') totalRet++; 
+        });
+        const absParMatiere = {};
+        h.forEach(p => { 
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          if ((p.statut === 'A' || isJustifiedAbsence) && p.seances) { 
+            const mat = p.seances.matiere || 'Inconnue'; 
+            absParMatiere[mat] = (absParMatiere[mat] || 0) + 1; 
+          } 
+        });
+        let matHtml = '';
+        if (Object.keys(absParMatiere).length > 0) {
+          matHtml = `<div><h4 class="font-bold text-xs mb-2">توزيع الغيابات حسب المواد :</h4><div class="grid grid-cols-3 gap-2">`;
+          Object.keys(absParMatiere).forEach(m => { matHtml += `<div class="border border-slate-300 dark:border-slate-600 p-2 rounded-lg text-center bg-white dark:bg-slate-900 text-xs"><div class="font-semibold truncate text-slate-800 dark:text-slate-200">${escapeHtml(m)}</div><div class="text-rose-600 font-black mt-0.5">${absParMatiere[m]} غيابات</div></div>`; });
+          matHtml += `</div></div>`;
+        }
+        let histHtml = h.length === 0 ? `<tr><td colspan="4" class="p-4 text-center font-bold text-slate-500">لا توجد أي غيابات مسجلة.</td></tr>` : h.map(p => {
+           const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+           const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+           const dt = (p.seances && p.seances.date_cours) ? p.seances.date_cours : '--', mat = (p.seances && p.seances.matiere) ? p.seances.matiere : '--';
+           const hr = (p.seances && p.seances.heure_debut && p.seances.heure_debut.length >= 5) ? p.seances.heure_debut.substring(0,5) : '--';
+           let stC = '', stT = 'حاضر'; 
+           if (isAbsent) { stC = 'text-rose-700'; stT = 'غياب'; } 
+           else if (p.statut === 'R') { stC = 'text-amber-700'; stT = 'تأخر'; }
+           let just = '';
+           if (isAbsent || p.statut === 'R') { just = p.justifie ? (p.motif_justification || 'مبرر') : 'غير مبرر'; } 
+           else { just = p.justifie ? (p.motif_justification || 'تسوية') : 'حاضر'; }
+           return `<tr><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-center text-slate-700 dark:text-slate-300" dir="ltr">${escapeHtml(dt)}</td><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-slate-700 dark:text-slate-300">${escapeHtml(mat)} (${hr})</td><td class="border-l border-slate-300 dark:border-slate-600 p-2 text-center font-bold ${stC}">${stT}</td><td class="p-2 text-center text-slate-700 dark:text-slate-300">${escapeHtml(just)}</td></tr>`;
+        }).join('');
+        
+        conteneur.innerHTML = `
+          <div class="text-center border-b-2 border-black dark:border-slate-600 pb-3 mb-4">
+            <p class="font-bold text-sm font-amiri text-slate-800 dark:text-white">${escapeHtml(etabConfig.nom_ar)}</p>
+            <div class="mt-2 border-2 border-black dark:border-slate-600 px-6 py-1 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white mx-auto" style="width: max-content; max-width: 100%;"><h2 class="font-black text-lg">بطاقة المتابعة الفردية</h2></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-300 dark:border-slate-600 text-xs font-bold text-slate-800 dark:text-slate-200">
+            <div>اللقب والاسم : <span class="font-normal">${escapeHtml(el.nom_ar || el.nom)} ${escapeHtml(el.prenom_ar || el.prenom)}</span></div>
+            <div>القسم : <span class="font-normal" dir="ltr">${escapeHtml(el.classes ? el.classes.nom_court : '')}</span></div>
+            <div>مجموع الغيابات : <span class="text-rose-700 dark:text-rose-400 font-black">${totalAbs} حصص</span></div>
+            <div>مجموع التأخرات : <span class="text-amber-700 dark:text-amber-400 font-black">${totalRet} مرات</span></div>
+            <div class="col-span-2 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg border border-indigo-100 dark:border-indigo-800 mt-1">هاتف الولي : <span class="font-black text-indigo-700 dark:text-indigo-400 tracking-wider text-sm ml-2" dir="ltr">${escapeHtml(el.telephone_parent || 'غير مسجل')}</span></div>
+          </div>
+          ${matHtml}
+          <div><h4 class="font-bold text-xs mb-2 text-slate-800 dark:text-white">السجل الزمني للغيابات :</h4><div class="max-h-56 overflow-y-auto border border-slate-300 dark:border-slate-600 rounded-lg"><table class="w-full text-right border-collapse text-xs"><thead class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-800 dark:text-slate-200 sticky top-0 border-b border-slate-300 dark:border-slate-600"><tr><th class="border-l border-slate-300 dark:border-slate-600 p-2 text-center">التاريخ</th><th class="border-l border-slate-300 dark:border-slate-600 p-2">المادة</th><th class="border-l border-slate-300 dark:border-slate-600 p-2 text-center">الحالة</th><th class="p-2 text-center">التبرير</th></tr></thead><tbody class="divide-y divide-slate-200 dark:divide-slate-700">${histHtml}</tbody></table></div></div>
+        `;
+        document.getElementById('zone-impression-fiche-eleve').innerHTML = conteneur.innerHTML;
+      } catch (err) { conteneur.innerHTML = `<p class="text-rose-600 font-bold">Erreur: ${escapeHtml(err.message)}</p>`; }
+    };
+    
+    window.fermerModalFicheEleve = function() { document.getElementById('modal-fiche-eleve').classList.add('hidden'); document.getElementById('modal-fiche-eleve').classList.remove('flex'); };
+    window.lancerImpressionFicheEleve = function() { document.body.classList.add('print-fiche-eleve'); window.print(); setTimeout(() => document.body.classList.remove('print-fiche-eleve'), 1000); };
+
+    window.imprimerBillet = async function(nom, prenom, nomAr, prenomAr, classe, date, heure, statut, eleveId) {
+      const d = date || obtenirDateLocaleISO();
+      try {
+        const { data: ex } = await supabaseClient.from('billets_entree').select('id').eq('eleve_id', eleveId).eq('date_billet', d).limit(1);
+        if (!ex || ex.length === 0) await supabaseClient.from('billets_entree').insert({ eleve_id: eleveId, date_billet: d, heure_emission: new Date().toTimeString().split(' ')[0], statut_origine: statut || 'A', motif: 'Régularisation' });
+      } catch (err) {}
+      document.getElementById('billet-details').innerHTML = `<div class="flex justify-between border-b border-black pb-2"><p><b>Nom & Prénom:</b> ${escapeHtml(nom)} ${escapeHtml(prenom)}</p><p dir="rtl"><b>اللقب والاسم:</b> ${escapeHtml(nomAr)} ${escapeHtml(prenomAr)}</p></div><div class="flex justify-between border-b border-black py-2"><p><b>Division / القسم:</b> ${escapeHtml(classe)}</p><p><b>Statut / الطبيعة:</b> ${statut === 'A' ? 'Absence / غياب' : 'Retard / تأخر'}</p></div><div class="py-2"><p><b>Date & Heure:</b> ${escapeHtml(date)} à ${heure ? heure.substring(0,5) : ''}</p></div>`;
+      document.getElementById('billet-date-emission').textContent = new Date().toLocaleString('fr-FR');
+      document.body.classList.add('print-billet'); window.print(); setTimeout(() => document.body.classList.remove('print-billet'), 1000);
+    };
+
+    window.imprimerConvocation = function(nom, prenom, nomAr, prenomAr, classe, tot) {
+      document.getElementById('convocation-details').innerHTML = `<div class="mb-4 bg-gray-100 p-3 border border-black text-center font-bold"><p>${escapeHtml(nom)} ${escapeHtml(prenom)} — ${escapeHtml(nomAr)} ${escapeHtml(prenomAr)} — القسم: ${escapeHtml(classe)}</p><p class="mt-2 text-rose-700 text-base">حالة إنذار: غياب لمدة 3 أيام متتالية (مجموع الغيابات: ${tot} حصص)</p></div><p>إلى السيد(ة) ولي أمر التلميذ(ة) المحترم(ة) :</p><p>نحيطكم علماً بأن ابنكم (ابنتكم) المذكور(ة) أعلاه قد سجل غياباً مستمراً لمدة 3 أيام دراسية متتالية، دون تقديم أي تبرير.</p><p>وعليه، يُرجى الحضور شخصياً إلى مكتب مستشار التربية لتسوية وضعية تمدرس التلميذ.</p>`;
+      document.getElementById('convoc-date-emission').textContent = new Date().toLocaleDateString('ar-DZ');
+      document.body.classList.add('print-convocation'); window.print(); setTimeout(() => document.body.classList.remove('print-convocation'), 1000);
+    };
+
+    window.ouvrirModalTransfertGlobal = function() { 
+      document.getElementById('modal-transfert-global').classList.remove('hidden'); 
+      document.getElementById('modal-transfert-global').classList.add('flex'); 
+    };
+    window.fermerModalTransfertGlobal = function() { 
+      document.getElementById('modal-transfert-global').classList.add('hidden'); 
+      document.getElementById('modal-transfert-global').classList.remove('flex'); 
+    };
+    
+    window.chargerElevesPourTransfert = async function(classeId) {
+      const selEleve = document.getElementById('transfert-select-eleve'); 
+      if (!selEleve || !classeId) { if(selEleve) selEleve.innerHTML = `<option value="">-- Sélectionnez l'élève --</option>`; return; }
+      selEleve.innerHTML = `<option value="">Chargement...</option>`;
+      try { 
+        const { data } = await supabaseClient.from('eleves').select('id, nom, prenom, nom_ar, prenom_ar').eq('classe_id', classeId).eq('actif', true).order('nom'); 
+        selEleve.innerHTML = `<option value="">-- Sélectionnez l'élève --</option>`; 
+        if (data) {
+          data.forEach(function(e) { 
+            const opt = document.createElement('option'); opt.value = e.id; opt.textContent = `${e.nom} ${e.prenom} (${e.nom_ar || ''} ${e.prenom_ar || ''})`; selEleve.appendChild(opt); 
+          }); 
+        }
+      } catch (err) {}
+    };
+
+    function construireHtmlRapportComplet() {
+      const d = filtreDate ? filtreDate.value : obtenirDateLocaleISO();
+      const dateObj = new Date(d);
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateStrAr = isNaN(dateObj.getTime()) ? d : dateObj.toLocaleDateString('ar-DZ', options);
+      const clsChoisie = filtreClasse ? filtreClasse.value : 'ALL';
+      const mapEleves = new Map();
+      
+      (vuePointages || []).forEach(p => { 
+        if (p.archive) return;
+        if (clsChoisie !== 'ALL' && String(p.classe_id) !== String(clsChoisie)) return; 
+        
+        const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+        const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+        const isRetard = p.statut === 'R';
+        
+        if (isAbsent || isRetard) {
+          if (!mapEleves.has(p.eleve_id)) {
+            mapEleves.set(p.eleve_id, {
+              nom_ar: p.nom_ar || p.nom || '',
+              prenom_ar: p.prenom_ar || p.prenom || '',
+              classe_nom: p.classe_nom || '',
+              isAbsent: false,
+              isRetard: false,
+              seances: [],
+              justifications: []
+            });
+          }
+          const el = mapEleves.get(p.eleve_id);
+          if (isAbsent) el.isAbsent = true;
+          if (isRetard) el.isRetard = true;
+          const h = (p.heure_debut && p.heure_debut.length >= 5) ? p.heure_debut.substring(0,5) : '';
+          el.seances.push(`${p.matiere || ''} (${h})`);
+          if (p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية') {
+            if (!el.justifications.includes(p.motif_justification)) {
+              el.justifications.push(p.motif_justification);
+            }
+          }
+        }
+      });
+
+      const incidents = Array.from(mapEleves.values());
+      const totalElevesAbsents = incidents.filter(p => p.isAbsent).length;
+      const totalElevesRetards = incidents.filter(p => !p.isAbsent && p.isRetard).length;
+      
+      let totalHeuresAbsence = 0;
+      incidents.forEach(p => {
+        if (p.isAbsent) totalHeuresAbsence += p.seances.length;
+      });
+
+      let incHtml = incidents.length === 0 ? `<tr><td colspan="6" class="p-4 text-center font-bold">لم تُسجل أي غيابات.</td></tr>` : incidents.map((p, i) => {
+        let stT = 'غياب';
+        let color = 'text-rose-700';
+        if (p.isAbsent && p.isRetard) { stT = 'غياب + تأخر'; }
+        else if (!p.isAbsent && p.isRetard) { stT = 'تأخر'; color = 'text-amber-700'; }
+        let just = p.justifications.length > 0 ? p.justifications.join(' / ') : 'غير مبرر';
+        
+        return `<tr>
+          <td class="border border-black p-1.5 text-center">${i + 1}</td>
+          <td class="border border-black p-1.5 font-bold">${escapeHtml(p.nom_ar)} ${escapeHtml(p.prenom_ar)}</td>
+          <td class="border border-black p-1.5 text-center font-bold" dir="ltr">${escapeHtml(p.classe_nom)}</td>
+          <td class="border border-black p-1.5 text-center text-[10px]" dir="ltr">${escapeHtml(p.seances.join(' | '))}</td>
+          <td class="border border-black p-1.5 text-center font-bold ${color}">${stT}</td>
+          <td class="border border-black p-1.5 text-center text-[11px]">${escapeHtml(just)}</td>
+        </tr>`;
+      }).join('');
+
+      const page1 = `
+        <div class="text-center mb-4">
+          <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية - ${escapeHtml(etabConfig.wilaya_ar)}</p>
+          <p class="font-bold text-xl mt-1 font-amiri">${escapeHtml(etabConfig.nom_ar)}</p>
+          <div class="mt-3 border-2 border-black inline-block px-12 py-1"><h2 class="font-black text-lg">التقرير اليومي للغيابات والتأخرات</h2></div>
+          <p class="font-bold text-sm mt-3">تاريخ اليوم : ${dateStrAr}</p>
+        </div>
+        <div class="flex justify-between items-center gap-2 mb-6 w-full" dir="rtl">
+          <div class="print-kpi-box text-center w-1/4">الحصص المنجزة : ${currentKpis.total_seances || 0}</div>
+          <div class="print-kpi-box text-center w-1/4">
+            التلاميذ الغائبون : <span class="font-black text-rose-700">${totalElevesAbsents}</span>
+            <span class="text-[10px] text-slate-500 block">(${totalHeuresAbsence} حصة)</span>
+          </div>
+          <div class="print-kpi-box text-center w-1/4">التأخرات : ${totalElevesRetards}</div>
+          <div class="print-kpi-box text-center w-1/4">نسبة الحضور : ${currentKpis.taux_presence || 0}%</div>
+        </div>
+        <table class="border-collapse border border-black print-table mb-8">
+          <thead><tr class="bg-gray-100"><th class="w-10">الرقم</th><th>اللقب والاسم</th><th>القسم</th><th>المادة والتوقيت</th><th>الحالة</th><th>التبرير / التأشيرة</th></tr></thead>
+          <tbody class="divide-y divide-black">${incHtml}</tbody>
+        </table>
+      `;
+
+      const classes1AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('1AS'));
+      const classes2AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('2AS'));
+      const classes3AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('3AS'));
+      
+      const maxColonnes = Math.max(9, classes1AS.length, classes2AS.length, classes3AS.length);
+
+      const getAbs = (classeNom) => {
+        return (vuePointages || []).filter(p => {
+          if (p.classe_nom !== classeNom) return false;
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          return p.statut === 'A' || isJustifiedAbsence;
+        }).length;
+      };
+
+      const genererLignesNiveau = (titre, classesNiveau) => {
+        const vides = Math.max(0, maxColonnes - classesNiveau.length);
+        const tdVides = Array(vides).fill('<td></td>').join('');
+        const totalAbsNiveau = classesNiveau.reduce((acc, c) => acc + getAbs(c.nom_court), 0);
+        return `
+          <tr>
+            <td rowspan="2" class="font-bold bg-gray-50">${titre}</td>
+            <td class="font-bold">الأفواج</td>
+            ${classesNiveau.map(c => `<td class="text-xs font-bold">${escapeHtml(c.nom_court)}</td>`).join('')}
+            ${tdVides}
+            <td rowspan="2" class="font-black text-sm">${totalAbsNiveau}</td>
+          </tr>
+          <tr>
+            <td class="font-bold">عدد الغياب</td>
+            ${classesNiveau.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
+            ${tdVides}
+          </tr>
+        `;
+      };
+
+      const rowsNiveaux = genererLignesNiveau('السنة الأولى ثانوي', classes1AS) +
+                          genererLignesNiveau('السنة الثانية ثانوي', classes2AS) +
+                          genererLignesNiveau('السنة الثالثة ثانوي', classes3AS);
+
+      const page2 = `
+        <div class="page-break"></div>
+        <div class="text-center mb-4 relative">
+          <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية</p>
+          <div class="flex justify-between items-end mt-2">
+             <p class="font-bold text-xs w-1/3 text-right">${escapeHtml(etabConfig.wilaya_ar)}</p>
+             <div class="w-1/3 text-center">
+                <h2 class="font-black text-lg">التقرير اليومي لمستشار التربية</h2>
+                <p class="font-bold text-xs mt-2">التاريخ : ${dateStrAr}</p>
+             </div>
+             <div class="w-1/3 text-left">
+                <p class="font-bold text-lg font-amiri">${escapeHtml(etabConfig.nom_ar)}</p>
+             </div>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-start gap-2 mb-6 w-full" dir="rtl">
+          <div class="w-[68%] flex-shrink-0">
+            <table class="print-table">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="w-[15%]">السنة</th>
+                  <th class="w-[15%]">الأفواج</th>
+                  <th colspan="${maxColonnes}">الغيابات</th>
+                  <th class="w-[10%]">المجموع</th>
+                </tr>
+              </thead>
+              <tbody>${rowsNiveaux}</tbody>
+            </table>
+          </div>
+
+          <div class="w-[30%] flex-shrink-0 flex flex-col gap-4">
+            <table class="print-table">
+              <thead><tr class="bg-gray-100"><th colspan="2">غيابات وتأخرات المساعدين التربويين</th></tr></thead>
+              <tbody>
+                <tr><td class="font-bold w-1/2">الفترة الصباحية</td><td></td></tr>
+                <tr><td class="font-bold w-1/2">الفترة المسائية</td><td></td></tr>
+              </tbody>
+            </table>
+            
+            <table class="print-table">
+              <thead><tr class="bg-gray-100"><th colspan="4">الخلاصة</th></tr><tr class="bg-gray-100"><th>البيان</th><th>تلميذ</th><th>أساتذة</th><th>مساعدون</th></tr></thead>
+              <tbody>
+                <tr><td class="font-bold">الحاضرون</td><td></td><td></td><td></td></tr>
+                <tr><td class="font-bold">الغائبون</td><td></td><td></td><td></td></tr>
+                <tr><td class="font-bold">المجموع</td><td></td><td></td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-end mt-8 pt-4">
+          <p class="font-bold text-sm w-2/3 text-right">ملاحظات مختلفة: ..................................................................................</p>
+          <p class="font-bold text-sm w-1/3 text-left">${escapeHtml(etabConfig.commune_ar)} في : ${new Date().toLocaleDateString('ar-DZ')}</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 text-center text-sm font-bold mt-12 pt-4 px-4 border-t border-dashed border-black">
+          <div><p class="underline">مستشار(ة) التربية</p><div class="h-20"></div></div>
+          <div><p class="underline">ناظر الدراسات</p><div class="h-20"></div></div>
+          <div><p class="underline">مدير الثانوية</p><div class="h-20"></div></div>
+        </div>
+      `;
+
+      return page1 + page2;
+    }
+    
+    window.ouvrirApercuRapportJournalier = function() { 
+      const h = construireHtmlRapportComplet();
+      document.getElementById('conteneur-document-rapport').innerHTML = h; 
+      document.getElementById('zone-impression-rapport').innerHTML = h; 
+      document.getElementById('modal-apercu-rapport').classList.remove('hidden'); document.getElementById('modal-apercu-rapport').classList.add('flex'); 
+    };
+    
+    window.fermerModalApercuRapport = function() { document.getElementById('modal-apercu-rapport').classList.add('hidden'); document.getElementById('modal-apercu-rapport').classList.remove('flex'); };
+    window.lancerImpressionRapport = function() { document.body.classList.add('print-rapport'); window.print(); setTimeout(() => document.body.classList.remove('print-rapport'), 1000); };
+
+    if (btnExportExcel) {
+      btnExportExcel.addEventListener('click', () => {
+        let sources = obtenirDonneesFiltrees();
+        if (pointagesSelectionnes.size > 0) sources = sources.filter(p => pointagesSelectionnes.has(String(p.pointage_id || p.id)));
+        if(sources.length === 0) return;
+        const d = sources.map((p, i) => {
+          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
+          const isAbsent = p.statut === 'A' || isJustifiedAbsence;
+          return { 
+            "N°": i + 1, "Date": p.date_cours, "Division": p.classe_nom, "Nom": p.nom_ar || p.nom, "Prénom": p.prenom_ar || p.prenom, "Matière": p.matiere, 
+            "Statut": isAbsent ? 'Absent' : (p.statut === 'R' ? 'Retard' : 'Présent'), 
+            "Justifié": p.justifie ? "OUI" : "NON", "Motif": p.motif_justification || '' 
+          };
+        });
+        const ws = XLSX.utils.json_to_sheet(d), wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Registre"); XLSX.writeFile(wb, `Absences_${filtreDate.value}.xlsx`);
+      });
+    }
+
+    if (filtreDate) filtreDate.addEventListener('change', fetchDonnees);
+    if (filtreClasse) filtreClasse.addEventListener('change', renderTableau);
+    if (filtreStatut) filtreStatut.addEventListener('change', renderTableau);
+    if (btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
+
+    if (sessionStorage.getItem('superviseur_token')) {
+      debloquerSuperviseur(sessionStorage.getItem('superviseur_token'));
+    }
+  </script>
+</body>
+</html>
