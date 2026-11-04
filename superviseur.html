@@ -924,7 +924,7 @@
       });
     }
 
-    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES (LOGIQUE DE CRÉNEAU HORAIRE)
+    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES (SANS ERREUR DE RELATION)
     window.ouvrirModalNonAppeles = async function() {
       const modal = document.getElementById('modal-non-appeles');
       const content = document.getElementById('non-appeles-content');
@@ -945,8 +945,7 @@
           .from('planning_enseignants')
           .select(`
             *,
-            classes(id, nom_court, salle),
-            enseignants(nom_ar, prenom_ar, nom, prenom, matiere)
+            classes(id, nom_court, salle)
           `)
           .or(`jour_semaine.eq.${nomJourAr},jour_semaine.eq.${nomJourFr}`);
 
@@ -960,7 +959,21 @@
 
         if (errS) throw errS;
 
-        // 3. Comparer le planning avec les séances (en vérifiant l'heure)
+        // 3. Récupérer les professeurs séparément
+        const ensIds = [...new Set((planningJour || []).map(p => p.enseignant_id).filter(Boolean))];
+        let enseignantsMap = {};
+        
+        if (ensIds.length > 0) {
+           const { data: enseignants, error: errEns } = await supabaseClient
+             .from('enseignants')
+             .select('id, nom_ar, prenom_ar, nom, prenom, matiere')
+             .in('id', ensIds);
+             
+           if (errEns) throw errEns;
+           (enseignants || []).forEach(e => enseignantsMap[e.id] = e);
+        }
+
+        // 4. Comparer
         classesNonAppeleesData = [];
         
         if (planningJour && planningJour.length > 0) {
@@ -973,24 +986,23 @@
             const startPlan = timeToMinutes(p.heure_debut);
             const endPlan = timeToMinutes(p.heure_fin);
 
-            // Vérifier si le prof a fait l'appel dans le créneau (avec 10 min de tolérance)
+            // Marge de 10 minutes avant le début et 10 minutes après la fin
             const isCalled = (seancesFaites || []).some(s => {
               if (String(s.classe_id) !== String(classeId)) return false;
               const startReal = timeToMinutes(s.heure_debut);
-              
-              // Tolérance : 10 minutes avant le début, 10 minutes après la fin
               return startReal >= (startPlan - 10) && startReal <= (endPlan + 10);
             });
 
             if (!isCalled) {
               let profNom = 'Non assigné';
               let matiere = '---';
-              if (p.enseignants) {
-                profNom = p.enseignants.nom_ar ? `${p.enseignants.nom_ar} ${p.enseignants.prenom_ar}` : `${p.enseignants.nom} ${p.enseignants.prenom}`;
-                matiere = p.enseignants.matiere || '---';
+              
+              const ens = enseignantsMap[p.enseignant_id];
+              if (ens) {
+                profNom = ens.nom_ar ? `${ens.nom_ar} ${ens.prenom_ar}` : `${ens.nom} ${ens.prenom}`;
+                matiere = ens.matiere || '---';
               }
               
-              // Éviter les doublons (si un prof a 2 heures consécutives)
               if (!classesNonAppeleesData.some(c => c.classe_id === classeId && c.heure_debut === p.heure_debut)) {
                 classesNonAppeleesData.push({
                   classe_id: classeId,
