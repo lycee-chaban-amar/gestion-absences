@@ -1,3 +1,12 @@
+C'est une excellente idée. Imprimer un rapport propre pour le directeur est beaucoup plus formel et professionnel que WhatsApp. 
+
+J'ai modifié le code de votre fichier `superviseur.html` pour :
+1. **Ajouter un bouton "Imprimer"** (à côté du bouton WhatsApp) dans la fenêtre "Classes non appelées".
+2. **Créer un modèle d'impression A4 officiel** (avec l'en-tête de l'établissement, le tableau des classes manquantes, les salles, et les zones de signature pour le Directeur et le Surveillant).
+
+Voici le code complet mis à jour. Copiez-collez-le pour remplacer votre fichier `superviseur.html` actuel :
+
+```html
 <!DOCTYPE html>
 <html lang="fr" dir="ltr" id="html-root">
 <head>
@@ -49,12 +58,16 @@
       body.print-convocation #zone-impression-convocation, body.print-convocation #zone-impression-convocation * { visibility: visible !important; }
       body.print-convocation #zone-impression-convocation { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
       
+      /* NOUVEAU : Impression du rapport des classes non appelées */
+      body.print-non-appeles #zone-impression-non-appeles, body.print-non-appeles #zone-impression-non-appeles * { visibility: visible !important; }
+      body.print-non-appeles #zone-impression-non-appeles { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+
       @page { size: A4 portrait; margin: 10mm; }
       .page-break { page-break-before: always; }
     }
     
-    .print-table { border-collapse: collapse; table-layout: fixed; width: 100%; font-size: 11px; }
-    .print-table th, .print-table td { border: 1px solid black; padding: 4px 2px; text-align: center; word-wrap: break-word; overflow-wrap: break-word; }
+    .print-table { border-collapse: collapse; table-layout: fixed; width: 100%; font-size: 12px; }
+    .print-table th, .print-table td { border: 1px solid black; padding: 8px 4px; text-align: center; word-wrap: break-word; overflow-wrap: break-word; }
     .print-table th { background-color: #f3f4f6; font-weight: bold; }
     .print-kpi-box { border: 2px solid black; padding: 5px 15px; font-weight: bold; font-size: 14px; }
   </style>
@@ -248,7 +261,11 @@
       </div>
       <div id="non-appeles-content" class="overflow-y-auto flex-1 text-sm mb-4"></div>
       <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 flex justify-between items-center gap-2">
-        <button type="button" onclick="partagerRappelWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-brands fa-whatsapp text-base"></i> WhatsApp</button>
+        <div class="flex gap-2">
+          <!-- NOUVEAU BOUTON IMPRIMER -->
+          <button type="button" onclick="imprimerRapportNonAppeles()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-solid fa-print text-base"></i> Imprimer</button>
+          <button type="button" onclick="partagerRappelWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-brands fa-whatsapp text-base"></i> WhatsApp</button>
+        </div>
         <button type="button" onclick="fermerModalNonAppeles()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
       </div>
     </div>
@@ -384,6 +401,9 @@
   <div id="zone-impression-fiche-eleve" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
   <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10"><div class="text-center border-b pb-3 mb-4"><h3 class="font-bold font-amiri text-xl dyn-etab-ar">ثانوية الشهيد شعبان اعمر</h3><h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée</h2></div><div id="billet-details" class="space-y-3 text-sm"></div><div class="mt-6 pt-4 border-t flex justify-between text-xs"><p>Édité le : <span id="billet-date-emission"></span></p><p class="font-bold">Visa Administration</p></div></div>
   <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-lg font-bold font-amiri dyn-etab-ar">ثانوية الشهيد شعبان اعمر</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p><span class="dyn-commune-ar">أوقاس</span> في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
+  
+  <!-- NOUVELLE ZONE D'IMPRESSION POUR LE RAPPORT DES CLASSES NON APPELÉES -->
+  <div id="zone-impression-non-appeles" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
 
   <script>
     // Clés Supabase figées dans le code
@@ -397,6 +417,7 @@
     let totalElevesEtablissement = 0;
     let __appInit = false;
     let chartRep = null, chartCls = null;
+    let classesNonAppeleesData = []; // Stockage des données pour l'impression
 
     let etabConfig = {
       nom_ar: 'ثانوية الشهيد شعبان اعمر',
@@ -914,12 +935,12 @@
           appelesParClasse[pt.classe_id].add(pt.eleve_id);
         });
 
-        let classesNonAppelees = [];
+        classesNonAppeleesData = []; // Reset global data
         classesCache.forEach(cls => {
           const total = totalParClasse[cls.id] || 0;
           const appeles = appelesParClasse[cls.id] ? appelesParClasse[cls.id].size : 0;
           if (total > 0 && appeles < total) {
-            classesNonAppelees.push({ 
+            classesNonAppeleesData.push({ 
               nom: cls.nom_court, 
               salle: cls.salle || '', 
               manquants: total - appeles, 
@@ -928,15 +949,15 @@
           }
         });
 
-        if (classesNonAppelees.length === 0) {
+        if (classesNonAppeleesData.length === 0) {
           content.innerHTML = `<div class="text-center py-8"><i class="fa-solid fa-check-circle text-emerald-500 text-4xl mb-3 block"></i><p class="text-sm font-bold text-slate-700 dark:text-slate-300">Toutes les classes ont fait l'appel !</p></div>`;
           return;
         }
 
-        classesNonAppelees.sort((a, b) => b.manquants - a.manquants);
+        classesNonAppeleesData.sort((a, b) => b.manquants - a.manquants);
         
         let html = '<ul class="space-y-2.5">';
-        classesNonAppelees.forEach(c => {
+        classesNonAppeleesData.forEach(c => {
           const salleBadge = c.salle 
             ? `<span class="badge-salle bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-door-open text-indigo-500"></i> الحجرة ${escapeHtml(c.salle)}</span>`
             : `<span class="badge-salle bg-slate-100 dark:bg-slate-700 text-slate-500 px-2 py-1 rounded-xl text-xs font-bold shrink-0">بدون حجرة</span>`;
@@ -962,6 +983,75 @@
       }
     };
     
+    // NOUVELLE FONCTION D'IMPRESSION DU RAPPORT POUR LE DIRECTEUR
+    window.imprimerRapportNonAppeles = function() {
+      if (!classesNonAppeleesData || classesNonAppeleesData.length === 0) {
+        alert("Aucune classe non appelée à imprimer.");
+        return;
+      }
+      
+      const dateStr = filtreDate ? filtreDate.value : obtenirDateLocaleISO();
+      const dateObj = new Date(dateStr);
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateStrAr = isNaN(dateObj.getTime()) ? dateStr : dateObj.toLocaleDateString('ar-DZ', options);
+
+      let rows = '';
+      classesNonAppeleesData.forEach((c, i) => {
+        rows += `<tr>
+          <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
+          <td class="border border-black p-2 font-bold" dir="ltr">${escapeHtml(c.nom)}</td>
+          <td class="border border-black p-2 text-center font-bold">${escapeHtml(c.salle || '---')}</td>
+          <td class="border border-black p-2 text-center">${c.total}</td>
+          <td class="border border-black p-2 text-center font-black text-rose-700 text-lg">${c.manquants}</td>
+        </tr>`;
+      });
+
+      const totalManquants = classesNonAppeleesData.reduce((acc, c) => acc + c.manquants, 0);
+
+      const html = `
+        <div class="text-center mb-6">
+          <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية - ${escapeHtml(etabConfig.wilaya_ar)}</p>
+          <p class="font-bold text-xl mt-1 font-amiri">${escapeHtml(etabConfig.nom_ar)}</p>
+          <div class="mt-3 border-2 border-black inline-block px-8 py-1"><h2 class="font-black text-lg">تقرير الأقسام التي لم تسجل الغيابات</h2></div>
+          <p class="font-bold text-sm mt-3">تاريخ اليوم : ${dateStrAr}</p>
+        </div>
+        
+        <div class="flex justify-end mb-4">
+          <div class="border-2 border-black px-4 py-2 font-bold text-sm">
+            إجمالي التلاميذ غير الممسوكين : <span class="text-rose-700 text-lg">${totalManquants}</span> تلميذ
+          </div>
+        </div>
+
+        <table class="w-full border-collapse border border-black print-table mb-8">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="border border-black p-2 w-12">الرقم</th>
+              <th class="border border-black p-2">القسم</th>
+              <th class="border border-black p-2">الحجرة</th>
+              <th class="border border-black p-2">إجمالي التلاميذ</th>
+              <th class="border border-black p-2">التلاميذ غير الممسوكين</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        
+        <div class="flex justify-between items-end mt-16 pt-8 px-8">
+          <div class="text-center">
+            <p class="font-bold text-sm underline mb-12">إمضاء مستشار التربية</p>
+          </div>
+          <div class="text-center">
+            <p class="font-bold text-sm underline mb-12">إمضاء مدير الثانوية</p>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('zone-impression-non-appeles').innerHTML = html;
+      document.body.classList.add('print-non-appeles');
+      window.print();
+      setTimeout(() => document.body.classList.remove('print-non-appeles'), 1000);
+    };
+
     window.partagerRappelWhatsApp = function() {
       const dateStr = document.getElementById('filtre-date') ? document.getElementById('filtre-date').value : obtenirDateLocaleISO();
       const lignesManquantes = [];
@@ -1116,7 +1206,6 @@
       } catch (err) { alert(err.message); }
     };
 
-    // --- CORRECTION : Justification groupée préservant le statut d'origine (Retard ou Absence) ---
     window.justifierSelectionGroupee = async function() {
       const ids = Array.from(pointagesSelectionnes); if (ids.length === 0) return;
       const motif = prompt('Motif :', 'Accord administration'); if (motif === null) return;
@@ -1126,11 +1215,10 @@
             const pt = vuePointages.find(p => String(p.pointage_id || p.id) === String(id));
             if (!pt) return Promise.resolve({ error: null });
             
-            // Utilisation de modifier_pointage_securise pour conserver le statut exact ('A' ou 'R')
             return supabaseClient.rpc('modifier_pointage_securise', {
                 p_token: getSessionToken(),
                 p_pointage_id: parseInt(id),
-                p_statut: pt.statut, // <-- Préserve le statut original (évite d'écraser les retards)
+                p_statut: pt.statut,
                 p_justifie: true,
                 p_motif: motif || 'Justifié'
             });
@@ -1586,3 +1674,4 @@
   </script>
 </body>
 </html>
+```
