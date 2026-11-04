@@ -7,12 +7,10 @@
   
   <meta name="theme-color" content="#0f172a">
   
-  <!-- Sécurité CSS anti-débordement des fenêtres -->
   <style>
     .hidden { display: none !important; }
   </style>
 
-  <!-- Bibliothèques externes -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: 'class' }</script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -248,9 +246,9 @@
 
   <!-- MODAL CLASSES NON APPELÉES -->
   <div id="modal-non-appeles" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
+    <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0">
-        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-slate-500"></i><span>Classes non appelées</span></h3>
+        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-slate-500"></i><span>Professeurs n'ayant pas fait l'appel</span></h3>
         <button type="button" onclick="fermerModalNonAppeles()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <div id="non-appeles-content" class="overflow-y-auto flex-1 text-sm mb-4"></div>
@@ -452,6 +450,13 @@
     function escJs(s) {
       if (s === null || s === undefined) return '';
       return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n').replace(/\r/g, '');
+    }
+
+    // Fonction pour convertir "08:30" en minutes (ex: 510)
+    function timeToMinutes(timeStr) {
+      if (!timeStr) return -9999;
+      const parts = timeStr.split(':');
+      return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
     }
 
     function toggleDarkMode() {
@@ -919,7 +924,7 @@
       });
     }
 
-    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES
+    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES (LOGIQUE DE CRÉNEAU HORAIRE)
     window.ouvrirModalNonAppeles = async function() {
       const modal = document.getElementById('modal-non-appeles');
       const content = document.getElementById('non-appeles-content');
@@ -930,81 +935,104 @@
       try {
         const dateCible = filtreDate.value || obtenirDateLocaleISO();
         const dateObj = new Date(dateCible);
-        const joursSemaine = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-        const nomJour = joursSemaine[dateObj.getDay()];
+        const joursSemaineAr = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+        const joursSemaineFr = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        const nomJourAr = joursSemaineAr[dateObj.getDay()];
+        const nomJourFr = joursSemaineFr[dateObj.getDay()];
 
-        // 1. Récupération des cours prévus ce jour-là
-        const { data: planningJour } = await supabaseClient
-          .from('v_planning_cours')
-          .select('*')
-          .eq('jour_semaine', nomJour);
+        // 1. Récupérer le planning du jour
+        const { data: planningJour, error: errPlan } = await supabaseClient
+          .from('planning_enseignants')
+          .select(`
+            *,
+            classes(id, nom_court, salle),
+            enseignants(nom_ar, prenom_ar, nom, prenom, matiere)
+          `)
+          .or(`jour_semaine.eq.${nomJourAr},jour_semaine.eq.${nomJourFr}`);
 
-        // Map classe_id -> Enseignant & Matière & Horaires
-        const profParClasse = {};
-        const heureDebutParClasse = {};
-        const heureFinParClasse = {};
+        if (errPlan) throw errPlan;
+
+        // 2. Récupérer toutes les séances faites ce jour-là
+        const { data: seancesFaites, error: errS } = await supabaseClient
+          .from('seances')
+          .select('classe_id, heure_debut')
+          .eq('date_cours', dateCible);
+
+        if (errS) throw errS;
+
+        // 3. Comparer le planning avec les séances (en vérifiant l'heure)
+        classesNonAppeleesData = [];
         
-        (planningJour || []).forEach(pl => {
-          if (!profParClasse[pl.classe_id]) {
-            profParClasse[pl.classe_id] = `${pl.enseignant_nom} (${pl.matiere})`;
-            heureDebutParClasse[pl.classe_id] = pl.heure_debut;
-            heureFinParClasse[pl.classe_id] = pl.heure_fin;
-          }
-        });
+        if (planningJour && planningJour.length > 0) {
+          planningJour.forEach(p => {
+            if (!p.classes) return;
+            const classeId = p.classes.id;
+            const classeNom = p.classes.nom_court;
+            const salle = p.salle_cours || p.classes.salle || '---';
+            
+            const startPlan = timeToMinutes(p.heure_debut);
+            const endPlan = timeToMinutes(p.heure_fin);
 
-        // 2. Décompte des élèves actifs et appelés
-        const { data: eleves } = await supabaseClient.from('eleves').select('classe_id').eq('actif', true);
-        const totalParClasse = {};
-        (eleves || []).forEach(e => { totalParClasse[e.classe_id] = (totalParClasse[e.classe_id] || 0) + 1; });
-
-        const appelesParClasse = {};
-        vuePointages.filter(pt => !pt.archive).forEach(pt => {
-          if (!appelesParClasse[pt.classe_id]) appelesParClasse[pt.classe_id] = new Set();
-          appelesParClasse[pt.classe_id].add(pt.eleve_id);
-        });
-
-        classesNonAppeleesData = []; 
-        classesCache.forEach(cls => {
-          const total = totalParClasse[cls.id] || 0;
-          const appeles = appelesParClasse[cls.id] ? appelesParClasse[cls.id].size : 0;
-          if (total > 0 && appeles < total) {
-            classesNonAppeleesData.push({ 
-              nom: cls.nom_court, 
-              salle: cls.salle || '', 
-              prof: profParClasse[cls.id] || 'Non assigné',
-              heure_debut: heureDebutParClasse[cls.id] || null,
-              heure_fin: heureFinParClasse[cls.id] || null,
-              manquants: total - appeles, 
-              total: total 
+            // Vérifier si le prof a fait l'appel dans le créneau (avec 10 min de tolérance)
+            const isCalled = (seancesFaites || []).some(s => {
+              if (String(s.classe_id) !== String(classeId)) return false;
+              const startReal = timeToMinutes(s.heure_debut);
+              
+              // Tolérance : 10 minutes avant le début, 10 minutes après la fin
+              return startReal >= (startPlan - 10) && startReal <= (endPlan + 10);
             });
-          }
-        });
+
+            if (!isCalled) {
+              let profNom = 'Non assigné';
+              let matiere = '---';
+              if (p.enseignants) {
+                profNom = p.enseignants.nom_ar ? `${p.enseignants.nom_ar} ${p.enseignants.prenom_ar}` : `${p.enseignants.nom} ${p.enseignants.prenom}`;
+                matiere = p.enseignants.matiere || '---';
+              }
+              
+              // Éviter les doublons (si un prof a 2 heures consécutives)
+              if (!classesNonAppeleesData.some(c => c.classe_id === classeId && c.heure_debut === p.heure_debut)) {
+                classesNonAppeleesData.push({
+                  classe_id: classeId,
+                  nom: classeNom,
+                  salle: salle,
+                  prof: profNom,
+                  matiere: matiere,
+                  heure_debut: p.heure_debut,
+                  heure_fin: p.heure_fin
+                });
+              }
+            }
+          });
+        }
 
         if (classesNonAppeleesData.length === 0) {
-          content.innerHTML = `<div class="text-center py-8"><i class="fa-solid fa-check-circle text-emerald-500 text-4xl mb-3 block"></i><p class="text-sm font-bold text-slate-700 dark:text-slate-300">Toutes les classes ont fait l'appel !</p></div>`;
+          content.innerHTML = `<div class="text-center py-8"><i class="fa-solid fa-check-circle text-emerald-500 text-4xl mb-3 block"></i><p class="text-sm font-bold text-slate-700 dark:text-slate-300">Tous les professeurs ont fait l'appel pour aujourd'hui !</p></div>`;
           return;
         }
 
-        classesNonAppeleesData.sort((a, b) => b.manquants - a.manquants);
-        
+        classesNonAppeleesData.sort((a, b) => (a.heure_debut || '').localeCompare(b.heure_debut || ''));
+
         let html = '<ul class="space-y-2.5">';
         classesNonAppeleesData.forEach(c => {
-          const salleBadge = c.salle 
-            ? `<span class="badge-salle bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-door-open text-indigo-500"></i> الحجرة ${escapeHtml(c.salle)}</span>`
-            : `<span class="badge-salle bg-slate-100 dark:bg-slate-700 text-slate-500 px-2 py-1 rounded-xl text-xs font-bold shrink-0">بدون حجرة</span>`;
+          const hDeb = (c.heure_debut || '').substring(0, 5);
+          const hFin = (c.heure_fin || '').substring(0, 5);
+          const timeStr = hDeb ? `${hDeb} - ${hFin}` : '---';
 
           html += `
             <li class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 p-3 rounded-2xl gap-3">
               <div class="flex items-center gap-3">
-                ${salleBadge}
+                <span class="bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700 px-2.5 py-1 rounded-xl text-xs font-black flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-door-open text-indigo-500"></i> ${escapeHtml(c.salle)}</span>
                 <div>
                   <div class="font-black text-slate-800 dark:text-white text-xs">${escapeHtml(c.nom)}</div>
-                  <div class="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5"><i class="fa-solid fa-user-tie text-[10px] mr-1"></i>${escapeHtml(c.prof)}</div>
+                  <div class="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5"><i class="fa-solid fa-user-tie text-[10px] mr-1"></i>${escapeHtml(c.prof)} (${escapeHtml(c.matiere)})</div>
                 </div>
               </div>
-              <span class="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2.5 py-1 rounded-xl text-xs font-black shrink-0">
-                ${c.manquants} manquant(s)
-              </span>
+              <div class="text-right shrink-0">
+                <span class="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 px-2.5 py-1 rounded-xl text-xs font-black block mb-1">
+                  <i class="fa-regular fa-clock mr-1"></i> ${timeStr}
+                </span>
+              </div>
             </li>
           `;
         });
@@ -1014,10 +1042,9 @@
       }
     };
     
-    // FONCTION D'IMPRESSION DU RAPPORT DES CLASSES NON APPELÉES POUR LE DIRECTEUR
     window.imprimerRapportNonAppeles = function() {
       if (!classesNonAppeleesData || classesNonAppeleesData.length === 0) {
-        alert("Aucune classe non appelée à imprimer.");
+        alert("Aucun professeur n'a oublié l'appel.");
         return;
       }
       
@@ -1028,20 +1055,19 @@
 
       let rows = '';
       classesNonAppeleesData.forEach((c, i) => {
-        const nomSalle = c.salle ? c.salle.replace('الحجرة', '').trim() : '---';
-        const horaire = c.heure_debut && c.heure_fin ? `من ${c.heure_debut.substring(0,5)} إلى ${c.heure_fin.substring(0,5)}` : '---';
+        const hDeb = (c.heure_debut || '').substring(0, 5);
+        const hFin = (c.heure_fin || '').substring(0, 5);
+        const timeStr = hDeb ? `${hDeb} - ${hFin}` : '---';
 
         rows += `<tr>
           <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
           <td class="border border-black p-2 font-bold" dir="ltr">${escapeHtml(c.nom)}</td>
-          <td class="border border-black p-2 text-center font-bold">${escapeHtml(nomSalle)}</td>
+          <td class="border border-black p-2 text-center font-bold">${escapeHtml(c.salle)}</td>
           <td class="border border-black p-2 text-center font-bold text-[11px]">${escapeHtml(c.prof)}</td>
-          <td class="border border-black p-2 text-center font-bold text-[11px]" dir="rtl">${escapeHtml(horaire)}</td>
-          <td class="border border-black p-2 text-center font-black text-rose-700 text-lg">${c.manquants}</td>
+          <td class="border border-black p-2 text-center font-bold text-[11px]">${escapeHtml(c.matiere)}</td>
+          <td class="border border-black p-2 text-center font-bold text-[11px]" dir="ltr">${timeStr}</td>
         </tr>`;
       });
-
-      const totalManquants = classesNonAppeleesData.reduce((acc, c) => acc + c.manquants, 0);
 
       const html = `
         <div class="text-center mb-6">
@@ -1052,12 +1078,6 @@
           <p class="font-bold text-sm mt-3">تاريخ اليوم : ${dateStrAr}</p>
         </div>
         
-        <div class="flex justify-end mb-4">
-          <div class="border-2 border-black px-4 py-2 font-bold text-sm">
-            إجمالي التلاميذ غير المسجلين : <span class="text-rose-700 text-lg">${totalManquants}</span> تلميذ
-          </div>
-        </div>
-
         <table class="w-full border-collapse border border-black print-table mb-8">
           <thead>
             <tr class="bg-gray-100">
@@ -1065,8 +1085,8 @@
               <th class="border border-black p-2">القسم</th>
               <th class="border border-black p-2">الحجرة</th>
               <th class="border border-black p-2">الأستاذ(ة)</th>
+              <th class="border border-black p-2">المادة</th>
               <th class="border border-black p-2">التوقيت</th>
-              <th class="border border-black p-2">التلاميذ غير المسجلين</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -1089,29 +1109,21 @@
     };
 
     window.partagerRappelWhatsApp = function() {
+      if (!classesNonAppeleesData || classesNonAppeleesData.length === 0) {
+        alert("Tous les professeurs ont fait l'appel !");
+        return;
+      }
+      
       const dateStr = document.getElementById('filtre-date') ? document.getElementById('filtre-date').value : obtenirDateLocaleISO();
       const lignesManquantes = [];
       
-      document.querySelectorAll('#non-appeles-content li').forEach(li => {
-        const nom = li.querySelector('.font-black.text-xs')?.textContent.trim();
-        const salle = li.querySelector('.badge-salle')?.textContent.trim();
-        const prof = li.querySelector('.text-indigo-600')?.textContent.trim() || '';
-        
-        if (nom) {
-          let str = salle ? `• *${nom}* (${salle})` : `• *${nom}*`;
-          if(prof) str += ` - ${prof}`;
-          lignesManquantes.push(str);
-        }
+      classesNonAppeleesData.forEach(c => {
+        lignesManquantes.push(`• القسم *${c.nom}* (حجرة ${c.salle}) - الأستاذ: *${c.prof}*`);
       });
-
-      if (lignesManquantes.length === 0) {
-        alert("Toutes les classes ont déjà fait l'appel !");
-        return;
-      }
 
       const message = `📢 *${etabConfig.nom_ar} - تذكير بتسجيل الغياب*\n` +
         `تاريخ اليوم : ${dateStr}\n\n` +
-        `يرجى من الأساتذة أو المساعدين التربويين التوجه للحجرات التالية لتسجيل الغياب :\n` +
+        `يرجى من الأساتذة التالية أسماؤهم التوجه للمنصة لتسجيل غياب أقسامهم :\n` +
         lignesManquantes.join('\n') +
         `\n\n🔗 رابط المنصة : https://lycee-chaban-amar.github.io/index.html`;
 
