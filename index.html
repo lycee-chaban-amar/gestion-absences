@@ -35,15 +35,37 @@
         .attendance-btn { transition: all 0.2s ease; }
         .attendance-btn:active { transform: scale(0.95); }
         
-        /* Select styling to remove default arrow on some browsers */
+        /* Select styling to remove default arrow */
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
         
-        /* Loading spinner */
+        /* Animations */
         .loader { border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top: 3px solid #6366f1; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+        .shake-error { animation: shakeBox 0.35s ease-in-out; border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.2) !important; }
     </style>
 </head>
 <body class="min-h-screen pb-24">
+
+    <!-- ECRAN PIN SÉCURISÉ -->
+    <div id="pin-screen" class="fixed inset-0 z-[9999] bg-[#0f172a]/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div id="pin-card" class="bg-[#1e293b] rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl text-center border border-slate-700 transition-transform">
+            <div class="w-16 h-16 bg-indigo-900/30 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner border border-indigo-500/20">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h2 class="text-xl font-extrabold text-white">فضاء الأستاذ</h2>
+            <p class="text-xs text-slate-400 mt-1 mb-6">يرجى إدخال الرمز السري</p>
+            <div class="space-y-4">
+                <div>
+                    <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-[#0f172a] border-2 border-slate-600 rounded-2xl outline-none text-white focus:border-indigo-500 transition-colors" />
+                    <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p>
+                </div>
+                <button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 transition-colors">
+                    Déverrouiller
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- HEADER -->
     <header class="bg-[#0b1120] border-b border-slate-800 sticky top-0 z-40">
@@ -61,6 +83,9 @@
                 <a href="superviseur.html" class="bg-indigo-900/50 text-indigo-300 border border-indigo-700/50 px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 hover:bg-indigo-800/50 transition">
                     <i class="fa-solid fa-shield-halved"></i> Admin
                 </a>
+                <button type="button" id="btn-lock" class="bg-rose-900/50 text-rose-300 border border-rose-700/50 px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 hover:bg-rose-800/50 transition">
+                    <i class="fa-solid fa-lock"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -83,7 +108,7 @@
                     <input type="date" id="date_cours" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white font-bold text-sm outline-none focus:border-indigo-500" dir="ltr" />
                 </div>
                 
-                <!-- Heure (Menu déroulant rapide) -->
+                <!-- Heure -->
                 <div>
                     <label class="block text-[11px] font-bold text-slate-400 mb-1">التوقيت / Heure</label>
                     <div class="relative">
@@ -209,19 +234,105 @@
         let supabaseClient = null;
         let listeElevesActuels = [];
         let classeActuelleId = null;
+        let __appInit = false;
 
         // Initialisation de la date du jour
         document.getElementById('date_cours').value = new Date().toISOString().split('T')[0];
 
+        // Initialiser Supabase pour le login
         try {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            chargerListeClasses();
         } catch (e) {
             console.error("Erreur init Supabase", e);
             alert("Erreur de connexion à la base de données.");
         }
 
-        // 1. Charger les classes dans le select
+        // ==========================================
+        // GESTION DU CODE PIN ET DE LA SESSION
+        // ==========================================
+        function getSessionToken() {
+            return sessionStorage.getItem('enseignant_token');
+        }
+
+        function debloquerEnseignant(token) {
+            sessionStorage.setItem('enseignant_token', token);
+            const pinScreen = document.getElementById('pin-screen'); 
+            if (pinScreen) pinScreen.remove();
+            
+            if (__appInit) return;
+            __appInit = true;
+            
+            chargerListeClasses();
+        }
+
+        async function validerPinDirect() {
+            const input = document.getElementById('input-pin');
+            const err = document.getElementById('pin-error');
+            const card = document.getElementById('pin-card');
+            const btn = document.getElementById('btn-valider-pin');
+            
+            let val = input ? input.value.trim() : '';
+            const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+            val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
+
+            if (!val) {
+                if (err) { err.textContent = "Veuillez entrer le code / يرجى إدخال الرمز"; err.classList.remove('hidden'); }
+                if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Vérification...</span>`;
+
+            try {
+                // Utilise la même fonction RPC que le superviseur pour valider le code
+                const { data: token, error } = await supabaseClient.rpc('ouvrir_session_pin', { p_role: 'enseignant', p_pin: val });
+
+                if (error) throw error;
+
+                if (token) { 
+                    if (err) err.classList.add('hidden'); 
+                    debloquerEnseignant(token); 
+                } else { 
+                    if (err) { err.textContent = "Code incorrect / رمز خاطئ"; err.classList.remove('hidden'); }
+                    if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
+                    if (input) { input.value = ''; input.focus(); } 
+                }
+            } catch (e) {
+                console.error(e);
+                if (err) { err.textContent = "Erreur: " + (e.message || "Connexion impossible"); err.classList.remove('hidden'); }
+                if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Déverrouiller";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputPin = document.getElementById('input-pin');
+            if(inputPin) {
+                inputPin.addEventListener('keydown', e => { 
+                    if (e.key === 'Enter') { e.preventDefault(); validerPinDirect(); } 
+                });
+            }
+            
+            const btnLock = document.getElementById('btn-lock');
+            if(btnLock) {
+                btnLock.addEventListener('click', () => { 
+                    sessionStorage.removeItem('enseignant_token'); 
+                    location.reload(); 
+                });
+            }
+
+            // Vérification de la session
+            if (getSessionToken()) {
+                debloquerEnseignant(getSessionToken());
+            }
+        });
+
+        // ==========================================
+        // GESTION DES CLASSES ET ÉLÈVES
+        // ==========================================
         async function chargerListeClasses() {
             try {
                 const { data, error } = await supabaseClient
@@ -243,7 +354,6 @@
             }
         }
 
-        // 2. Charger les élèves de la classe sélectionnée
         async function chargerEleves() {
             const select = document.getElementById('select_classe');
             const conteneur = document.getElementById('liste-eleves');
@@ -278,7 +388,6 @@
             }
         }
 
-        // 3. Afficher les lignes d'élèves
         function renderEleves() {
             const conteneur = document.getElementById('liste-eleves');
             
@@ -331,7 +440,6 @@
             conteneur.innerHTML = html;
         }
 
-        // 4. Soumettre l'appel
         async function soumettreAppel() {
             if (!classeActuelleId || listeElevesActuels.length === 0) {
                 alert("Veuillez sélectionner une classe avec des élèves.");
@@ -353,7 +461,6 @@
             btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-xl"></i> <span>Enregistrement en cours...</span>`;
 
             try {
-                // Créer la séance
                 const { data: seanceData, error: seanceErr } = await supabaseClient
                     .from('seances')
                     .insert([{
@@ -361,7 +468,7 @@
                         date_cours: dateCours,
                         heure_debut: heureCours,
                         matiere: matiere,
-                        enseignant_id: null // Facultatif
+                        enseignant_id: null 
                     }])
                     .select('id')
                     .single();
@@ -369,7 +476,6 @@
                 if (seanceErr) throw seanceErr;
                 const seanceId = seanceData.id;
 
-                // Préparer les pointages
                 const pointages = listeElevesActuels.map(eleve => {
                     const statut = document.querySelector(`input[name="statut_${eleve.id}"]:checked`).value;
                     return {
@@ -381,11 +487,9 @@
                     };
                 });
 
-                // Insérer les pointages
                 const { error: ptgErr } = await supabaseClient.from('pointages').insert(pointages);
                 if (ptgErr) throw ptgErr;
 
-                // Succès
                 btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
                 btn.classList.add('bg-indigo-600');
                 btn.innerHTML = `<i class="fa-solid fa-check text-xl"></i> <span>Appel enregistré avec succès !</span>`;
@@ -396,7 +500,6 @@
                     btn.innerHTML = texteOriginal;
                     btn.disabled = false;
                     
-                    // Remettre tout le monde "Présent"
                     document.querySelectorAll('input[value="P"]').forEach(radio => radio.checked = true);
                 }, 3000);
 
@@ -408,7 +511,6 @@
             }
         }
 
-        // 5. Gestion Modal Ajout Rapide
         function ouvrirModalAjout() {
             if(!classeActuelleId) { alert("Choisissez d'abord un classe !"); return; }
             document.getElementById('modal-ajout-eleve').classList.remove('hidden');
@@ -438,15 +540,15 @@
                     classe_id: classeActuelleId,
                     nom_ar: nomAr,
                     prenom_ar: prenomAr,
-                    nom: nomAr,     // Fallback
-                    prenom: prenomAr, // Fallback
+                    nom: nomAr,     
+                    prenom: prenomAr, 
                     actif: true
                 }]);
 
                 if (error) throw error;
                 
                 fermerModalAjout();
-                chargerEleves(); // Recharger la liste
+                chargerEleves(); 
                 
             } catch (err) {
                 alert("Erreur ajout : " + err.message);
