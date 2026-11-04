@@ -27,7 +27,6 @@
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #0f172a; color: #f8fafc; }
         
-        /* Custom Radio Buttons for Attendance */
         .attendance-radio:checked + div.present-btn { background-color: #10b981; color: white; border-color: #10b981; }
         .attendance-radio:checked + div.absent-btn { background-color: #f43f5e; color: white; border-color: #f43f5e; }
         .attendance-radio:checked + div.retard-btn { background-color: #f59e0b; color: white; border-color: #f59e0b; }
@@ -35,10 +34,8 @@
         .attendance-btn { transition: all 0.2s ease; }
         .attendance-btn:active { transform: scale(0.95); }
         
-        /* Select styling to remove default arrow */
         select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
         
-        /* Animations */
         .loader { border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top: 3px solid #6366f1; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes shakeBox { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
@@ -54,10 +51,41 @@
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
             <h2 class="text-xl font-extrabold text-white">فضاء الأستاذ</h2>
-            <p class="text-xs text-slate-400 mt-1 mb-6">يرجى إدخال الرمز السري</p>
+            <p class="text-xs text-slate-400 mt-1 mb-6">يرجى اختيار المادة وإدخال الرمز السري</p>
+            
             <div class="space-y-4">
+                <!-- Dropdown Choix de la Matière -->
+                <div class="relative">
+                    <select id="select-matiere-login" class="w-full bg-[#0f172a] border-2 border-slate-600 rounded-xl px-4 py-3 text-white font-bold text-sm outline-none focus:border-indigo-500 cursor-pointer text-right appearance-none pr-10" dir="rtl">
+                        <option value="">-- إختر المادة (Choisir la matière) --</option>
+                        <option value="رياضيات">Mathématiques / رياضيات</option>
+                        <option value="علوم الطبيعة">Sciences Naturelles / علوم الطبيعة</option>
+                        <option value="علوم فيزيائية">Sciences Physiques / علوم فيزيائية</option>
+                        <option value="إعلام آلي">Informatique / إعلام آلي</option>
+                        <option value="هندسة مدنية">Génie Civil / هندسة مدنية</option>
+                        <option value="هندسة كهربائية">Génie Électrique / هندسة كهربائية</option>
+                        <option value="هندسة ميكانيكية">Génie Mécanique / هندسة ميكانيكية</option>
+                        <option value="هندسة الطرائق">Génie des Procédés / هندسة الطرائق</option>
+                        <option value="تسيير واقتصاد">Gestion & Économie / تسيير واقتصاد</option>
+                        <option value="قانون">Droit / قانون</option>
+                        <option value="لغة عربية">Langue Arabe / لغة عربية</option>
+                        <option value="فرنسية">Langue Française / فرنسية</option>
+                        <option value="إنجليزية">Langue Anglaise / إنجليزية</option>
+                        <option value="ألمانية">Langue Allemande / ألمانية</option>
+                        <option value="إسبانية">Langue Espagnole / إسبانية</option>
+                        <option value="أمازيغية">Langue Amazigh / أمازيغية</option>
+                        <option value="فلسفة">Philosophie / فلسفة</option>
+                        <option value="تاريخ وجغرافيا">Histoire-Géo / تاريخ وجغرافيا</option>
+                        <option value="علوم إسلامية">Sciences Islamiques / علوم إسلامية</option>
+                        <option value="تربية بدنية">EPS (Sport) / تربية بدنية</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+
                 <div>
-                    <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-[#0f172a] border-2 border-slate-600 rounded-2xl outline-none text-white focus:border-indigo-500 transition-colors" />
+                    <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-[#0f172a] border-2 border-slate-600 rounded-2xl outline-none text-white focus:border-indigo-500 transition-colors" />
                     <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p>
                 </div>
                 <button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 transition-colors">
@@ -76,7 +104,7 @@
                 </div>
                 <div>
                     <h1 class="text-sm font-black text-white">ثانوية الشهيد شعبان اعمر</h1>
-                    <p class="text-[10px] text-slate-400">ورقة الغياب الرقمية</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5" id="prof-name-display">ورقة الغياب الرقمية</p>
                 </div>
             </div>
             <div class="flex gap-2">
@@ -135,7 +163,7 @@
                     <label class="block text-[11px] font-bold text-slate-400 mb-1 flex items-center gap-1">
                         <i class="fa-solid fa-lock text-rose-500 text-[9px]"></i> المادة / Matière
                     </label>
-                    <input type="text" id="matiere_cours" value="الرياضيات" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white font-bold text-sm outline-none focus:border-indigo-500 text-right" />
+                    <input type="text" id="matiere_cours" readonly class="w-full bg-[#0f172a] border border-slate-700 text-emerald-400 rounded-xl px-4 py-3 font-bold text-sm outline-none cursor-not-allowed text-right" placeholder="جاري التحميل..." />
                 </div>
 
                 <!-- Classe -->
@@ -236,10 +264,8 @@
         let classeActuelleId = null;
         let __appInit = false;
 
-        // Initialisation de la date du jour
         document.getElementById('date_cours').value = new Date().toISOString().split('T')[0];
 
-        // Initialiser Supabase pour le login
         try {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         } catch (e) {
@@ -254,11 +280,28 @@
             return sessionStorage.getItem('enseignant_token');
         }
 
-        function debloquerEnseignant(token) {
+        function debloquerEnseignant(token, matiere, nom) {
             sessionStorage.setItem('enseignant_token', token);
+            if (matiere) sessionStorage.setItem('enseignant_matiere', matiere);
+            if (nom) sessionStorage.setItem('enseignant_nom', nom);
+            
             const pinScreen = document.getElementById('pin-screen'); 
             if (pinScreen) pinScreen.remove();
             
+            // Verrouiller la matière
+            const savedMatiere = sessionStorage.getItem('enseignant_matiere');
+            const matiereInput = document.getElementById('matiere_cours');
+            if (savedMatiere && matiereInput) {
+                matiereInput.value = savedMatiere;
+            }
+
+            // Afficher le nom de l'enseignant (département)
+            const savedNom = sessionStorage.getItem('enseignant_nom');
+            const profNameDisplay = document.getElementById('prof-name-display');
+            if(savedNom && profNameDisplay) {
+                profNameDisplay.innerHTML = `<i class="fa-solid fa-chalkboard-user text-indigo-400 mr-1 ml-1"></i> ${savedNom}`;
+            }
+
             if (__appInit) return;
             __appInit = true;
             
@@ -267,13 +310,22 @@
 
         async function validerPinDirect() {
             const input = document.getElementById('input-pin');
+            const selectMatiere = document.getElementById('select-matiere-login');
             const err = document.getElementById('pin-error');
             const card = document.getElementById('pin-card');
             const btn = document.getElementById('btn-valider-pin');
             
             let val = input ? input.value.trim() : '';
+            let matiereSelect = selectMatiere ? selectMatiere.value : '';
+
             const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
             val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
+
+            if (!matiereSelect) {
+                if (err) { err.textContent = "Veuillez choisir une matière / يرجى اختيار المادة"; err.classList.remove('hidden'); }
+                if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
+                return;
+            }
 
             if (!val) {
                 if (err) { err.textContent = "Veuillez entrer le code / يرجى إدخال الرمز"; err.classList.remove('hidden'); }
@@ -285,22 +337,31 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Vérification...</span>`;
 
             try {
-                // Utilise la même fonction RPC que le superviseur pour valider le code
-                const { data: token, error } = await supabaseClient.rpc('ouvrir_session_pin', { p_role: 'enseignant', p_pin: val });
+                // Recherche du professeur (ou des professeurs de cette matière)
+                const { data: profs, error } = await supabaseClient
+                    .from('enseignants')
+                    .select('id, nom_ar, prenom_ar, nom, prenom, matiere')
+                    .eq('pin', val)
+                    .ilike('matiere', `%${matiereSelect}%`);
 
                 if (error) throw error;
 
-                if (token) { 
-                    if (err) err.classList.add('hidden'); 
-                    debloquerEnseignant(token); 
-                } else { 
-                    if (err) { err.textContent = "Code incorrect / رمز خاطئ"; err.classList.remove('hidden'); }
+                if (profs && profs.length > 0) {
+                    const prof = profs[0];
+                    const nomAffichage = `أساتذة ${matiereSelect}`; 
+                    
+                    if (err) err.classList.add('hidden');
+                    
+                    const tokenSession = 'mat_' + prof.id; 
+                    debloquerEnseignant(tokenSession, matiereSelect, nomAffichage);
+                } else {
+                    if (err) { err.textContent = "Code ou matière incorrect / الرمز أو المادة خطأ"; err.classList.remove('hidden'); }
                     if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
                     if (input) { input.value = ''; input.focus(); } 
                 }
             } catch (e) {
                 console.error(e);
-                if (err) { err.textContent = "Erreur: " + (e.message || "Connexion impossible"); err.classList.remove('hidden'); }
+                if (err) { err.textContent = "Erreur de connexion"; err.classList.remove('hidden'); }
                 if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
             } finally {
                 btn.disabled = false;
@@ -319,14 +380,16 @@
             const btnLock = document.getElementById('btn-lock');
             if(btnLock) {
                 btnLock.addEventListener('click', () => { 
-                    sessionStorage.removeItem('enseignant_token'); 
+                    sessionStorage.removeItem('enseignant_token');
+                    sessionStorage.removeItem('enseignant_matiere');
+                    sessionStorage.removeItem('enseignant_nom');
                     location.reload(); 
                 });
             }
 
             // Vérification de la session
             if (getSessionToken()) {
-                debloquerEnseignant(getSessionToken());
+                debloquerEnseignant(getSessionToken(), sessionStorage.getItem('enseignant_matiere'), sessionStorage.getItem('enseignant_nom'));
             }
         });
 
@@ -449,6 +512,7 @@
             const dateCours = document.getElementById('date_cours').value;
             const heureCours = document.getElementById('heure_cours').value;
             const matiere = document.getElementById('matiere_cours').value.trim();
+            const profToken = getSessionToken();
 
             if (!dateCours || !heureCours || !matiere) {
                 alert("Veuillez remplir la date, l'heure et la matière.");
@@ -461,6 +525,11 @@
             btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-xl"></i> <span>Enregistrement en cours...</span>`;
 
             try {
+                let profId = null;
+                if (profToken && profToken.startsWith('mat_')) {
+                    profId = parseInt(profToken.split('_')[1]);
+                }
+
                 const { data: seanceData, error: seanceErr } = await supabaseClient
                     .from('seances')
                     .insert([{
@@ -468,7 +537,7 @@
                         date_cours: dateCours,
                         heure_debut: heureCours,
                         matiere: matiere,
-                        enseignant_id: null 
+                        enseignant_id: profId 
                     }])
                     .select('id')
                     .single();
