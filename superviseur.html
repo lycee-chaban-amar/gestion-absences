@@ -53,6 +53,10 @@
       body.print-non-appeles #zone-impression-non-appeles, body.print-non-appeles #zone-impression-non-appeles * { visibility: visible !important; }
       body.print-non-appeles #zone-impression-non-appeles { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
 
+      /* NOUVEAU : Impression des détails des appels */
+      body.print-details-appels #zone-impression-details-appels, body.print-details-appels #zone-impression-details-appels * { visibility: visible !important; }
+      body.print-details-appels #zone-impression-details-appels { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; display: block !important; background: white !important; color: black !important; }
+
       @page { size: A4 portrait; margin: 10mm; }
       .page-break { page-break-before: always; }
     }
@@ -160,7 +164,9 @@
           <tbody id="details-appels-body" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
         </table>
       </div>
-      <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 text-right">
+      <!-- NOUVEAU BOUTON IMPRIMER ICI -->
+      <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 flex justify-between items-center">
+        <button type="button" onclick="imprimerDetailsAppels()" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-solid fa-print text-base"></i> Imprimer</button>
         <button type="button" onclick="fermerModalDetailsAppels()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
       </div>
     </div>
@@ -253,7 +259,7 @@
       <div id="non-appeles-content" class="overflow-y-auto flex-1 text-sm mb-4"></div>
       <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 flex justify-between items-center gap-2">
         <div class="flex gap-2">
-          <!-- NOUVEAU BOUTON IMPRIMER -->
+          <!-- BOUTON IMPRIMER POUR NON APPELÉS -->
           <button type="button" onclick="imprimerRapportNonAppeles()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-solid fa-print text-base"></i> Imprimer</button>
           <button type="button" onclick="partagerRappelWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-brands fa-whatsapp text-base"></i> WhatsApp</button>
         </div>
@@ -393,8 +399,11 @@
   <div id="zone-impression-billet" class="hidden p-8 font-serif bg-white border-2 border-dashed border-black max-w-lg mx-auto mt-10"><div class="text-center border-b pb-3 mb-4"><h3 class="font-bold font-amiri text-xl dyn-etab-ar">ثانوية الشهيد شعبان اعمر</h3><h2 class="font-black uppercase mt-2 text-lg">Billet d'Entrée</h2></div><div id="billet-details" class="space-y-3 text-sm"></div><div class="mt-6 pt-4 border-t flex justify-between text-xs"><p>Édité le : <span id="billet-date-emission"></span></p><p class="font-bold">Visa Administration</p></div></div>
   <div id="zone-impression-convocation" class="hidden p-8 font-serif bg-white border-2 border-black max-w-xl mx-auto rounded-xl mt-10"><div class="text-center border-b border-black pb-4 mb-5"><p class="text-xs font-bold">الجمهورية الجزائرية الديمقراطية الشعبية</p><p class="text-lg font-bold font-amiri dyn-etab-ar">ثانوية الشهيد شعبان اعمر</p><h2 class="text-xl font-black mt-4 underline decoration-double">استدعاء ولي أمر تلميذ</h2><h3 class="text-base font-bold mt-1 text-rose-700">(إشعار بتكرار الغياب لـ 3 أيام متتالية)</h3></div><div id="convocation-details" class="space-y-4 text-sm text-justify" dir="rtl"></div><div class="mt-10 pt-4 border-t flex justify-between text-xs"><p><span class="dyn-commune-ar">أوقاس</span> في : <span id="convoc-date-emission" class="font-bold"></span></p><p class="font-bold text-center">ختم وإمضاء مستشار التربية</p></div></div>
   
-  <!-- NOUVELLE ZONE D'IMPRESSION POUR LE RAPPORT DES CLASSES NON APPELÉES -->
+  <!-- ZONE D'IMPRESSION POUR LE RAPPORT DES CLASSES NON APPELÉES -->
   <div id="zone-impression-non-appeles" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
+
+  <!-- ZONE D'IMPRESSION POUR LES DÉTAILS DES APPELS -->
+  <div id="zone-impression-details-appels" class="hidden p-6 bg-white text-black font-sans" dir="rtl"></div>
 
   <script>
     // Clés Supabase figées dans le code
@@ -408,7 +417,8 @@
     let totalElevesEtablissement = 0;
     let __appInit = false;
     let chartRep = null, chartCls = null;
-    let classesNonAppeleesData = []; // Stockage des données pour l'impression
+    let classesNonAppeleesData = []; 
+    let detailsAppelsData = []; // Stockage des données pour l'impression des détails d'appels
 
     let etabConfig = {
       nom_ar: 'ثانوية الشهيد شعبان اعمر',
@@ -435,7 +445,6 @@
     const checkAllMaster = document.getElementById('checkbox-select-all');
     const btnExportExcel = document.getElementById('btn-export-excel');
 
-    // Date locale exacte (corrigée du décalage UTC)
     function obtenirDateLocaleISO() {
       const now = new Date();
       const tzOffset = now.getTimezoneOffset() * 60000;
@@ -634,7 +643,6 @@
 
         currentKpis = kpiData || { total_seances: 0, total_absents: 0, total_retards: 0, total_alertes: 0, taux_presence: 0 };
         
-        // --- CORRECTION DU CALCUL DES KPIs ET DU TAUX DE PRÉSENCE (Basé sur les élèves uniques) ---
         let pCount = 0, aCount = 0, rCount = 0;
         const statutMap = new Map();
         
@@ -656,7 +664,6 @@
         currentKpis.total_absents = aCount;
         currentKpis.total_retards = rCount;
         currentKpis.taux_presence = (pCount + aCount + rCount) > 0 ? Math.round((pCount / (pCount + aCount + rCount)) * 100) : 0;
-        // -----------------------------------------------------------------------------------------
 
         document.getElementById('kpi-seances').textContent = currentKpis.total_seances || 0;
         document.getElementById('kpi-absents').textContent = currentKpis.total_absents || 0;
@@ -926,7 +933,7 @@
           appelesParClasse[pt.classe_id].add(pt.eleve_id);
         });
 
-        classesNonAppeleesData = []; // Reset global data
+        classesNonAppeleesData = []; 
         classesCache.forEach(cls => {
           const total = totalParClasse[cls.id] || 0;
           const appeles = appelesParClasse[cls.id] ? appelesParClasse[cls.id].size : 0;
@@ -974,7 +981,7 @@
       }
     };
     
-    // NOUVELLE FONCTION D'IMPRESSION DU RAPPORT POUR LE DIRECTEUR
+    // FONCTION D'IMPRESSION DU RAPPORT DES CLASSES NON APPELÉES POUR LE DIRECTEUR
     window.imprimerRapportNonAppeles = function() {
       if (!classesNonAppeleesData || classesNonAppeleesData.length === 0) {
         alert("Aucune classe non appelée à imprimer.");
@@ -1112,6 +1119,8 @@
 
         if (error) throw error;
         
+        detailsAppelsData = data || []; // Sauvegarde des données pour l'impression
+
         if (!data || data.length === 0) { 
           tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500 font-bold">Aucun appel enregistré pour cette date.</td></tr>`; 
           return; 
@@ -1146,6 +1155,72 @@
         tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-rose-500 font-bold">Erreur : ${escapeHtml(err.message)}</td></tr>`; 
       }
     };
+    
+    // NOUVELLE FONCTION D'IMPRESSION DES DÉTAILS DES APPELS POUR LE DIRECTEUR
+    window.imprimerDetailsAppels = function() {
+      if (!detailsAppelsData || detailsAppelsData.length === 0) {
+        alert("Aucun appel à imprimer pour cette date.");
+        return;
+      }
+      
+      const dateStr = filtreDate ? filtreDate.value : obtenirDateLocaleISO();
+      const dateObj = new Date(dateStr);
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateStrAr = isNaN(dateObj.getTime()) ? dateStr : dateObj.toLocaleDateString('ar-DZ', options);
+
+      let rows = '';
+      detailsAppelsData.forEach((s, i) => {
+        const h = (s.heure_debut || '').substring(0, 5);
+        const c = s.classes ? s.classes.nom_court : 'N/A';
+        const salle = (s.classes && s.classes.salle) ? s.classes.salle : '---';
+        
+        rows += `<tr>
+          <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
+          <td class="border border-black p-2 font-bold" dir="rtl">${escapeHtml(s.matiere)}</td>
+          <td class="border border-black p-2 text-center font-bold" dir="ltr">${h}</td>
+          <td class="border border-black p-2 text-center font-bold" dir="ltr">${escapeHtml(c)}</td>
+          <td class="border border-black p-2 text-center font-black">${escapeHtml(salle)}</td>
+        </tr>`;
+      });
+
+      const html = `
+        <div class="text-center mb-6">
+          <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
+          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية - ${escapeHtml(etabConfig.wilaya_ar)}</p>
+          <p class="font-bold text-xl mt-1 font-amiri">${escapeHtml(etabConfig.nom_ar)}</p>
+          <div class="mt-3 border-2 border-black inline-block px-8 py-1"><h2 class="font-black text-lg">بيان الحصص المنجزة (تفاصيل الغيابات)</h2></div>
+          <p class="font-bold text-sm mt-3">تاريخ اليوم : ${dateStrAr}</p>
+        </div>
+        
+        <table class="w-full border-collapse border border-black print-table mb-8">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="border border-black p-2 w-12">الرقم</th>
+              <th class="border border-black p-2">المادة</th>
+              <th class="border border-black p-2">التوقيت</th>
+              <th class="border border-black p-2">القسم</th>
+              <th class="border border-black p-2">الحجرة</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        
+        <div class="flex justify-between items-end mt-16 pt-8 px-8">
+          <div class="text-center">
+            <p class="font-bold text-sm underline mb-12">إمضاء مستشار التربية</p>
+          </div>
+          <div class="text-center">
+            <p class="font-bold text-sm underline mb-12">إمضاء مدير الثانوية</p>
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('zone-impression-details-appels').innerHTML = html;
+      document.body.classList.add('print-details-appels');
+      window.print();
+      setTimeout(() => document.body.classList.remove('print-details-appels'), 1000);
+    };
+
     window.fermerModalDetailsAppels = function() { document.getElementById('modal-details-appels').classList.add('hidden'); document.getElementById('modal-details-appels').classList.remove('flex'); };
 
     // ACTIONS SÉCURISÉES VIA LES PROCÉDURES RPC
@@ -1508,160 +1583,4 @@
         <div class="flex justify-between items-center gap-2 mb-6 w-full" dir="rtl">
           <div class="print-kpi-box text-center w-1/4">الحصص المنجزة : ${currentKpis.total_seances || 0}</div>
           <div class="print-kpi-box text-center w-1/4">
-            التلاميذ الغائبون : <span class="font-black text-rose-700">${totalElevesAbsents}</span>
-            <span class="text-[10px] text-slate-500 block">(${totalHeuresAbsence} حصة)</span>
-          </div>
-          <div class="print-kpi-box text-center w-1/4">التأخرات : ${totalElevesRetards}</div>
-          <div class="print-kpi-box text-center w-1/4">نسبة الحضور : ${currentKpis.taux_presence || 0}%</div>
-        </div>
-        <table class="border-collapse border border-black print-table mb-8">
-          <thead><tr class="bg-gray-100"><th class="w-10">الرقم</th><th>اللقب والاسم</th><th>القسم</th><th>المادة والتوقيت</th><th>الحالة</th><th>التبرير / التأشيرة</th></tr></thead>
-          <tbody class="divide-y divide-black">${incHtml}</tbody>
-        </table>
-      `;
-
-      const classes1AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('1AS'));
-      const classes2AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('2AS'));
-      const classes3AS = (classesCache || []).filter(c => (c.nom_court || '').startsWith('3AS'));
-      
-      const maxColonnes = Math.max(9, classes1AS.length, classes2AS.length, classes3AS.length);
-
-      const getAbs = (classeNom) => {
-        return (vuePointages || []).filter(p => {
-          if (p.classe_nom !== classeNom) return false;
-          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
-          return p.statut === 'A' || isJustifiedAbsence;
-        }).length;
-      };
-
-      const genererLignesNiveau = (titre, classesNiveau) => {
-        const vides = Math.max(0, maxColonnes - classesNiveau.length);
-        const tdVides = Array(vides).fill('<td></td>').join('');
-        const totalAbsNiveau = classesNiveau.reduce((acc, c) => acc + getAbs(c.nom_court), 0);
-        return `
-          <tr>
-            <td rowspan="2" class="font-bold bg-gray-50">${titre}</td>
-            <td class="font-bold">الأفواج</td>
-            ${classesNiveau.map(c => `<td class="text-xs font-bold">${escapeHtml(c.nom_court)}</td>`).join('')}
-            ${tdVides}
-            <td rowspan="2" class="font-black text-sm">${totalAbsNiveau}</td>
-          </tr>
-          <tr>
-            <td class="font-bold">عدد الغياب</td>
-            ${classesNiveau.map(c => `<td class="font-bold">${getAbs(c.nom_court)}</td>`).join('')}
-            ${tdVides}
-          </tr>
-        `;
-      };
-
-      const rowsNiveaux = genererLignesNiveau('السنة الأولى ثانوي', classes1AS) +
-                          genererLignesNiveau('السنة الثانية ثانوي', classes2AS) +
-                          genererLignesNiveau('السنة الثالثة ثانوي', classes3AS);
-
-      const page2 = `
-        <div class="page-break"></div>
-        <div class="text-center mb-4 relative">
-          <p class="font-bold text-sm">الجمهورية الجزائرية الديمقراطية الشعبية</p>
-          <p class="font-bold text-xs mt-1">وزارة التربية الوطنية</p>
-          <div class="flex justify-between items-end mt-2">
-             <p class="font-bold text-xs w-1/3 text-right">${escapeHtml(etabConfig.wilaya_ar)}</p>
-             <div class="w-1/3 text-center">
-                <h2 class="font-black text-lg">التقرير اليومي لمستشار التربية</h2>
-                <p class="font-bold text-xs mt-2">التاريخ : ${dateStrAr}</p>
-             </div>
-             <div class="w-1/3 text-left">
-                <p class="font-bold text-lg font-amiri">${escapeHtml(etabConfig.nom_ar)}</p>
-             </div>
-          </div>
-        </div>
-
-        <div class="flex justify-between items-start gap-2 mb-6 w-full" dir="rtl">
-          <div class="w-[68%] flex-shrink-0">
-            <table class="print-table">
-              <thead>
-                <tr class="bg-gray-100">
-                  <th class="w-[15%]">السنة</th>
-                  <th class="w-[15%]">الأفواج</th>
-                  <th colspan="${maxColonnes}">الغيابات</th>
-                  <th class="w-[10%]">المجموع</th>
-                </tr>
-              </thead>
-              <tbody>${rowsNiveaux}</tbody>
-            </table>
-          </div>
-
-          <div class="w-[30%] flex-shrink-0 flex flex-col gap-4">
-            <table class="print-table">
-              <thead><tr class="bg-gray-100"><th colspan="2">غيابات وتأخرات المساعدين التربويين</th></tr></thead>
-              <tbody>
-                <tr><td class="font-bold w-1/2">الفترة الصباحية</td><td></td></tr>
-                <tr><td class="font-bold w-1/2">الفترة المسائية</td><td></td></tr>
-              </tbody>
-            </table>
-            
-            <table class="print-table">
-              <thead><tr class="bg-gray-100"><th colspan="4">الخلاصة</th></tr><tr class="bg-gray-100"><th>البيان</th><th>تلميذ</th><th>أساتذة</th><th>مساعدون</th></tr></thead>
-              <tbody>
-                <tr><td class="font-bold">الحاضرون</td><td></td><td></td><td></td></tr>
-                <tr><td class="font-bold">الغائبون</td><td></td><td></td><td></td></tr>
-                <tr><td class="font-bold">المجموع</td><td></td><td></td><td></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        
-        <div class="flex justify-between items-end mt-8 pt-4">
-          <p class="font-bold text-sm w-2/3 text-right">ملاحظات مختلفة: ..................................................................................</p>
-          <p class="font-bold text-sm w-1/3 text-left">${escapeHtml(etabConfig.commune_ar)} في : ${new Date().toLocaleDateString('ar-DZ')}</p>
-        </div>
-
-        <div class="grid grid-cols-3 gap-4 text-center text-sm font-bold mt-12 pt-4 px-4 border-t border-dashed border-black">
-          <div><p class="underline">مستشار(ة) التربية</p><div class="h-20"></div></div>
-          <div><p class="underline">ناظر الدراسات</p><div class="h-20"></div></div>
-          <div><p class="underline">مدير الثانوية</p><div class="h-20"></div></div>
-        </div>
-      `;
-
-      return page1 + page2;
-    }
-    
-    window.ouvrirApercuRapportJournalier = function() { 
-      const h = construireHtmlRapportComplet();
-      document.getElementById('conteneur-document-rapport').innerHTML = h; 
-      document.getElementById('zone-impression-rapport').innerHTML = h; 
-      document.getElementById('modal-apercu-rapport').classList.remove('hidden'); document.getElementById('modal-apercu-rapport').classList.add('flex'); 
-    };
-    
-    window.fermerModalApercuRapport = function() { document.getElementById('modal-apercu-rapport').classList.add('hidden'); document.getElementById('modal-apercu-rapport').classList.remove('flex'); };
-    window.lancerImpressionRapport = function() { document.body.classList.add('print-rapport'); window.print(); setTimeout(() => document.body.classList.remove('print-rapport'), 1000); };
-
-    if (btnExportExcel) {
-      btnExportExcel.addEventListener('click', () => {
-        let sources = obtenirDonneesFiltrees();
-        if (pointagesSelectionnes.size > 0) sources = sources.filter(p => pointagesSelectionnes.has(String(p.pointage_id || p.id)));
-        if(sources.length === 0) return;
-        const d = sources.map((p, i) => {
-          const isJustifiedAbsence = p.statut === 'P' && p.justifie && p.motif_justification && p.motif_justification !== 'Régularisé' && p.motif_justification !== 'تسوية';
-          const isAbsent = p.statut === 'A' || isJustifiedAbsence;
-          return { 
-            "N°": i + 1, "Date": p.date_cours, "Division": p.classe_nom, "Nom": p.nom_ar || p.nom, "Prénom": p.prenom_ar || p.prenom, "Matière": p.matiere, 
-            "Statut": isAbsent ? 'Absent' : (p.statut === 'R' ? 'Retard' : 'Présent'), 
-            "Justifié": p.justifie ? "OUI" : "NON", "Motif": p.motif_justification || '' 
-          };
-        });
-        const ws = XLSX.utils.json_to_sheet(d), wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Registre"); XLSX.writeFile(wb, `Absences_${filtreDate.value}.xlsx`);
-      });
-    }
-
-    if (filtreDate) filtreDate.addEventListener('change', fetchDonnees);
-    if (filtreClasse) filtreClasse.addEventListener('change', renderTableau);
-    if (filtreStatut) filtreStatut.addEventListener('change', renderTableau);
-    if (btnRefresh) btnRefresh.addEventListener('click', fetchDonnees);
-
-    if (sessionStorage.getItem('superviseur_token')) {
-      debloquerSuperviseur(sessionStorage.getItem('superviseur_token'));
-    }
-  </script>
-</body>
-</html>
+            التلاميذ الغائبون : <span class="font-black text-rose-700">${totalElevesAbsents}</span
