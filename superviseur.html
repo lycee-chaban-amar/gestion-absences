@@ -162,7 +162,6 @@
           <tbody id="details-appels-body" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
         </table>
       </div>
-      <!-- NOUVEAU BOUTON IMPRIMER ICI -->
       <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 flex justify-between items-center">
         <button type="button" onclick="imprimerDetailsAppels()" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-solid fa-print text-base"></i> Imprimer</button>
         <button type="button" onclick="fermerModalDetailsAppels()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
@@ -247,7 +246,7 @@
     </div>
   </div>
 
-  <!-- MODAL CLASSES NON APPELÉES AVEC NUMÉRO DE SALLE -->
+  <!-- MODAL CLASSES NON APPELÉES -->
   <div id="modal-non-appeles" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-700 animate-table-row flex flex-col max-h-[85vh]">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4 shrink-0">
@@ -255,13 +254,12 @@
         <button type="button" onclick="fermerModalNonAppeles()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
       <div id="non-appeles-content" class="overflow-y-auto flex-1 text-sm mb-4"></div>
-      <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 flex justify-between items-center gap-2">
+      <div class="pt-4 border-t border-slate-100 dark:border-slate-700 mt-2 shrink-0 flex justify-between items-center gap-2 flex-wrap">
         <div class="flex gap-2">
-          <!-- BOUTON IMPRIMER POUR NON APPELÉS -->
-          <button type="button" onclick="imprimerRapportNonAppeles()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-solid fa-print text-base"></i> Imprimer</button>
-          <button type="button" onclick="partagerRappelWhatsApp()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-brands fa-whatsapp text-base"></i> WhatsApp</button>
+          <button type="button" onclick="imprimerRapportNonAppeles()" class="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-solid fa-print text-base"></i> Imprimer</button>
+          <button type="button" onclick="partagerRappelWhatsApp()" class="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md flex items-center gap-1.5 transition"><i class="fa-brands fa-whatsapp text-base"></i> WhatsApp</button>
         </div>
-        <button type="button" onclick="fermerModalNonAppeles()" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
+        <button type="button" onclick="fermerModalNonAppeles()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300">Fermer</button>
       </div>
     </div>
   </div>
@@ -926,6 +924,7 @@
       });
     }
 
+    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES AVEC VUE SQL
     window.ouvrirModalNonAppeles = async function() {
       const modal = document.getElementById('modal-non-appeles');
       const content = document.getElementById('non-appeles-content');
@@ -934,6 +933,26 @@
       modal.classList.add('flex');
 
       try {
+        const dateCible = filtreDate.value || obtenirDateLocaleISO();
+        const dateObj = new Date(dateCible);
+        const joursSemaine = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        const nomJour = joursSemaine[dateObj.getDay()];
+
+        // Récupération des cours prévus ce jour-là
+        const { data: planningJour } = await supabaseClient
+          .from('v_planning_cours')
+          .select('*')
+          .eq('jour_semaine', nomJour);
+
+        // Map classe_id -> Enseignant & Matière
+        const profParClasse = {};
+        (planningJour || []).forEach(pl => {
+          if (!profParClasse[pl.classe_id]) {
+            profParClasse[pl.classe_id] = `${pl.enseignant_nom} (${pl.matiere})`;
+          }
+        });
+
+        // Décompte des élèves actifs et appelés
         const { data: eleves } = await supabaseClient.from('eleves').select('classe_id').eq('actif', true);
         const totalParClasse = {};
         (eleves || []).forEach(e => { totalParClasse[e.classe_id] = (totalParClasse[e.classe_id] || 0) + 1; });
@@ -952,6 +971,7 @@
             classesNonAppeleesData.push({ 
               nom: cls.nom_court, 
               salle: cls.salle || '', 
+              prof: profParClasse[cls.id] || 'Non assigné',
               manquants: total - appeles, 
               total: total 
             });
@@ -977,7 +997,7 @@
                 ${salleBadge}
                 <div>
                   <div class="font-black text-slate-800 dark:text-white text-xs">${escapeHtml(c.nom)}</div>
-                  <div class="text-[11px] text-slate-500 mt-0.5">Total : ${c.total} élèves</div>
+                  <div class="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5"><i class="fa-solid fa-user-tie text-[10px] mr-1"></i>${escapeHtml(c.prof)}</div>
                 </div>
               </div>
               <span class="bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 px-2.5 py-1 rounded-xl text-xs font-black shrink-0">
@@ -1006,10 +1026,12 @@
 
       let rows = '';
       classesNonAppeleesData.forEach((c, i) => {
+        const nomSalle = c.salle ? c.salle.replace('الحجرة', '').trim() : '---';
         rows += `<tr>
           <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
           <td class="border border-black p-2 font-bold" dir="ltr">${escapeHtml(c.nom)}</td>
-          <td class="border border-black p-2 text-center font-bold">${escapeHtml(c.salle || '---')}</td>
+          <td class="border border-black p-2 text-center font-bold">${escapeHtml(nomSalle)}</td>
+          <td class="border border-black p-2 text-center font-bold text-[11px]">${escapeHtml(c.prof)}</td>
           <td class="border border-black p-2 text-center">${c.total}</td>
           <td class="border border-black p-2 text-center font-black text-rose-700 text-lg">${c.manquants}</td>
         </tr>`;
@@ -1038,6 +1060,7 @@
               <th class="border border-black p-2 w-12">الرقم</th>
               <th class="border border-black p-2">القسم</th>
               <th class="border border-black p-2">الحجرة</th>
+              <th class="border border-black p-2">الأستاذ(ة)</th>
               <th class="border border-black p-2">إجمالي التلاميذ</th>
               <th class="border border-black p-2">التلاميذ غير الممسوكين</th>
             </tr>
@@ -1068,8 +1091,12 @@
       document.querySelectorAll('#non-appeles-content li').forEach(li => {
         const nom = li.querySelector('.font-black.text-xs')?.textContent.trim();
         const salle = li.querySelector('.badge-salle')?.textContent.trim();
+        const prof = li.querySelector('.text-indigo-600')?.textContent.trim() || '';
+        
         if (nom) {
-          lignesManquantes.push(salle ? `• *${nom}* (${salle})` : `• *${nom}*`);
+          let str = salle ? `• *${nom}* (${salle})` : `• *${nom}*`;
+          if(prof) str += ` - ${prof}`;
+          lignesManquantes.push(str);
         }
       });
 
