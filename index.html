@@ -51,14 +51,43 @@
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
             <h2 class="text-xl font-extrabold text-white">فضاء الأستاذ</h2>
-            <p class="text-xs text-slate-400 mt-1 mb-6">يرجى إدخال الرمز السري الخاص بالمادة</p>
+            <p class="text-xs text-slate-400 mt-1 mb-6">يرجى اختيار المادة وإدخال الرمز السري</p>
             
             <div class="space-y-4">
+                <!-- LISTE DES MATIERES -->
                 <div>
-                    <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" autofocus class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-[#0f172a] border-2 border-slate-600 rounded-2xl outline-none text-white focus:border-indigo-500 transition-colors" />
+                    <select id="select-matiere" class="w-full bg-[#0f172a] border-2 border-slate-600 rounded-xl px-4 py-3 text-sm font-bold outline-none text-white focus:border-indigo-500 transition-colors appearance-none cursor-pointer text-right pr-10" dir="rtl">
+                        <option value="">-- إختر المادة / Choisir la matière --</option>
+                        <option value="الرياضيات">Mathématiques / رياضيات</option>
+                        <option value="علوم الطبيعة">Sciences Naturelles / علوم الطبيعة</option>
+                        <option value="علوم فيزيائية">Sciences Physiques / علوم فيزيائية</option>
+                        <option value="إعلام آلي">Informatique / إعلام آلي</option>
+                        <option value="هندسة مدنية">Génie Civil / هندسة مدنية</option>
+                        <option value="هندسة كهربائية">Génie Électrique / هندسة كهربائية</option>
+                        <option value="هندسة ميكانيكية">Génie Mécanique / هندسة ميكانيكية</option>
+                        <option value="هندسة الطرائق">Génie des Procédés / هندسة الطرائق</option>
+                        <option value="تسيير واقتصاد">Gestion & Économie / تسيير واقتصاد</option>
+                        <option value="قانون">Droit / قانون</option>
+                        <option value="لغة عربية">Langue Arabe / لغة عربية</option>
+                        <option value="فرنسية">Langue Française / فرنسية</option>
+                        <option value="إنجليزية">Langue Anglaise / إنجليزية</option>
+                        <option value="ألمانية">Langue Allemande / ألمانية</option>
+                        <option value="إسبانية">Langue Espagnole / إسبانية</option>
+                        <option value="أمازيغية">Langue Amazighe / أمازيغية</option>
+                        <option value="فلسفة">Philosophie / فلسفة</option>
+                        <option value="تاريخ وجغرافيا">Histoire-Géographie / تاريخ وجغرافيا</option>
+                        <option value="علوم إسلامية">Sciences Islamiques / علوم إسلامية</option>
+                        <option value="تربية بدنية">EPS (Sport) / تربية بدنية</option>
+                    </select>
+                </div>
+
+                <!-- INPUT PIN -->
+                <div>
+                    <input type="password" id="input-pin" maxlength="4" placeholder="••••" autocomplete="off" inputmode="numeric" class="w-full text-center text-3xl tracking-[0.5em] font-mono py-3 px-4 bg-[#0f172a] border-2 border-slate-600 rounded-2xl outline-none text-white focus:border-indigo-500 transition-colors" />
                     <p id="pin-error" class="hidden text-xs text-rose-500 font-bold mt-2">Code incorrect</p>
                 </div>
-                <button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 transition-colors">
+                
+                <button type="button" id="btn-valider-pin" onclick="validerPinDirect()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-2xl shadow-lg cursor-pointer flex items-center justify-center gap-2 transition-colors mt-2">
                     Déverrouiller
                 </button>
             </div>
@@ -243,9 +272,6 @@
             alert("Erreur de connexion à la base de données.");
         }
 
-        // ==========================================
-        // GESTION DU CODE PIN ET DE LA SESSION
-        // ==========================================
         function getSessionToken() {
             return sessionStorage.getItem('enseignant_token');
         }
@@ -277,6 +303,9 @@
         }
 
         async function validerPinDirect() {
+            const selectMat = document.getElementById('select-matiere');
+            const matiere = selectMat.value;
+
             const input = document.getElementById('input-pin');
             const err = document.getElementById('pin-error');
             const card = document.getElementById('pin-card');
@@ -286,6 +315,12 @@
 
             const arabicDigits = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
             val = val.replace(/[٠-٩]/g, d => arabicDigits.indexOf(d).toString());
+
+            if (!matiere) {
+                if (err) { err.textContent = "Veuillez choisir une matière / يرجى اختيار المادة"; err.classList.remove('hidden'); }
+                if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); }
+                return;
+            }
 
             if (!val) {
                 if (err) { err.textContent = "Veuillez entrer le code / يرجى إدخال الرمز"; err.classList.remove('hidden'); }
@@ -297,30 +332,30 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Vérification...</span>`;
 
             try {
-                // Recherche directe du professeur dans Supabase uniquement par son code PIN
+                // Recherche du professeur avec le PIN ET la Matière
                 const { data: profs, error } = await supabaseClient
                     .from('enseignants')
                     .select('id, nom_ar, prenom_ar, nom, prenom, matiere')
-                    .eq('pin', val);
+                    .eq('pin', val)
+                    .eq('matiere', matiere); // Vérification stricte
 
                 if (error) throw error;
 
                 if (profs && profs.length > 0) {
                     const prof = profs[0];
                     const nomAffichage = prof.nom_ar ? `${prof.nom_ar} ${prof.prenom_ar}` : `${prof.nom} ${prof.prenom}`;
-                    const matiereProf = prof.matiere || 'Matière générale';
                     
                     if (err) err.classList.add('hidden');
                     
-                    debloquerEnseignant(prof.id, matiereProf, nomAffichage);
+                    debloquerEnseignant(prof.id, prof.matiere, nomAffichage);
                 } else {
-                    if (err) { err.textContent = "Code incorrect / رمز خاطئ"; err.classList.remove('hidden'); }
+                    if (err) { err.textContent = "Code incorrect pour cette matière"; err.classList.remove('hidden'); }
                     if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
                     if (input) { input.value = ''; input.focus(); } 
                 }
             } catch (e) {
                 console.error(e);
-                if (err) { err.textContent = "Erreur de connexion"; err.classList.remove('hidden'); }
+                if (err) { err.textContent = "Erreur: " + (e.message || "Connexion impossible"); err.classList.remove('hidden'); }
                 if (card) { card.classList.remove('shake-error'); void card.offsetWidth; card.classList.add('shake-error'); } 
             } finally {
                 btn.disabled = false;
@@ -351,9 +386,6 @@
             }
         });
 
-        // ==========================================
-        // GESTION DES CLASSES ET ÉLÈVES
-        // ==========================================
         async function chargerListeClasses() {
             try {
                 const { data, error } = await supabaseClient
