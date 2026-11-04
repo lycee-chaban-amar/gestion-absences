@@ -83,7 +83,7 @@
                     <input type="date" id="date_cours" class="w-full bg-[#0f172a] border border-slate-700 rounded-xl px-4 py-3 text-white font-bold text-sm outline-none focus:border-indigo-500" dir="ltr" />
                 </div>
                 
-                <!-- Heure (Menu déroulant corrigé) -->
+                <!-- Heure (Menu déroulant rapide) -->
                 <div>
                     <label class="block text-[11px] font-bold text-slate-400 mb-1">التوقيت / Heure</label>
                     <div class="relative">
@@ -143,10 +143,10 @@
                 <button type="button" onclick="ouvrirModalAjout()" class="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition">
                     <i class="fa-solid fa-user-plus"></i> Ajouter un élève
                 </button>
-                <button type="button" class="shrink-0 bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition">
+                <button type="button" onclick="alert('La génération de la Fiche d\'Évaluation sera bientôt disponible.')" class="shrink-0 bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition">
                     <i class="fa-solid fa-list-check"></i> Fiche Évaluation
                 </button>
-                <button type="button" class="shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition">
+                <button type="button" onclick="alert('La Fiche de Suivi Mensuel est en cours de développement.')" class="shrink-0 bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition">
                     <i class="fa-solid fa-calendar-days"></i> Fiche Suivi Mensuel
                 </button>
             </div>
@@ -361,7 +361,7 @@
                         date_cours: dateCours,
                         heure_debut: heureCours,
                         matiere: matiere,
-                        enseignant_id: null // Facultatif dans cette version rapide
+                        enseignant_id: null // Facultatif
                     }])
                     .select('id')
                     .single();
@@ -381,7 +381,7 @@
                     };
                 });
 
-                // Insérer les pointages (uniquement les Absents et Retards pour alléger, ou tout le monde selon votre choix. Ici on met tout le monde).
+                // Insérer les pointages
                 const { error: ptgErr } = await supabaseClient.from('pointages').insert(pointages);
                 if (ptgErr) throw ptgErr;
 
@@ -446,7 +446,7 @@
                 if (error) throw error;
                 
                 fermerModalAjout();
-                chargerEleves(); // Recharger la liste pour afficher le petit nouveau
+                chargerEleves(); // Recharger la liste
                 
             } catch (err) {
                 alert("Erreur ajout : " + err.message);
