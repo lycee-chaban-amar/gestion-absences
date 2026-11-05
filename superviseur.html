@@ -918,7 +918,7 @@
       });
     }
 
-    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES SÉCURISÉ
+    // OUVERTURE DU MODAL DES CLASSES NON APPELÉES AVEC CORRECTION TOTALE DES 0
     window.ouvrirModalNonAppeles = async function() {
       const modal = document.getElementById('modal-non-appeles');
       const content = document.getElementById('non-appeles-content');
@@ -929,13 +929,13 @@
       try {
         const dateCible = filtreDate.value || obtenirDateLocaleISO();
         
-        // Calcul du jour de la semaine en évitant les décalages UTC
+        // Calcul du jour de la semaine sans décalage
         const parts = dateCible.split('-');
         const dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
         const joursSemaine = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
         const nomJour = joursSemaine[dateObj.getDay()];
 
-        // 1. Récupération du planning pour le jour sélectionné
+        // 1. Récupération du planning pour le jour
         const { data: planningJour } = await supabaseClient
           .from('v_planning_cours')
           .select('*')
@@ -948,7 +948,22 @@
         (planningJour || []).forEach(pl => {
           const keyId = pl.classe_id;
           const keyNom = (pl.classe_nom || '').toUpperCase().trim();
-          const profStr = `${pl.enseignant_nom || ''} (${pl.matiere || ''})`.trim();
+          
+          // Nettoyage strict anti-zéro : si le nom vaut 0 ou commence par 0, on le corrige
+          let nomProf = (pl.enseignant_nom || '').trim();
+          if (nomProf === '0' || nomProf === '0 0' || !nomProf || /^0\s*$/.test(nomProf)) {
+            nomProf = 'أستاذ(ة)';
+          } else if (nomProf.startsWith('0 ')) {
+            nomProf = nomProf.replace(/^0\s+/, '').trim();
+          }
+          
+          const matProf = (pl.matiere || '').trim();
+          let profStr = '';
+          if (matProf) {
+            profStr = (nomProf && nomProf !== 'أستاذ(ة)') ? `${nomProf} (${matProf})` : `أستاذ(ة) (${matProf})`;
+          } else {
+            profStr = nomProf;
+          }
           
           if (keyId && !profParClasse[keyId]) {
             profParClasse[keyId] = profStr;
@@ -1012,6 +1027,15 @@
 
           const horaireAff = c.heure_debut ? `${c.heure_debut.substring(0,5)} - ${c.heure_fin ? c.heure_fin.substring(0,5) : ''}` : '';
 
+          let affichageProf = (c.prof || '').trim();
+          if (affichageProf === '0' || affichageProf === '0 ()' || affichageProf === '') {
+            affichageProf = 'أستاذ(ة)';
+          } else if (affichageProf.startsWith('0 (')) {
+            affichageProf = 'أستاذ(ة) ' + affichageProf.substring(2);
+          } else if (affichageProf.startsWith('0 ')) {
+            affichageProf = affichageProf.substring(2).trim();
+          }
+
           html += `
             <li class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 p-3 rounded-2xl gap-3">
               <div class="flex items-center gap-3">
@@ -1019,7 +1043,7 @@
                 <div>
                   <div class="font-black text-slate-800 dark:text-white text-xs">${escapeHtml(c.nom)}</div>
                   <div class="text-[11px] text-indigo-600 dark:text-indigo-400 font-bold mt-0.5">
-                    <i class="fa-solid fa-user-tie text-[10px] mr-1"></i>${escapeHtml(c.prof)}
+                    <i class="fa-solid fa-user-tie text-[10px] mr-1"></i>${escapeHtml(affichageProf)}
                     ${horaireAff ? `<span class="text-slate-400 text-[10px] ml-1">(${horaireAff})</span>` : ''}
                   </div>
                 </div>
@@ -1054,11 +1078,20 @@
         const nomSalle = c.salle ? c.salle.replace('الحجرة', '').trim() : '---';
         const horaire = c.heure_debut && c.heure_fin ? `من ${c.heure_debut.substring(0,5)} إلى ${c.heure_fin.substring(0,5)}` : '---';
 
+        let affichageProf = (c.prof || '').trim();
+        if (affichageProf === '0' || affichageProf === '0 ()' || affichageProf === '') {
+          affichageProf = 'أستاذ(ة)';
+        } else if (affichageProf.startsWith('0 (')) {
+          affichageProf = 'أستاذ(ة) ' + affichageProf.substring(2);
+        } else if (affichageProf.startsWith('0 ')) {
+          affichageProf = affichageProf.substring(2).trim();
+        }
+
         rows += `<tr>
           <td class="border border-black p-2 text-center font-bold">${i + 1}</td>
           <td class="border border-black p-2 font-bold" dir="ltr">${escapeHtml(c.nom)}</td>
           <td class="border border-black p-2 text-center font-bold">${escapeHtml(nomSalle)}</td>
-          <td class="border border-black p-2 text-center font-bold text-[11px]">${escapeHtml(c.prof)}</td>
+          <td class="border border-black p-2 text-center font-bold text-[11px]">${escapeHtml(affichageProf)}</td>
           <td class="border border-black p-2 text-center font-bold text-[11px]" dir="rtl">${escapeHtml(horaire)}</td>
           <td class="border border-black p-2 text-center font-black text-rose-700 text-lg">${c.manquants}</td>
         </tr>`;
